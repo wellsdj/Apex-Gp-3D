@@ -1334,12 +1334,12 @@ function onPlayClick(){
 // 1. Create project → 2. Enable Authentication (Email/Password) → 3. Create Firestore database
 // 4. Copy config from Project Settings → Your apps → Web app
 var firebaseConfig={
-  apiKey:"AIzaSyD_REPLACE_ME",
-  authDomain:"apex-gp.firebaseapp.com",
-  projectId:"apex-gp",
-  storageBucket:"apex-gp.appspot.com",
-  messagingSenderId:"000000000000",
-  appId:"1:000000000000:web:000000000000"
+  apiKey:"AIzaSyAm9zT1XCPpH_4lga6STuwfPOA2-NW14QU",
+  authDomain:"apex-gp-3d.firebaseapp.com",
+  projectId:"apex-gp-3d",
+  storageBucket:"apex-gp-3d.firebasestorage.app",
+  messagingSenderId:"919953480177",
+  appId:"1:919953480177:web:eb4f482adc8b667b2e4c50"
 };
 var fbApp=null,fbAuth=null,fbDb=null,fbUser=null;
 try{fbApp=firebase.initializeApp(firebaseConfig);fbAuth=firebase.auth();fbDb=firebase.firestore()}catch(e){console.warn('Firebase init failed:',e)}
