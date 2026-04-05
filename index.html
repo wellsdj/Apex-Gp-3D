@@ -235,6 +235,11 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 </style>
 </head>
 <body>
+<div id="mobileBlock" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px">
+  <div style="font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;background:linear-gradient(175deg,#ff1f1f,#ff5500,#ffaa00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:20px">APEX GP</div>
+  <div style="font-family:'Rajdhani',sans-serif;font-size:18px;color:rgba(255,255,255,.7);line-height:1.6;max-width:320px">This game requires a keyboard to play.<br><br>Please open on a <span style="color:#ff8833;font-weight:700">laptop or PC</span> for the full experience.</div>
+</div>
+<script>if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){document.getElementById('mobileBlock').style.display='flex'}</script>
 <div id="menuScreen"><canvas id="menuCanvas"></canvas><button class="cog-btn" style="position:absolute;top:18px;right:18px;z-index:10" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="mo"><div class="title">APEX<br>GP</div><button class="play-btn" onclick="onPlayClick()"><span class="play-car-ico">🏎️</span><span class="play-txt">PLAY</span></button><div class="ci"><span>W/&#8593;</span> Accelerate &middot; <span>S/&#8595;</span> Brake &middot; <span>A/&#8592;</span> <span>D/&#8594;</span> Steer<br><span>C</span> Camera &middot; <span>R</span> Restart &middot; <span>G</span> Ghost &middot; <span>H</span> Headlights &middot; <span>SPACE</span> Look Back</div></div></div>
 <div id="garageScreen" class="hide"><canvas id="garageCanvas"></canvas><button class="cog-btn" style="position:absolute;top:18px;right:18px;z-index:10" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="gar-left"><div class="gar-brand">APEX GP &mdash; TIME ATTACK</div><div class="gar-car-name">APEX<br>GP</div><div class="gar-divider"></div><div class="gar-rank" id="garRank">BEGINNER</div><div class="gar-laps" id="garLaps">0 LAPS</div></div><div class="track-sel"><button class="track-arr" onclick="chgTrack(-1)">&#9664;</button><div class="track-info"><canvas id="trackPreview" width="120" height="120"></canvas><div class="track-name" id="trackName">SUNSET CIRCUIT</div><div class="track-best" id="trackBest">BEST: --:--.---</div><div class="track-num" id="trackNum">1 / 3</div></div><button class="track-arr" onclick="chgTrack(1)">&#9654;</button></div><div class="hud-bottom"><div class="gar-section">HUD DISPLAY</div><div class="tog-row"><div class="tog" id="togLap" onclick="togHUD('lap')">LAP TIMES</div><div class="tog" id="togMap" onclick="togHUD('map')">MINIMAP</div><div class="tog" id="togGrip" onclick="togHUD('grip')">DELTA</div><div class="tog" id="togGhost" onclick="togHUD('ghost')">GHOST</div><div class="tog off" id="togOpponent" onclick="togHUD('opponent')" style="display:none">OPPONENT</div><div class="tog off" id="togOpGhost" onclick="togHUD('opGhost')" style="display:none">OPP. GHOST</div></div></div><button class="gar-btn" id="setupBtn" onclick="openSetup()">SETUP</button><button class="gar-btn" id="customBtn" onclick="openCustom();event.stopPropagation()">CUSTOMISE</button><button class="gar-btn" id="startBtn" onclick="showWeatherMenu()">RACE</button><div class="mp-panel" id="mpPanel"><div class="gar-section">MULTIPLAYER</div><div id="mpButtons" class="mp-buttons"><div class="tog" onclick="createParty()">CREATE PARTY</div><div class="tog" onclick="showJoinUI()">JOIN PARTY</div></div><div id="mpHosting" class="mp-hosting hide"><div class="mp-code-label">PARTY CODE</div><div class="mp-code" id="mpCode">-----</div><div class="mp-status" id="mpHostStatus">Waiting for opponent...</div><div class="tog mp-leave" onclick="leaveParty()">CANCEL</div></div><div id="mpJoining" class="mp-joining hide"><div class="mp-row"><input class="mp-input" id="mpCodeInput" maxlength="5" placeholder="CODE"><div class="tog" onclick="joinParty()">JOIN</div></div><div class="mp-status" id="mpJoinStatus"></div><div class="tog mp-leave" onclick="cancelJoin()">CANCEL</div></div><div id="mpConnected" class="mp-connected hide"><div class="mp-status ok">CONNECTED &#10003;</div><div class="mp-opponent" id="mpOpponent"></div><div class="tog mp-leave" onclick="leaveParty()">LEAVE</div></div></div></div>
 <div id="hudScreen" class="hide"><div class="cl" id="camLbl">CHASE CAM</div><button class="ghostBtn" id="ghostBtn" onclick="toggleGhost()">GHOST: ON</button><button class="ghostBtn" id="hudSetupBtn" style="top:80px;left:140px;background:rgba(255,140,0,.4);border-color:rgba(255,140,0,.3)" onclick="openSetup()">SETUP</button><button class="cog-btn" style="position:absolute;top:110px;left:70px" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="hb lbb" id="lapBox"><div class="lt">Current Lap</div><div class="lv" id="curLap">00:00.000</div><div class="lt" style="margin-top:7px">Best Lap</div><div class="lbv" id="bestLap">--:--.---</div><div class="lt" style="margin-top:7px">Last Lap</div><div class="lc" id="lastLap">--:--.---</div><div class="lc" id="lapCnt" style="margin-top:5px">LAP 1</div></div><div class="hb sbb" id="spdBox"><svg id="spdOutlineSvg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible"><rect id="spdOutlineRect" x="0" y="0" width="10" height="10" rx="10" ry="10" fill="none" stroke="#ff3333" stroke-width="9" stroke-dasharray="0 9999" stroke-linecap="round"/></svg><div class="sv" id="spdVal">0</div><div class="su">KM/H</div><div class="sbc"><div class="sb2" id="spdBar"></div></div></div><div class="gearBox" id="gearBox"><div class="gearLbl">VS GHOST</div><div class="gearNum" id="gearD">--</div><div class="gearBar"><div class="gearFill" id="gearFill"></div></div></div><div class="hb mmb" id="mapBox"><canvas id="mmC" width="150" height="150"></canvas></div><div class="nb" id="nB">&#9733; NEW BEST LAP &#9733;</div><div class="opDeltaBox" id="opDeltaBox"><div class="opDeltaLbl">VS OPPONENT</div><div class="opDeltaNum" id="opDeltaD">--</div></div><div class="buildSpd" id="buildSpd"><div class="bt">BUILDING SPEED</div><div class="bbar"><div class="bfill" id="buildFill"></div></div></div></div>
@@ -329,7 +334,6 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 // One-time reset of old best times (remove this block after first load)
 if(!localStorage.getItem('apexgp_v2')){localStorage.removeItem('apexgp_bests');['SUNSET CIRCUIT','T-BONE','THE BOOT'].forEach(function(n){localStorage.removeItem('apexgp_ghost_'+n)});localStorage.setItem('apexgp_v2','1')}
@@ -495,14 +499,14 @@ function pickWeather(w){
   startDrive();
   if(w==='night'||w==='night_dark'){var h=document.getElementById('hlHint');h.classList.add('show');setTimeout(function(){h.classList.remove('show')},3000)}
 }
-function chgTrack(dir){selTrack=(selTrack+dir+TRACKS.length)%TRACKS.length;document.getElementById('trackName').textContent=TRACKS[selTrack].name;document.getElementById('trackNum').textContent=(selTrack+1)+' / '+TRACKS.length;drawTrackPreview();if(mpMode==='host'&&mpConn)try{mpSend({t:'trackReq',track:selTrack})}catch(e){}}
+function chgTrack(dir){selTrack=(selTrack+dir+TRACKS.length)%TRACKS.length;document.getElementById('trackName').textContent=TRACKS[selTrack].name;document.getElementById('trackNum').textContent=(selTrack+1)+' / '+TRACKS.length;drawTrackPreview();if(mpMode==='host'&&mpDocRef){mpDocRef.update({track:selTrack}).catch(function(){});mpSend({t:'trackReq',track:selTrack})}}
 function togHUD(key){hudShow[key]=!hudShow[key];var elId='tog'+key.charAt(0).toUpperCase()+key.slice(1);var el=document.getElementById(elId);if(el)el.className='tog'+(hudShow[key]?'':' off');if(key==='opponent'){opVisible=hudShow.opponent;if(opCar)opCar.visible=opVisible&&!!opPos}if(key==='opGhost'){opGhostVisible=hudShow.opGhost;if(opBestCar)opBestCar.visible=opGhostVisible&&opGhostPlaying}}
 function applyHUD(){document.getElementById('spdBox').style.display=hudShow.spd?'':'none';document.getElementById('lapBox').style.display=hudShow.lap?'':'none';document.getElementById('mapBox').style.display=hudShow.map?'':'none';document.getElementById('gearBox').style.display=hudShow.grip?'':'none';document.getElementById('ghostBtn').style.display=hudShow.ghost?'':'none'}
 function toggleHeadlights(){if(!car||!car.headlights)return;car.hlOn=!car.hlOn;car.headlights.forEach(function(l){l.visible=car.hlOn});car.hlMeshes.forEach(function(m){m.material.emissiveIntensity=car.hlOn?1:.1});if(car.carGlow)car.carGlow.visible=car.hlOn}
 function toggleGhost(){ghostMode=(ghostMode+1)%3;var btn=document.getElementById('ghostBtn');if(ghostMode===0){btn.textContent='GHOST: ON';btn.className='ghostBtn';btn.style.background='';btn.style.borderColor=''}else if(ghostMode===1){btn.textContent='GHOST: BEST';btn.className='ghostBtn';btn.style.background='rgba(200,170,0,.4)';btn.style.borderColor='rgba(200,170,0,.3)'}else{btn.textContent='GHOST: OFF';btn.className='ghostBtn off';btn.style.background='';btn.style.borderColor=''}if(ghostCar)ghostCar.visible=ghostMode===0&&ghostPlaying;if(allTimeCar)allTimeCar.visible=ghostMode===1&&allTimeGhostPlaying}
 function showGarage(){mRun=false;document.getElementById('menuScreen').classList.add('hide');document.getElementById('garageScreen').classList.remove('hide');initGarage();startLobbyMusic();drawTrackPreview();checkRankUp();if(mpMode==='join'&&mpConn){document.getElementById('startBtn').textContent='WAITING FOR HOST...';document.getElementById('startBtn').style.pointerEvents='none';document.getElementById('startBtn').style.opacity='0.5'}else{document.getElementById('startBtn').textContent='RACE';document.getElementById('startBtn').style.pointerEvents='';document.getElementById('startBtn').style.opacity=''}}
 function backToMenu(){racing=false;gRun=false;document.getElementById('hudScreen').classList.add('hide');document.getElementById('garageScreen').classList.add('hide');document.getElementById('menuScreen').classList.remove('hide');mRun=true;initMenu();startLobbyMusic();}
-function startDrive(){if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}fadeLobbyMusic();gRun=false;document.getElementById('garageScreen').classList.add('hide');document.getElementById('hudScreen').classList.remove('hide');applyHUD();initRace();resetCar();racing=true;raceStartedAt=performance.now();audioStarted=false;prevEngineActive=false;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;s.currentTime=0;});clk.getDelta();opPos=null;opPrevPos=null;opGhostFrame=0;lastMpSend=0;if(mpMode==='host'&&mpConn)try{mpSend({t:'start',weather:selWeather})}catch(e){};if(opBestGhost.length>1&&tPts){opGhostTimeLookup=buildGhostLookupGeneric(opBestGhost)}allTimeGhost=getTrackGhost(TRACKS[selTrack].name)||[];allTimeGhostPlaying=allTimeGhost.length>1;allTimeGhostFrame=0;allTimeGhostLookup=allTimeGhostPlaying?buildGhostLookupGeneric(allTimeGhost):null}
+function startDrive(){if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}fadeLobbyMusic();gRun=false;document.getElementById('garageScreen').classList.add('hide');document.getElementById('hudScreen').classList.remove('hide');applyHUD();initRace();resetCar();racing=true;raceStartedAt=performance.now();audioStarted=false;prevEngineActive=false;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;s.currentTime=0;});clk.getDelta();opPos=null;opPrevPos=null;opGhostFrame=0;lastMpSend=0;if(mpMode==='host'&&mpDocRef){mpDocRef.update({started:true,weather:selWeather}).catch(function(){})}if(opBestGhost.length>1&&tPts){opGhostTimeLookup=buildGhostLookupGeneric(opBestGhost)}allTimeGhost=getTrackGhost(TRACKS[selTrack].name)||[];allTimeGhostPlaying=allTimeGhost.length>1;allTimeGhostFrame=0;allTimeGhostLookup=allTimeGhostPlaying?buildGhostLookupGeneric(allTimeGhost):null}
 
 function buildScene(){var T=TRACKS[selTrack],W=WEATHER[selWeather];WP=T.wp;scene=new THREE.Scene();
 var skC=W.skyOver!==null?W.skyOver:T.sky,fgC=W.fogOver!==null?W.fogOver:T.fog;
@@ -704,7 +708,7 @@ function checkCP(){
   }
 }
 var _dlN=new THREE.Vector3(),_dlC=new THREE.Vector3(),_dlF=new THREE.Vector3();
-function doLaps(){if(!racing)return;checkCP();var sfP=tPts[sfIdx],sfT=spl.getTangent(sfIdx/tPts.length).normalize(),sfN=_dlN.set(-sfT.z,0,sfT.x),toC=_dlC.subVectors(P,sfP);if(Math.abs(toC.dot(sfN))<TW/2&&Math.abs(toC.dot(sfT))<5){var cf=_dlF.set(Math.sin(A),0,Math.cos(A));if(cf.dot(sfT)>.3&&!xSF){xSF=true;if(lapN>0&&cpHit>=CP_COUNT){var lt=performance.now()-lapSt;lastLT=lt;if(lt<bestLT){bestLT=lt;bestGhost=curGhost.slice();playBeep();var isAllTime=saveTrackBest(TRACKS[selTrack].name,lt,bestGhost);var nEl=D('nB');if(isAllTime){allTimeGhost=bestGhost.slice();allTimeGhostPlaying=true;allTimeGhostLookup=buildGhostLookupGeneric(allTimeGhost);nEl.textContent='\u2605 BEST LAP EVER \u2605';nEl.style.color='#ffd700';nEl.style.textShadow='0 0 30px rgba(255,215,0,.6),0 0 60px rgba(255,180,0,.3)'}else{nEl.textContent='\u2605 NEW BEST LAP \u2605';nEl.style.color='#00ff88';nEl.style.textShadow='0 0 30px rgba(0,255,136,.5)'}nEl.classList.add('show');setTimeout(function(){nEl.classList.remove('show')},2500);if(mpConn)try{mpSend({t:'bestLap',time:lt,ghost:bestGhost})}catch(e){}}ghostPlaying=bestGhost.length>0;ghostFrame=0;allTimeGhostFrame=0;buildGhostLookup();opGhostFrame=0}if(lapN===0||cpHit>=CP_COUNT){if(lapN>0){totalLaps++;localStorage.setItem('apexgp_laps',totalLaps)}lapN++;lapSt=performance.now();curGhost=[];lastRecordTime=0;cpHit=0;D('lapCnt').textContent='LAP '+lapN}}}else xSF=false;curLT=performance.now()-lapSt}
+function doLaps(){if(!racing)return;checkCP();var sfP=tPts[sfIdx],sfT=spl.getTangent(sfIdx/tPts.length).normalize(),sfN=_dlN.set(-sfT.z,0,sfT.x),toC=_dlC.subVectors(P,sfP);if(Math.abs(toC.dot(sfN))<TW/2&&Math.abs(toC.dot(sfT))<5){var cf=_dlF.set(Math.sin(A),0,Math.cos(A));if(cf.dot(sfT)>.3&&!xSF){xSF=true;if(lapN>0&&cpHit>=CP_COUNT){var lt=performance.now()-lapSt;lastLT=lt;if(lt<bestLT){bestLT=lt;bestGhost=curGhost.slice();playBeep();var isAllTime=saveTrackBest(TRACKS[selTrack].name,lt,bestGhost);var nEl=D('nB');if(isAllTime){allTimeGhost=bestGhost.slice();allTimeGhostPlaying=true;allTimeGhostLookup=buildGhostLookupGeneric(allTimeGhost);nEl.textContent='\u2605 BEST LAP EVER \u2605';nEl.style.color='#ffd700';nEl.style.textShadow='0 0 30px rgba(255,215,0,.6),0 0 60px rgba(255,180,0,.3)'}else{nEl.textContent='\u2605 NEW BEST LAP \u2605';nEl.style.color='#00ff88';nEl.style.textShadow='0 0 30px rgba(0,255,136,.5)'}nEl.classList.add('show');setTimeout(function(){nEl.classList.remove('show')},2500);if(mpDocRef){mpSend({t:'bestLap',ghost:bestGhost.length>200?[]:bestGhost})}}ghostPlaying=bestGhost.length>0;ghostFrame=0;allTimeGhostFrame=0;buildGhostLookup();opGhostFrame=0}if(lapN===0||cpHit>=CP_COUNT){if(lapN>0){totalLaps++;localStorage.setItem('apexgp_laps',totalLaps)}lapN++;lapSt=performance.now();curGhost=[];lastRecordTime=0;cpHit=0;D('lapCnt').textContent='LAP '+lapN}}}else xSF=false;curLT=performance.now()-lapSt}
 
 // Ghost delta - build track-index-to-time lookup from best ghost
 var ghostTimeLookup=null,allTimeGhostLookup=null;
@@ -771,7 +775,7 @@ function doHUD(){
   updateOpGhostDelta();
   var opDBox=D('opDeltaBox');
   var opDEl=D('opDeltaD');
-  if(mpConn&&opGhostPlaying&&opGhostTimeLookup&&lapN>=1){
+  if(mpDocRef&&opGhostPlaying&&opGhostTimeLookup&&lapN>=1){
     opDBox.style.display='block';
     var oda=Math.abs(opGhostDelta),ods=opGhostDelta>=0?'+':'-';
     opDEl.textContent=ods+oda.toFixed(2)+'s';
@@ -925,153 +929,155 @@ function toggleSettMusic(){musicEnabled=!musicEnabled;document.getElementById('s
 function toggleSettSfx(){sfxEnabled=!sfxEnabled;document.getElementById('settSfxTog').classList.toggle('on',sfxEnabled);if(!sfxEnabled)[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});}
 function setMusicVol(v){musicVolume=v/100;if(lobbyPlaying&&musicEnabled)sndLobby.volume=musicVolume;}
 function setSfxVol(v){sfxVolume=v/100;}
-// ── Multiplayer (PeerJS WebRTC) ─────────────────────────────────────────────
-var mpPeer=null,mpHeartbeat=null,mpLastPong=0,mpRetries=0,MP_MAX_RETRIES=3;
-// ICE servers for reliable NAT traversal worldwide
-var MP_ICE={iceServers:[
-  {urls:'stun:stun.l.google.com:19302'},
-  {urls:'stun:stun1.l.google.com:19302'},
-  {urls:'stun:stun2.l.google.com:19302'},
-  {urls:'stun:stun.relay.metered.ca:80'},
-  {urls:'turn:a.relay.metered.ca:80',username:'open',credential:'open'},
-  {urls:'turn:a.relay.metered.ca:443',username:'open',credential:'open'},
-  {urls:'turn:a.relay.metered.ca:443?transport=tcp',username:'open',credential:'open'}
-]};
+// ── Multiplayer (Firebase Firestore) ────────────────────────────────────────
+var mpDocRef=null,mpSlot='',mpUnsub=[],mpHeartbeat=null;
 function genCode(){var c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',s='';for(var i=0;i<5;i++)s+=c[Math.floor(Math.random()*c.length)];return s}
 function mpShowUI(panel){['mpButtons','mpHosting','mpJoining','mpConnected'].forEach(function(id){document.getElementById(id).classList.add('hide')});document.getElementById(panel).classList.remove('hide')}
-function mpSend(d){if(mpConn&&mpConn.open)mpConn.send(d)}
-function startHeartbeat(){
-  stopHeartbeat();mpLastPong=performance.now();
-  mpHeartbeat=setInterval(function(){
-    mpSend({t:'ping'});
-    if(performance.now()-mpLastPong>8000){console.warn('[MP] Heartbeat timeout');onMpDisconnect()}
-  },3000);
+function mpSend(d){
+  if(!mpDocRef||!mpSlot)return;
+  // Write messages to opponent's inbox
+  var target=mpSlot==='host'?'joinInbox':'hostInbox';
+  mpDocRef.update(target,d).catch(function(){});
 }
-function stopHeartbeat(){if(mpHeartbeat){clearInterval(mpHeartbeat);mpHeartbeat=null}}
-function wireConn(conn){
-  mpConn=conn;
-  conn.on('data',function(d){handleMpData(d)});
-  conn.on('close',function(){onMpDisconnect()});
-  conn.on('error',function(e){console.warn('[MP] Connection error:',e);onMpDisconnect()});
+function mpCleanup(){
+  mpUnsub.forEach(function(fn){fn()});mpUnsub=[];
+  if(mpHeartbeat){clearInterval(mpHeartbeat);mpHeartbeat=null}
+  mpDocRef=null;mpSlot='';
 }
 function createParty(){
-  destroyPeer();mpRetries=0;
-  mpCode=genCode();mpMode='host';mpShowUI('mpHosting');
+  if(!fbDb){alert('Sign in first to use multiplayer');return}
+  mpCleanup();
+  mpCode=genCode();mpMode='host';mpSlot='host';mpShowUI('mpHosting');
   document.getElementById('mpCode').textContent=mpCode;
   document.getElementById('mpHostStatus').textContent='Setting up...';
-  var peerId='apexgp-'+mpCode;
-  mpPeer=new Peer(peerId,{config:MP_ICE,debug:0});
-  mpPeer.on('error',function(e){
-    if(e.type==='unavailable-id'&&mpRetries<3){
-      // Stale peer ID — wait and retry (PeerJS cleans up after ~60s)
-      mpRetries++;destroyPeer();
-      document.getElementById('mpHostStatus').textContent='Code in use, generating new one...';
-      setTimeout(createParty,1000);return;
-    }
-    document.getElementById('mpHostStatus').textContent='Error: '+e.type+'. Try again.';
-  });
-  mpPeer.on('open',function(id){
+  mpDocRef=fbDb.collection('parties').doc(mpCode);
+  var myGhost=getTrackGhost(TRACKS[selTrack].name)||[];
+  var myBest=getTrackBest(TRACKS[selTrack].name);
+  mpDocRef.set({
+    code:mpCode,host:getPlayerName(),hostUid:fbUser.uid,
+    track:selTrack,weather:selWeather,
+    hostGhost:myGhost.length>200?[]:myGhost,hostBest:myBest,
+    joiner:null,joinerUid:null,
+    hostPos:null,joinerPos:null,
+    hostInbox:null,joinInbox:null,
+    started:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
     document.getElementById('mpHostStatus').textContent='Waiting for opponent...';
-    // Register code→peerId mapping on PeerJS metadata
-    mpPeer.on('connection',function(conn){
-      conn.on('open',function(){
-        wireConn(conn);startHeartbeat();setupConn();
-      });
+    // Listen for joiner
+    var unsub=mpDocRef.onSnapshot(function(snap){
+      var d=snap.data();if(!d)return;
+      if(d.joiner&&!mpConn){
+        mpConn={open:true};
+        document.getElementById('mpOpponent').textContent=d.joiner;
+        if(d.joinerGhost&&d.joinerGhost.length>0){opBestGhost=d.joinerGhost;opGhostPlaying=false}
+        setupConnUI();
+        startMpSync();
+      }
+      // Read messages from joinInbox
+      if(d.joinInbox)handleMpData(d.joinInbox);
     });
+    mpUnsub.push(unsub);
+  }).catch(function(e){
+    document.getElementById('mpHostStatus').textContent='Error: '+e.message;
   });
 }
 function showJoinUI(){mpShowUI('mpJoining');document.getElementById('mpCodeInput').value='';document.getElementById('mpJoinStatus').textContent='';document.getElementById('mpCodeInput').focus()}
 function joinParty(){
+  if(!fbDb){alert('Sign in first to use multiplayer');return}
   var code=document.getElementById('mpCodeInput').value.trim().toUpperCase();
   if(code.length!==5){document.getElementById('mpJoinStatus').textContent='Enter 5-char code';return}
-  mpCode=code;mpMode='join';mpRetries=0;
+  mpCode=code;mpMode='join';mpSlot='joiner';
   document.getElementById('mpJoinStatus').textContent='Connecting...';
-  destroyPeer();
-  mpPeer=new Peer(null,{config:MP_ICE,debug:0});
-  mpPeer.on('error',function(e){
-    if(e.type==='peer-unavailable'&&mpRetries<MP_MAX_RETRIES){
-      mpRetries++;
-      document.getElementById('mpJoinStatus').textContent='Searching... (attempt '+mpRetries+'/'+MP_MAX_RETRIES+')';
-      setTimeout(function(){_tryConnect()},1000);return;
-    }
-    document.getElementById('mpJoinStatus').textContent=e.type==='peer-unavailable'?'Party not found. Check the code.':'Error: '+e.type;
+  mpCleanup();
+  mpDocRef=fbDb.collection('parties').doc(mpCode);
+  mpDocRef.get().then(function(snap){
+    if(!snap.exists){document.getElementById('mpJoinStatus').textContent='Party not found. Check the code.';mpDocRef=null;return}
+    var d=snap.data();
+    if(d.joinerUid&&d.joinerUid!==fbUser.uid){document.getElementById('mpJoinStatus').textContent='Party is full.';mpDocRef=null;return}
+    // Join the party
+    var myGhost=getTrackGhost(TRACKS[selTrack].name)||[];
+    var myBest=getTrackBest(TRACKS[selTrack].name);
+    return mpDocRef.update({
+      joiner:getPlayerName(),joinerUid:fbUser.uid,
+      joinerGhost:myGhost.length>200?[]:myGhost,joinerBest:myBest
+    }).then(function(){
+      mpConn={open:true};
+      // Set track from host
+      selTrack=d.track;document.getElementById('trackName').textContent=TRACKS[selTrack].name;
+      document.getElementById('trackNum').textContent=(selTrack+1)+' / '+TRACKS.length;drawTrackPreview();
+      document.getElementById('mpOpponent').textContent=d.host;
+      if(d.hostGhost&&d.hostGhost.length>0){opBestGhost=d.hostGhost;opGhostPlaying=false}
+      setupConnUI();
+      startMpSync();
+      // Listen for host messages
+      var unsub=mpDocRef.onSnapshot(function(snap2){
+        var d2=snap2.data();if(!d2)return;
+        if(d2.hostInbox)handleMpData(d2.hostInbox);
+        if(d2.started&&!racing){selWeather=d2.weather||'dry';startDrive()}
+      });
+      mpUnsub.push(unsub);
+    });
+  }).catch(function(e){
+    document.getElementById('mpJoinStatus').textContent='Error: '+e.message;
   });
-  mpPeer.on('open',function(){_tryConnect()});
 }
-function _tryConnect(){
-  if(!mpPeer||mpPeer.destroyed)return;
-  var conn=mpPeer.connect('apexgp-'+mpCode,{reliable:true});
-  conn.on('open',function(){
-    wireConn(conn);startHeartbeat();
-    mpSend({t:'join',name:getPlayerName()});
+function startMpSync(){
+  // Poll opponent position at 10Hz via Firestore
+  var posField=mpSlot==='host'?'joinerPos':'hostPos';
+  var unsub=mpDocRef.onSnapshot(function(snap){
+    var d=snap.data();if(!d)return;
+    var p=d[posField];
+    if(p){opPrevPos=opPos;opPos={x:p.x,y:p.y,z:p.z,a:p.a,pa:p.pa,ra:p.ra};opPosTime=performance.now()}
   });
-  conn.on('error',function(e){
-    if(mpRetries<MP_MAX_RETRIES){
-      mpRetries++;
-      document.getElementById('mpJoinStatus').textContent='Retrying... ('+mpRetries+'/'+MP_MAX_RETRIES+')';
-      setTimeout(function(){_tryConnect()},1500);
-    }else{
-      document.getElementById('mpJoinStatus').textContent='Could not connect. Check code and try again.';
-    }
-  });
+  mpUnsub.push(unsub);
+  // Heartbeat — update own timestamp every 3s, check opponent every 8s
+  var hbField=mpSlot==='host'?'hostHb':'joinerHb';
+  var opHbField=mpSlot==='host'?'joinerHb':'hostHb';
+  var lastOpHb=Date.now();
+  mpHeartbeat=setInterval(function(){
+    if(!mpDocRef)return;
+    var upd={};upd[hbField]=Date.now();mpDocRef.update(upd).catch(function(){});
+    mpDocRef.get().then(function(snap){
+      var d=snap.data();if(!d)return;
+      if(d[opHbField]&&d[opHbField]>lastOpHb)lastOpHb=d[opHbField];
+      if(Date.now()-lastOpHb>12000)onMpDisconnect();
+    }).catch(function(){});
+  },3000);
 }
-function destroyPeer(){stopHeartbeat();if(mpPeer){try{mpPeer.destroy()}catch(e){}mpPeer=null}}
-function cancelJoin(){mpShowUI('mpButtons');destroyPeer();mpMode=null;mpConn=null}
-var mpSyncReceived=false;
-function setupConn(){
+function setupConnUI(){
   mpShowUI('mpConnected');
-  document.getElementById('mpOpponent').textContent='Connected!';
   document.getElementById('togOpponent').style.display='';
   document.getElementById('togOpGhost').style.display='';
   if(mpMode==='join'){document.getElementById('startBtn').textContent='WAITING...';document.getElementById('startBtn').style.pointerEvents='none';document.getElementById('startBtn').style.opacity='.4'}
-  var myGhost=getTrackGhost(TRACKS[selTrack].name)||[];
-  var myBest=getTrackBest(TRACKS[selTrack].name);
-  mpSend({t:'sync',track:selTrack,bestTime:myBest,ghost:myGhost,name:getPlayerName(),photo:fbUser?fbUser.photoURL:null});
 }
+function cancelJoin(){mpShowUI('mpButtons');mpCleanup();mpMode=null;mpConn=null}
 function handleMpData(d){
-  if(d.t==='ping'){mpSend({t:'pong'});return}
-  if(d.t==='pong'){mpLastPong=performance.now();return}
-  if(d.t==='join'&&mpMode==='host'){
-    if(d.name)document.getElementById('mpOpponent').textContent=d.name;
-    setupConn();
-  }
-  if(d.t==='sync'){
-    if(d.name){document.getElementById('mpOpponent').textContent=d.name}
-    if(!mpSyncReceived){
-      mpSyncReceived=true;
-      if(mpMode==='join'){
-        selTrack=d.track;document.getElementById('trackName').textContent=TRACKS[selTrack].name;
-        document.getElementById('trackNum').textContent=(selTrack+1)+' / '+TRACKS.length;drawTrackPreview();
-        setupConn();
-      }
-      if(d.ghost&&d.ghost.length>0){opBestGhost=d.ghost;opGhostPlaying=false}
-    }
-  }
-  if(d.t==='pos'){opPrevPos=opPos;opPos={x:d.x,y:d.y,z:d.z,a:d.a,pa:d.pa,ra:d.ra};opPosTime=performance.now()}
+  if(!d||!d.t)return;
   if(d.t==='trackReq'&&mpMode==='join'){selTrack=d.track;document.getElementById('trackName').textContent=TRACKS[selTrack].name;document.getElementById('trackNum').textContent=(selTrack+1)+' / '+TRACKS.length;drawTrackPreview()}
   if(d.t==='bestLap'){opBestGhost=d.ghost||[];if(opBestGhost.length>1){opGhostTimeLookup=buildGhostLookupGeneric(opBestGhost);opGhostPlaying=true;opGhostFrame=0}}
-  if(d.t==='start'){if(d.weather)selWeather=d.weather;startDrive()}
   if(d.t==='leave'){onMpDisconnect()}
 }
 function onMpDisconnect(){
-  stopHeartbeat();
   if(opCar)opCar.visible=false;
   if(opBestCar)opBestCar.visible=false;
   opPos=null;opPrevPos=null;opGhostPlaying=false;
-  mpConn=null;mpSyncReceived=false;
+  mpConn=null;
   if(!racing){
     mpShowUI('mpButtons');
     document.querySelectorAll('.track-arr').forEach(function(b){b.style.pointerEvents='';b.style.opacity=''});
     document.getElementById('startBtn').textContent='RACE';
     document.getElementById('startBtn').style.pointerEvents='';document.getElementById('startBtn').style.opacity='';
   }
-  destroyPeer();
+  mpCleanup();
   mpMode=null;
   document.getElementById('togOpponent').style.display='none';
   document.getElementById('togOpGhost').style.display='none';
 }
 function leaveParty(){
-  mpSend({t:'leave'});
+  if(mpDocRef)mpSend({t:'leave'});
+  // Clean up Firestore doc
+  if(mpDocRef&&mpSlot==='host')mpDocRef.delete().catch(function(){});
+  if(mpDocRef&&mpSlot==='joiner'){mpDocRef.update({joiner:null,joinerUid:null,joinerPos:null}).catch(function(){})}
   onMpDisconnect();
   mpShowUI('mpButtons');
 }
@@ -1093,7 +1099,7 @@ function buildGhostLookupGeneric(ghostData){
 }
 // Play opponent live position (interpolated)
 function playOpponent(dt){
-  if(!opCar||!opPos||!opVisible||!mpConn){if(opCar)opCar.visible=false;return}
+  if(!opCar||!opPos||!opVisible||!mpDocRef){if(opCar)opCar.visible=false;return}
   opCar.visible=true;
   var now=performance.now(),elapsed=now-opPosTime,frac=Math.min(1,elapsed/100);
   if(opPrevPos){
@@ -1128,7 +1134,7 @@ function updateOpGhostDelta(){
   var gt=opGhostTimeLookup[carNearIdx];
   if(gt>=0)opGhostDelta=(gt-elapsed)/1000;
 }
-window.addEventListener('beforeunload',function(){if(mpConn)try{mpSend({t:'leave'})}catch(e){};destroyPeer()});
+window.addEventListener('beforeunload',function(){if(mpDocRef){if(mpSlot==='host')mpDocRef.delete().catch(function(){});else mpDocRef.update({joiner:null,joinerUid:null,joinerPos:null}).catch(function(){});mpCleanup()}});
 // ── Flip crash state ────────────────────────────────────────────────────────
 var flipCrashActive=false,flipUpsideTime=0,raceFadeTimer=0;
 var wallCrashActive=false,wallCrashTimer=0;
@@ -1244,7 +1250,7 @@ function rLoop(){requestAnimationFrame(rLoop);var dt=Math.min(clk.getDelta(),.05
     if(wallCrashActive){wallCrashTimer-=dt;var wProg=wallCrashTimer>2?Math.max(0,1-(wallCrashTimer-2)/0.8):1;document.getElementById('crashOverlay').style.opacity=wProg;if(wallCrashTimer<2)document.getElementById('crashTxt').style.opacity=1;if(wallCrashTimer<=0){wallCrashActive=false;var co2=document.getElementById('crashOverlay');co2.style.opacity=0;co2.style.display='none';document.getElementById('crashTxt').style.opacity=0;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;racing=false;document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar();startLobbyMusic();}}
     updateDebris(dt);for(var si=skidMarks.length-1;si>=0;si--){skidMarks[si].life-=dt;if(skidMarks[si].life<=0){scene.remove(skidMarks[si]);skidMarks.splice(si,1)}else if(skidMarks[si].life<2){if(!skidMarks[si]._fadeMat){skidMarks[si]._fadeMat=skidMat.clone();skidMarks[si].material=skidMarks[si]._fadeMat}skidMarks[si]._fadeMat.opacity=skidMarks[si].life/2*.6}}if(rainDrops&&rainGeo){var rPos=rainGeo.attributes.position.array,rv2=rainGeo.rv,rCnt=rainGeo.pCount;for(var ri2=0;ri2<rCnt;ri2++){rPos[ri2*3+1]-=rv2[ri2]*dt;if(rPos[ri2*3+1]<-P.y){rPos[ri2*3+1]=40+Math.random()*40;rPos[ri2*3]=(Math.random()-.5)*160;rPos[ri2*3+2]=(Math.random()-.5)*160}};rainGeo.attributes.position.needsUpdate=true;rainDrops.position.set(P.x,0,P.z)}
     if(sprayGeo&&sprayPts&&SPD>15){var spPos=sprayGeo.attributes.position.array,spVa=sprayGeo.spV,spLi=sprayGeo.spL,spC=sprayGeo.spCnt;var bwdx=-Math.sin(A),bwdz=-Math.cos(A);var spRate=Math.min(SPD/40,3)*dt*60;for(var spi=0;spi<Math.ceil(spRate);spi++){var idx=sprayGeo.spIdx%spC;spPos[idx*3]=P.x+bwdx*2.5+(Math.random()-.5)*1.2;spPos[idx*3+1]=0.3+Math.random()*0.3;spPos[idx*3+2]=P.z+bwdz*2.5+(Math.random()-.5)*1.2;var spSpd=SPD/80;spVa[idx*3]=bwdx*spSpd+(Math.random()-.5)*1.5;spVa[idx*3+1]=1.5+Math.random()*2;spVa[idx*3+2]=bwdz*spSpd+(Math.random()-.5)*1.5;spLi[idx]=0.4+Math.random()*0.3;sprayGeo.spIdx++}for(var sj=0;sj<spC;sj++){if(spLi[sj]>0){spPos[sj*3]+=spVa[sj*3]*dt;spPos[sj*3+1]+=spVa[sj*3+1]*dt;spVa[sj*3+1]-=6*dt;spPos[sj*3+2]+=spVa[sj*3+2]*dt;spLi[sj]-=dt;if(spLi[sj]<=0)spPos[sj*3+1]=-10}}sprayGeo.attributes.position.needsUpdate=true}else if(sprayGeo){var spHide=sprayGeo.spL,spHPos=sprayGeo.attributes.position.array;for(var sh=0;sh<sprayGeo.spCnt;sh++){if(spHide[sh]>0){spHide[sh]-=dt;if(spHide[sh]<=0)spHPos[sh*3+1]=-10;else{spHPos[sh*3]+=sprayGeo.spV[sh*3]*dt;spHPos[sh*3+1]+=sprayGeo.spV[sh*3+1]*dt;sprayGeo.spV[sh*3+1]-=6*dt;spHPos[sh*3+2]+=sprayGeo.spV[sh*3+2]*dt}}};sprayGeo.attributes.position.needsUpdate=true}
-    playGhost(dt);playAllTimeGhost(dt);playOpponent(dt);playOpGhost(dt);doLaps();doCam(dt);doHUD();doMM();updateSound(dt);if(mpConn&&performance.now()-lastMpSend>100){try{mpSend({t:'pos',x:P.x,y:P.y,z:P.z,a:A,pa:pitchA,ra:rollA,spd:SPD,lap:lapN})}catch(e){};lastMpSend=performance.now()}}if(ren)ren.render(scene,cam)}
+    playGhost(dt);playAllTimeGhost(dt);playOpponent(dt);playOpGhost(dt);doLaps();doCam(dt);doHUD();doMM();updateSound(dt);if(mpConn&&mpDocRef&&performance.now()-lastMpSend>100){var _pf=mpSlot==='host'?'hostPos':'joinerPos';var _pu={};_pu[_pf]={x:P.x,y:P.y,z:P.z,a:A,pa:pitchA,ra:rollA};mpDocRef.update(_pu).catch(function(){});lastMpSend=performance.now()}}if(ren)ren.render(scene,cam)}
 // ---- Stat editor ----
 function openSetup(){document.getElementById('setupModal').classList.add('show');document.getElementById('setupDf').value=setupDf;document.getElementById('setupBb').value=setupBb;onSetupChange()}
 function closeSetup(){document.getElementById('setupModal').classList.remove('show')}
