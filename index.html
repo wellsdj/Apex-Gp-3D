@@ -360,7 +360,7 @@ var trackCurv=[],carNearIdx=0;
 var P=new THREE.Vector3(),V=new THREE.Vector3(),A=0,AV=0,ST=0,SPD=0;
 var spinV=0,pitchA=0,pitchV=0,rollA=0,rollV=0,ab=false;
 var KY={},camM=0,camN=['CHASE CAM','HOOD CAM','HELICOPTER'];
-var lapSt=0,curLT=0,bestLT=Infinity,lastLT=0,lapN=0,xSF=false,racing=false,mmx,rInit=false;
+var lapSt=0,curLT=0,bestLT=Infinity,lastLT=0,lapN=0,racing=false,mmx,rInit=false,prevSFDot=null,prevCpDot=null;
 var ghostMode=0,ghostCar=null,bestGhost=[],curGhost=[],ghostFrame=0,ghostPlaying=false; // ghostMode: 0=session, 1=alltime, 2=off
 var allTimeGhost=[],allTimeGhostFrame=0,allTimeGhostPlaying=false,allTimeCar=null;
 var RECORD_INTERVAL=50,lastRecordTime=0;
@@ -691,13 +691,15 @@ function checkCP(){
   if(cpHit>=CP_COUNT)return;
   var idx=getCPIdx(cpHit+1);var cpP=tPts[idx],cpT=spl.getTangent(idx/tPts.length).normalize(),cpN=_cpN.set(-cpT.z,0,cpT.x);
   var toC=_cpToC.subVectors(P,cpP);
-  if(Math.abs(toC.dot(cpN))<TW/2&&Math.abs(toC.dot(cpT))<8){
+  var dot=toC.dot(cpT);
+  if(prevCpDot!==null&&prevCpDot<0&&dot>=0&&Math.abs(toC.dot(cpN))<TW){
     var carFwd=_cpFwd.set(Math.sin(A),0,Math.cos(A));
-    if(carFwd.dot(cpT)>0)cpHit++;
+    if(carFwd.dot(cpT)>0){cpHit++;prevCpDot=null;return}
   }
+  prevCpDot=dot;
 }
 var _dlN=new THREE.Vector3(),_dlC=new THREE.Vector3(),_dlF=new THREE.Vector3();
-function doLaps(){if(!racing)return;checkCP();var sfP=tPts[sfIdx],sfT=spl.getTangent(sfIdx/tPts.length).normalize(),sfN=_dlN.set(-sfT.z,0,sfT.x),toC=_dlC.subVectors(P,sfP);if(Math.abs(toC.dot(sfN))<TW&&Math.abs(toC.dot(sfT))<5){var cf=_dlF.set(Math.sin(A),0,Math.cos(A));if(cf.dot(sfT)>.3&&!xSF){xSF=true;if(lapN>0&&cpHit>=CP_COUNT){var lt=performance.now()-lapSt;lastLT=lt;if(lt<bestLT){bestLT=lt;bestGhost=curGhost.slice();playBeep();var isAllTime=saveTrackBest(TRACKS[selTrack].name,lt,bestGhost);var nEl=D('nB');if(isAllTime){allTimeGhost=bestGhost.slice();allTimeGhostPlaying=true;allTimeGhostLookup=buildGhostLookupGeneric(allTimeGhost);nEl.textContent='\u2605 BEST LAP EVER \u2605';nEl.style.color='#ffd700';nEl.style.textShadow='0 0 30px rgba(255,215,0,.6),0 0 60px rgba(255,180,0,.3)'}else{nEl.textContent='\u2605 NEW BEST LAP \u2605';nEl.style.color='#00ff88';nEl.style.textShadow='0 0 30px rgba(0,255,136,.5)'}nEl.classList.add('show');setTimeout(function(){nEl.classList.remove('show')},2500);if(mpDocRef){mpSend({t:'bestLap',ghost:bestGhost.length>200?[]:bestGhost})}}ghostPlaying=bestGhost.length>0;ghostFrame=0;allTimeGhostFrame=0;buildGhostLookup();opGhostFrame=0}if(lapN===0||cpHit>=CP_COUNT){if(lapN>0){totalLaps++;localStorage.setItem('apexgp_laps',totalLaps)}lapN++;lapSt=performance.now();curGhost=[];lastRecordTime=0;cpHit=0;D('lapCnt').textContent='LAP '+lapN}}}else xSF=false;curLT=performance.now()-lapSt}
+function doLaps(){if(!racing)return;checkCP();var sfP=tPts[sfIdx],sfT=spl.getTangent(sfIdx/tPts.length).normalize(),sfN=_dlN.set(-sfT.z,0,sfT.x),toC=_dlC.subVectors(P,sfP);var _sfDot=toC.dot(sfT);if(prevSFDot!==null&&prevSFDot<0&&_sfDot>=0&&Math.abs(toC.dot(sfN))<TW){var cf=_dlF.set(Math.sin(A),0,Math.cos(A));if(cf.dot(sfT)>0.2){if(lapN>0&&cpHit>=CP_COUNT){var lt=performance.now()-lapSt;lastLT=lt;if(lt<bestLT){bestLT=lt;bestGhost=curGhost.slice();playBeep();var isAllTime=saveTrackBest(TRACKS[selTrack].name,lt,bestGhost);var nEl=D('nB');if(isAllTime){allTimeGhost=bestGhost.slice();allTimeGhostPlaying=true;allTimeGhostLookup=buildGhostLookupGeneric(allTimeGhost);nEl.textContent='\u2605 BEST LAP EVER \u2605';nEl.style.color='#ffd700';nEl.style.textShadow='0 0 30px rgba(255,215,0,.6),0 0 60px rgba(255,180,0,.3)'}else{nEl.textContent='\u2605 NEW BEST LAP \u2605';nEl.style.color='#00ff88';nEl.style.textShadow='0 0 30px rgba(0,255,136,.5)'}nEl.classList.add('show');setTimeout(function(){nEl.classList.remove('show')},2500);if(mpDocRef){mpSend({t:'bestLap',ghost:bestGhost.length>200?[]:bestGhost})}}ghostPlaying=bestGhost.length>0;ghostFrame=0;allTimeGhostFrame=0;buildGhostLookup();opGhostFrame=0}if(lapN===0||cpHit>=CP_COUNT){if(lapN>0){totalLaps++;localStorage.setItem('apexgp_laps',totalLaps)}lapN++;lapSt=performance.now();curGhost=[];lastRecordTime=0;cpHit=0;prevCpDot=null;D('lapCnt').textContent='LAP '+lapN}}}prevSFDot=_sfDot;curLT=performance.now()-lapSt}
 
 // Ghost delta - build track-index-to-time lookup from best ghost
 var ghostTimeLookup=null,allTimeGhostLookup=null;
@@ -789,7 +791,7 @@ function resetCar(){
   var fo=document.getElementById('flipOverlay');if(fo){fo.style.opacity=0;fo.style.display='none'}
   var co=document.getElementById('crashOverlay');if(co){co.style.opacity=0;co.style.display='none'}
   // DON'T reset lap times - preserve best/last
-  lapN=0;lapSt=performance.now();curLT=0;xSF=false;
+  lapN=0;lapSt=performance.now();curLT=0;prevSFDot=null;prevCpDot=null;
   curGhost=[];ghostFrame=0;allTimeGhostFrame=0;opGhostFrame=0;
   // Keep bestLT, lastLT, bestGhost, ghostPlaying intact
   D('lapCnt').textContent='LAP 1';
