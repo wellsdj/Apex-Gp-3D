@@ -92,13 +92,6 @@
 .auth-profile{text-align:center}
 .auth-email{font-family:'Orbitron';font-size:11px;color:rgba(255,150,50,.8);letter-spacing:1px;margin-bottom:6px;word-break:break-all}
 .auth-status{font-family:'Rajdhani';font-size:12px;color:rgba(255,255,255,.35);letter-spacing:1px;margin-bottom:18px}
-.auth-google{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#333;font-size:13px;letter-spacing:1px}
-.auth-google:hover{background:#f0f0f0;transform:scale(1.02)}
-.auth-g-icon{width:20px;height:20px;flex-shrink:0}
-.auth-divider{display:flex;align-items:center;gap:12px;margin:14px 0;color:rgba(255,255,255,.25);font-size:12px;letter-spacing:2px}
-.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.1)}
-.auth-photo{width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,150,50,.4);margin:0 auto 10px;display:block;object-fit:cover}
-.auth-photo[src=""]{display:none}
 .auth-user-name{font-family:'Orbitron';font-size:14px;font-weight:700;color:#fff;letter-spacing:2px;margin-bottom:4px}
 .sett-acct-btn{font-family:'Orbitron';font-size:9px;letter-spacing:2px;padding:8px 18px;border-radius:6px;cursor:pointer;border:1px solid rgba(255,150,50,.4);background:rgba(255,100,0,.1);color:rgba(255,180,100,.8);pointer-events:all;transition:all .2s}
 .sett-acct-btn:hover{background:rgba(255,100,0,.2);color:#fff;border-color:rgba(255,150,50,.7)}
@@ -308,18 +301,14 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
     <div class="auth-title" id="authTitle">SIGN IN</div>
     <div class="auth-msg" id="authMsg"></div>
     <div id="authForm">
-      <button class="auth-btn auth-google" onclick="authGoogle()"><svg class="auth-g-icon" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>SIGN IN WITH GOOGLE</button>
-      <div class="auth-divider"><span>or</span></div>
-      <input class="auth-input" id="authEmail" type="email" placeholder="Email address" autocomplete="email">
+      <input class="auth-input" id="authUsername" type="text" placeholder="Username" autocomplete="username" maxlength="24">
       <input class="auth-input" id="authPass" type="password" placeholder="Password" autocomplete="current-password">
-      <button class="auth-btn auth-btn-primary" id="authSubmit" onclick="authSubmit()">SIGN IN WITH EMAIL</button>
+      <button class="auth-btn auth-btn-primary" id="authSubmit" onclick="authSubmit()">SIGN IN</button>
       <div class="auth-switch" id="authSwitch">No account? <span onclick="authToggleMode()">Create one</span></div>
       <button class="auth-btn auth-btn-secondary" id="authSkip" onclick="closeAuth()" style="margin-top:6px">PLAY WITHOUT ACCOUNT</button>
     </div>
     <div id="authProfile" class="auth-profile" style="display:none">
-      <img id="authUserPhoto" class="auth-photo" src="" alt="">
       <div class="auth-user-name" id="authUserName"></div>
-      <div class="auth-email" id="authUserEmail"></div>
       <div class="auth-status" id="authSyncStatus">DATA SYNCED</div>
       <button class="auth-btn auth-btn-primary" onclick="cloudSave()" style="margin-bottom:8px">SAVE TO CLOUD</button>
       <button class="auth-btn auth-btn-secondary" onclick="cloudLoad()">LOAD FROM CLOUD</button>
@@ -1374,64 +1363,52 @@ function authShowMsg(msg,isErr){
   var el=document.getElementById('authMsg');
   el.textContent=msg;el.className='auth-msg '+(isErr?'err':'ok');
 }
+function authUsernameToEmail(username){return username.toLowerCase().replace(/[^a-z0-9_\-]/g,'')+'@apexgp3d.game'}
 function authSubmit(){
-  var email=document.getElementById('authEmail').value.trim();
+  var username=document.getElementById('authUsername').value.trim();
   var pass=document.getElementById('authPass').value;
-  if(!email||!pass){authShowMsg('Please enter email and password',true);return}
-  if(!fbAuth){authShowMsg('Firebase not configured yet',true);return}
+  if(!username||!pass){authShowMsg('Please enter a username and password',true);return}
+  if(username.length<3){authShowMsg('Username must be 3+ characters',true);return}
+  if(!fbAuth){authShowMsg('Service unavailable',true);return}
+  var email=authUsernameToEmail(username);
   document.getElementById('authSubmit').textContent='...';
   var p=authIsSignUp?fbAuth.createUserWithEmailAndPassword(email,pass):fbAuth.signInWithEmailAndPassword(email,pass);
   p.then(function(cred){
     fbUser=cred.user;
+    if(authIsSignUp){
+      fbUser.updateProfile({displayName:username});
+    }
     authShowMsg(authIsSignUp?'Account created!':'Signed in!',false);
     updateAcctUI();showAuthProfile();
     setTimeout(function(){cloudLoad(true)},500);
     setTimeout(function(){closeAuth()},1200);
   }).catch(function(err){
     var msg=err.message||'Error';
-    if(err.code==='auth/email-already-in-use')msg='Email already in use';
-    if(err.code==='auth/wrong-password'||err.code==='auth/invalid-credential')msg='Wrong email or password';
-    if(err.code==='auth/user-not-found')msg='No account with that email';
+    if(err.code==='auth/email-already-in-use')msg='Username already taken';
+    if(err.code==='auth/wrong-password'||err.code==='auth/invalid-credential')msg='Wrong username or password';
+    if(err.code==='auth/user-not-found')msg='No account with that username';
     if(err.code==='auth/weak-password')msg='Password must be 6+ characters';
-    if(err.code==='auth/invalid-email')msg='Invalid email address';
     authShowMsg(msg,true);
     document.getElementById('authSubmit').textContent=authIsSignUp?'CREATE ACCOUNT':'SIGN IN';
-  });
-}
-function authGoogle(){
-  if(!fbAuth){authShowMsg('Firebase not configured yet',true);return}
-  var provider=new firebase.auth.GoogleAuthProvider();
-  fbAuth.signInWithPopup(provider).then(function(result){
-    fbUser=result.user;
-    authShowMsg('Signed in as '+fbUser.displayName,false);
-    updateAcctUI();showAuthProfile();
-    setTimeout(function(){cloudLoad(true)},500);
-    setTimeout(function(){closeAuth()},1200);
-  }).catch(function(err){
-    if(err.code==='auth/popup-closed-by-user')return;
-    authShowMsg(err.message||'Google sign-in failed',true);
   });
 }
 function showAuthProfile(){
   document.getElementById('authForm').style.display='none';
   document.getElementById('authProfile').style.display='';
-  var photo=document.getElementById('authUserPhoto');
   var name=document.getElementById('authUserName');
-  if(fbUser.photoURL){photo.src=fbUser.photoURL;photo.style.display='block'}else{photo.style.display='none'}
-  name.textContent=fbUser.displayName||'';
-  document.getElementById('authUserEmail').textContent=fbUser.email||'';
+  name.textContent=fbUser.displayName||fbUser.email.replace('@apexgp3d.game','')||'PLAYER';
 }
 function authLogout(){
   if(fbAuth)fbAuth.signOut();
   fbUser=null;
   document.getElementById('authForm').style.display='';
   document.getElementById('authProfile').style.display='none';
-  document.getElementById('authEmail').value='';
+  document.getElementById('authUsername').value='';
   document.getElementById('authPass').value='';
   authShowMsg('Signed out',false);
   updateAcctUI();
 }
-function getPlayerName(){return fbUser?(fbUser.displayName||fbUser.email||'Player'):'Guest'}
+function getPlayerName(){return fbUser?(fbUser.displayName||fbUser.email.replace('@apexgp3d.game','')||'Player'):'Guest'}
 function updateAcctUI(){
   var btn=document.getElementById('settAcctBtn');
   var lbl=document.getElementById('settAcctLbl');
@@ -1508,7 +1485,8 @@ saveTrackBest=function(trackName,ms,ghost){
   return result;
 };
 // Enter key submits auth form
-document.getElementById('authEmail').addEventListener('keydown',function(e){if(e.key==='Enter')authSubmit()});
+document.getElementById('authUsername').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('authPass').focus()})
+document.getElementById('authPass').addEventListener('keydown',function(e){if(e.key==='Enter')authSubmit()});
 document.getElementById('authPass').addEventListener('keydown',function(e){if(e.key==='Enter')authSubmit()});
 document.addEventListener('click',function(e){if(e.target.id==='authModal')closeAuth()});
 
