@@ -1337,7 +1337,7 @@ var firebaseConfig={
   appId:"1:919953480177:web:eb4f482adc8b667b2e4c50"
 };
 var fbApp=null,fbAuth=null,fbDb=null,fbUser=null;
-try{fbApp=firebase.initializeApp(firebaseConfig);fbAuth=firebase.auth();fbDb=firebase.firestore()}catch(e){console.warn('Firebase init failed:',e)}
+try{fbApp=firebase.initializeApp(firebaseConfig);fbAuth=firebase.auth();fbDb=firebase.firestore();fbAuth.setPersistence(firebase.auth.Auth.Persistence.NONE)}catch(e){console.warn('Firebase init failed:',e)}
 
 var authIsSignUp=false;
 function openAuth(){
