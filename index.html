@@ -396,7 +396,7 @@ if(!localStorage.getItem('apexgp_v2')){localStorage.removeItem('apexgp_bests');[
 var TRACKS=[
 {name:"SUNSET CIRCUIT",sky:0xf08030,fog:0xd0703a,ambI:.45,sunI:.8,sunC:0xffaa55,hemiSky:0xffaa66,hemiGnd:0x443322,grass:0x3a6a2a,sf:[200,0],wp:[[10,0],[60,0],[100,0],[200,0],[300,0],[400,0],[440,10],[465,35],[475,65],[475,130],[475,190],[468,218],[445,240],[420,248],[360,250],[300,250],[272,255],[255,272],[250,295],[250,330],[255,358],[272,375],[295,382],[360,385],[420,385],[448,390],[468,410],[475,435],[475,480],[468,510],[445,535],[418,545],[340,545],[240,545],[140,545],[10,545],[-18,538],[-38,515],[-45,488],[-45,400],[-45,300],[-45,200],[-45,55],[-41,34],[-29,16],[-11,4]],pit:{roadX1:90,roadX2:310,roadZ1:14,roadZ2:17,dividerX1:110,dividerX2:290,dividerZ:13.5,laneAABB:{x1:80,x2:320,z1:13.4,z2:17.5},boxAABB:{x1:195,x2:208,z1:14.4,z2:16.6},speedLimit:70}},
 {name:"T-BONE",sky:0x87ceeb,fog:0x87ceeb,ambI:.55,sunI:.9,sunC:0xffffff,hemiSky:0x88aadd,hemiGnd:0x446633,grass:0x3a7a3a,sf:[250,0],wp:[[30,55],[35,25],[55,5],[90,0],[170,0],[250,0],[330,0],[410,0],[445,5],[465,25],[470,55],[470,80],[465,100],[445,115],[410,120],[365,120],[338,125],[322,145],[320,200],[320,280],[320,360],[318,410],[305,445],[280,465],[250,470],[220,465],[195,445],[182,410],[180,360],[180,280],[180,200],[178,145],[162,125],[135,120],[90,120],[55,115],[35,100],[30,80]],pit:{roadX1:130,roadX2:370,roadZ1:14,roadZ2:17,dividerX1:150,dividerX2:350,dividerZ:13.5,laneAABB:{x1:120,x2:380,z1:13.4,z2:17.5},boxAABB:{x1:243,x2:256,z1:14.4,z2:16.6},speedLimit:70}},
-{name:"THE BOOT",sky:0x6a7a8a,fog:0x5a6a78,ambI:.35,sunI:.5,sunC:0xcccccc,hemiSky:0x667788,hemiGnd:0x334433,grass:0x2d5a2d,sf:[125,0],wp:[[0,0],[125,0],[210,0],[210,310],[455,310],[455,510],[0,510]],pit:{roadX1:35,roadX2:185,roadZ1:14,roadZ2:17,dividerX1:55,dividerX2:165,dividerZ:13.5,laneAABB:{x1:25,x2:195,z1:13.4,z2:17.5},boxAABB:{x1:119,x2:132,z1:14.4,z2:16.6},speedLimit:70}},
+{name:"THE BOOT",sky:0x6a7a8a,fog:0x5a6a78,ambI:.35,sunI:.5,sunC:0xcccccc,hemiSky:0x667788,hemiGnd:0x334433,grass:0x2d5a2d,sf:[125,0],wp:[[0,0],[125,0],[210,0],[210,310],[455,310],[455,490],[455,510],[275,510],[25,510],[0,510]],pit:{roadX1:50,roadX2:410,roadZ1:493,roadZ2:496,dividerX1:70,dividerX2:390,dividerZ:496.5,laneAABB:{x1:40,x2:420,z1:492.5,z2:496.6},boxAABB:{x1:230,x2:243,z1:493.4,z2:495.6},speedLimit:70}},
 {name:"DRAGON'S TAIL",noCurbs:true,sky:0x4a3a6a,fog:0x3a2e54,ambI:.4,sunI:.7,sunC:0xff88cc,hemiSky:0x6a5a9a,hemiGnd:0x2a2238,grass:0x2d5a3a,sf:[148,82],wp:[[86,82],[107,82],[127,82],[148,82],[168,82],[189,82],[209,82],[230,82],[246,80],[261,72],[275,64],[292,61],[322,61],[338,58],[352,51],[367,43],[383,40],[405,40],[426,40],[448,40],[470,40],[491,40],[513,40],[534,40],[556,40],[578,40],[599,40],[618,42],[636,47],[652,56],[667,71],[675,91],[675,111],[667,131],[652,146],[636,155],[618,160],[599,162],[577,162],[555,162],[533,162],[511,165],[490,174],[473,188],[455,202],[435,210],[412,213],[390,216],[369,225],[352,239],[334,253],[314,262],[291,265],[271,265],[251,265],[231,265],[209,260],[191,246],[173,234],[152,229],[130,229],[108,229],[86,229],[63,223],[46,206],[40,183],[40,156],[40,128],[46,105],[63,89]],pit:{roadX1:100,roadX2:215,roadZ1:96,roadZ2:99,dividerX1:115,dividerX2:200,dividerZ:95.5,laneAABB:{x1:90,x2:220,z1:95.4,z2:99.5},boxAABB:{x1:142,x2:155,z1:96.4,z2:98.6},speedLimit:70}}
 ];
 var WEATHER={
@@ -414,16 +414,16 @@ var WEATHER={
 var selWeather='dry',weatherKeys=['dry','dry_bright','sunset','sunset_low','night','night_dark','rain','rain_heavy','snow','snow_heavy'];
 // Tire compounds: condition multiplier, optimum temperature window, wear rate
 var TIRES={
-  soft:{name:'SOFT',short:'S',color:'#ff3333',eff:{dry:1.10,rain:0.55,snow:0.45},optTemp:{lo:75,hi:125},wearRate:0.12,heatRate:1.2},
-  medium:{name:'MEDIUM',short:'M',color:'#ffcc00',eff:{dry:1.03,rain:0.65,snow:0.55},optTemp:{lo:70,hi:120},wearRate:0.07,heatRate:1.0},
-  hard:{name:'HARD',short:'H',color:'#dddddd',eff:{dry:0.97,rain:0.70,snow:0.62},optTemp:{lo:65,hi:115},wearRate:0.045,heatRate:0.8},
+  soft:{name:'SOFT',short:'S',color:'#ff3333',eff:{dry:1.10,rain:0.55,snow:0.45},optTemp:{lo:80,hi:120},wearRate:0.18,heatRate:1.2},
+  medium:{name:'MEDIUM',short:'M',color:'#ffcc00',eff:{dry:1.03,rain:0.65,snow:0.55},optTemp:{lo:70,hi:125},wearRate:0.07,heatRate:1.0},
+  hard:{name:'HARD',short:'H',color:'#dddddd',eff:{dry:0.97,rain:0.70,snow:0.62},optTemp:{lo:60,hi:130},wearRate:0.035,heatRate:0.75},
   inter:{name:'INTER',short:'I',color:'#44cc44',eff:{dry:0.85,rain:1.10,snow:0.85},optTemp:{lo:45,hi:95},wearRate:0.06,heatRate:1.0},
   wet:{name:'WET',short:'W',color:'#44aaff',eff:{dry:0.70,rain:0.95,snow:1.10},optTemp:{lo:30,hi:80},wearRate:0.05,heatRate:0.9}
 };
 var TIRE_ORDER=['soft','medium','hard','inter','wet'];
 var currentTire='medium';
 var tireTemp=25,tireWear=100,tireInfoOpen=false;
-var tireStock={soft:10,medium:10,hard:10,inter:10,wet:10};
+var tireStock={soft:Infinity,medium:Infinity,hard:Infinity,inter:Infinity,wet:Infinity};
 var AMBIENT_TEMP=25;
 function weatherCond(w){if(!w)return 'dry';if(w.indexOf('rain')>=0)return 'rain';if(w.indexOf('snow')>=0)return 'snow';return 'dry'}
 function recommendedTire(w){var c=weatherCond(w);if(c==='rain')return w==='rain_heavy'?'wet':'inter';if(c==='snow')return w==='snow_heavy'?'wet':'inter';return 'soft'}
@@ -712,7 +712,8 @@ function mkTrack(grassCOverride){var pts=WP.map(function(p){return new THREE.Vec
       var post=new THREE.Mesh(new THREE.BoxGeometry(.4,1.2,.4),divPostMat);post.position.set(dpx,.6,pit.dividerZ);scene.add(post);
     }
     // Red/white striped wall between pit and main straight (track-side of divider)
-    var pwZ=pit.dividerZ-0.4,pwSegs=Math.max(4,Math.floor((pit.dividerX2-pit.dividerX1)/5));
+    var _pitRoadMid=(pit.roadZ1+pit.roadZ2)/2;
+    var pwZ=pit.dividerZ+(pit.dividerZ>_pitRoadMid?0.4:-0.4),pwSegs=Math.max(4,Math.floor((pit.dividerX2-pit.dividerX1)/5));
     var pwV=[],pwC=[],pwI=[];
     for(var pw=0;pw<=pwSegs;pw++){
       var pwX=pit.dividerX1+(pw*(pit.dividerX2-pit.dividerX1)/pwSegs);
@@ -762,7 +763,7 @@ var mirrorCam=null;
 var _mirFwd=new THREE.Vector3(),_mirPos=new THREE.Vector3(),_mirLook=new THREE.Vector3();
 function updateCar(dt){var steps=Math.max(1,Math.min(8,Math.ceil(dt*100))),sdt=dt/steps;var W=WEATHER[selWeather];var _tf=tireFactor();var effTOPMS=TOPMS*(1-getDmgPenalty())*(W.topSpdMul||1);for(var i=0;i<steps;i++){var gas=(KY['w']||KY['arrowup'])?1:0,brk=(KY['s']||KY['arrowdown'])?1:0;var str=((KY['a']||KY['arrowleft'])?1:0)-((KY['d']||KY['arrowright'])?1:0);if(nuked){gas=1;brk=0;str=0}if(pitOpen){gas=0;brk=0;str=0;V.x=0;V.z=0;V.y=0;AV=0;spinV=0;ST=0}var wSteer=W.steerMul;ST+=(str-ST)*Math.min(1,sdt*25);var fwd=_ucFwd.set(Math.sin(A),0,Math.cos(A)),rgt=_ucRgt.set(fwd.z,0,-fwd.x);var fs=V.dot(fwd),ls=V.dot(rgt);if(!ab){var acc=0,r=Math.abs(fs)/effTOPMS;var aM=stat0to100/5;var wAcc=W.accMul*_tf,wBrk=W.brkMul*_tf;if(gas>0){acc=50*aM*wAcc*(1-r*r*.45);if(fs<-.5)acc=30*aM*wAcc}if(brk>0){acc=fs>1?-60*(statBraking/5)*wBrk:-25*(statBraking/5)*wBrk;var bbRot=(setupBb-5)/5*0.4*Math.min(Math.abs(fs)/8,1);if(Math.abs(ST)>.1)AV+=ST*bbRot*sdt*4}acc-=fs*.18+Math.sign(fs)*.6;V.addScaledVector(fwd,acc*sdt);var wGrip=W.gripMul*_tf;V.addScaledVector(rgt,-ls*(18*(statGrip/5)*wGrip)*sdt);
       var wSlide=W.slideFactor+Math.max(0,0.85-_tf*W.gripMul)*0.35;if(wSlide>0&&Math.abs(fs)>5){var slideStr=wSlide*Math.min((Math.abs(fs)-5)/20,1);var sNoise=(Math.sin(performance.now()*.003+P.x*.3)*0.6+Math.sin(performance.now()*.006+P.z*.2)*0.4);V.addScaledVector(rgt,sNoise*slideStr*12*sdt);if(gas>0&&Math.abs(fs)>6){var wheelSpin=wSlide*0.45*Math.min(r,.6);AV+=sNoise*wheelSpin*sdt*2.2}if(Math.abs(ST)>.25&&Math.abs(fs)>8){var overStr=wSlide*Math.abs(ST)*Math.min((Math.abs(fs)-8)/15,1);AV+=ST*overStr*sdt*2.6}}
-      var sf=Math.min(Math.abs(fs)/3,1),sp=Math.abs(fs),sr=1/(1+sp*.0028+sp*sp*.00000004);var steerYaw=ST*6.5*sf*sr*Math.sign(fs+.001);AV+=(steerYaw*(1-(1-wSteer)*.5)-AV*6)*sdt*12}else{V.y-=9.8*sdt;AV*=.998}A+=AV*sdt+spinV*sdt;spinV*=(1-sdt*3);if(inPitLane&&!pitOpen){var _pitMaxV=70/3.6,_pitVxz=Math.sqrt(V.x*V.x+V.z*V.z);if(_pitVxz>_pitMaxV){var _ps=_pitMaxV/_pitVxz;V.x*=_ps;V.z*=_ps}}P.addScaledVector(V,sdt);doCol();if(TRACKS[selTrack]&&TRACKS[selTrack].pit){var _ptr=TRACKS[selTrack].pit,_pbZ=_ptr.dividerZ-0.4,_pbH=CAR_HW+0.1;if(P.x>_ptr.dividerX1-_pbH&&P.x<_ptr.dividerX2+_pbH){var _pbDz=P.z-_pbZ;if(Math.abs(_pbDz)<_pbH){var _pbS=V.z>0.05?-1:(V.z<-0.05?1:(_pbDz>=0?1:-1));P.z=_pbZ+_pbS*_pbH;if((_pbS===1&&V.z<0)||(_pbS===-1&&V.z>0))V.z*=-0.2}}}if(!ab){pitchV+=-pitchA*8*sdt;pitchV*=(1-sdt*2.5);rollV+=-rollA*8*sdt;rollV*=(1-sdt*2.5)}else{pitchV*=(1-sdt*.1);rollV*=(1-sdt*.1)}pitchA+=pitchV*sdt;rollA+=rollV*sdt;if(P.y<=.8){P.y=.8;if(V.y<0)V.y=0;ab=false}else ab=true}SPD=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;car.position.copy(P);car.rotation.set(pitchA,A,rollA-ST*Math.min(SPD/120,1)*.02,'YXZ');if(car.tl)car.tl.material.emissiveIntensity=(KY['s']||KY['arrowdown'])?1.2:.2;recordGhostFrame()}
+      var sf=Math.min(Math.abs(fs)/3,1),sp=Math.abs(fs),sr=1/(1+sp*.0028+sp*sp*.00000004);var steerYaw=ST*6.5*sf*sr*Math.sign(fs+.001);AV+=(steerYaw*(1-(1-wSteer)*.5)-AV*6)*sdt*12}else{V.y-=9.8*sdt;AV*=.998}A+=AV*sdt+spinV*sdt;spinV*=(1-sdt*3);if(inPitLane&&!pitOpen){var _pitMaxV=70/3.6,_pitVxz=Math.sqrt(V.x*V.x+V.z*V.z);if(_pitVxz>_pitMaxV){var _ps=_pitMaxV/_pitVxz;V.x*=_ps;V.z*=_ps}}P.addScaledVector(V,sdt);doCol();if(TRACKS[selTrack]&&TRACKS[selTrack].pit){var _ptr=TRACKS[selTrack].pit,_rMid=(_ptr.roadZ1+_ptr.roadZ2)/2,_pbZ=_ptr.dividerZ+(_ptr.dividerZ>_rMid?0.4:-0.4),_pbH=CAR_HW+0.1;if(P.x>_ptr.dividerX1-_pbH&&P.x<_ptr.dividerX2+_pbH){var _pbDz=P.z-_pbZ;if(Math.abs(_pbDz)<_pbH){var _pbS=V.z>0.05?-1:(V.z<-0.05?1:(_pbDz>=0?1:-1));P.z=_pbZ+_pbS*_pbH;if((_pbS===1&&V.z<0)||(_pbS===-1&&V.z>0))V.z*=-0.2}}}if(!ab){pitchV+=-pitchA*8*sdt;pitchV*=(1-sdt*2.5);rollV+=-rollA*8*sdt;rollV*=(1-sdt*2.5)}else{pitchV*=(1-sdt*.1);rollV*=(1-sdt*.1)}pitchA+=pitchV*sdt;rollA+=rollV*sdt;if(P.y<=.8){P.y=.8;if(V.y<0)V.y=0;ab=false}else ab=true}SPD=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;car.position.copy(P);car.rotation.set(pitchA,A,rollA-ST*Math.min(SPD/120,1)*.02,'YXZ');if(car.tl)car.tl.material.emissiveIntensity=(KY['s']||KY['arrowdown'])?1.2:.2;recordGhostFrame()}
 
 function doCol(){var minD=Infinity,ci=0;if(_colGrid){var gc=Math.floor((P.x-_colGridOX)/_colGridSize),gr=Math.floor((P.z-_colGridOZ)/_colGridSize);for(var gri=gr-1;gri<=gr+1;gri++)for(var gci=gc-1;gci<=gc+1;gci++){if(gri<0||gri>=_colGridRows||gci<0||gci>=_colGridCols)continue;var cell=_colGrid[gri*_colGridCols+gci];for(var gi=0;gi<cell.length;gi++){var idx=cell[gi],dx=tPts[idx].x-P.x,dz=tPts[idx].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=idx}}}}else{for(var i=0;i<tPts.length;i+=8){var dx=tPts[i].x-P.x,dz=tPts[i].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=i}}for(var i2=Math.max(0,ci-15);i2<Math.min(tPts.length,ci+15);i2++){var dx2=tPts[i2].x-P.x,dz2=tPts[i2].z-P.z,d2=dx2*dx2+dz2*dz2;if(d2<minD){minD=d2;ci=i2}}}var t=ci/tPts.length,tp=spl.getPoint(t),tn=spl.getTangent(t).normalize(),nm=_tv1.set(-tn.z,0,tn.x);var lat=_tv2.subVectors(P,tp).dot(nm),aL=Math.abs(lat),ss=Math.sign(lat);var fwd=_tv3.set(Math.sin(A),0,Math.cos(A));_tv4.copy(P).addScaledVector(fwd,3);var nL=Math.abs(_tv5.subVectors(_tv4,tp).dot(nm));carNearIdx=ci;onCurb=aL>(TW/2-1.5)&&aL<(TW/2+CWW)&&trackCurv[ci]>.015;var effWL=WL-CAR_HW;if(nL>=effWL||aL>=effWL){if(aL>=effWL){_tv6.copy(tp).addScaledVector(nm,ss*(effWL-.05));P.copy(_tv6)}var vN=V.dot(nm)*ss,spd=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;if(vN>.5){var tV=V.dot(tn),iA=Math.atan2(Math.abs(vN),Math.abs(tV));
       var displaySpd=spd*(130/400);
@@ -1590,9 +1591,9 @@ function renderTireRow(){
   for(var i=0;i<TIRE_ORDER.length;i++){
     var key=TIRE_ORDER[i],t=TIRES[key],isCur=key===currentTire,isRec=key===rec;
     var stock=tireStock[key];
-    var empty=stock<=0&&!isCur;
-    var cls='tireBtn'+(isCur?' active':'')+(isRec?' rec':'')+(empty?' empty':'');
-    html+='<div class="'+cls+'" onclick="pickTire(\''+key+'\')"><div class="tireDot" style="background:'+t.color+'"></div><div class="tireLbl">'+t.short+'</div><div class="tireStock">x'+stock+'</div></div>';
+    var stockTxt=stock===Infinity?'∞':('x'+stock);
+    var cls='tireBtn'+(isCur?' active':'')+(isRec?' rec':'');
+    html+='<div class="'+cls+'" onclick="pickTire(\''+key+'\')"><div class="tireDot" style="background:'+t.color+'"></div><div class="tireLbl">'+t.short+'</div><div class="tireStock">'+stockTxt+'</div></div>';
   }
   row.innerHTML=html;
   var recEl=document.getElementById('pitRec');
@@ -1610,7 +1611,7 @@ function pickTire(key){
   renderTireRow();
 }
 function resetTiresForRace(){
-  tireStock={soft:10,medium:10,hard:10,inter:10,wet:10};
+  tireStock={soft:Infinity,medium:Infinity,hard:Infinity,inter:Infinity,wet:Infinity};
   currentTire=recommendedTire(selWeather);
   var t=TIRES[currentTire];
   tireTemp=(t.optTemp.lo+t.optTemp.hi)/2;
@@ -1650,7 +1651,8 @@ function renderTireInfo(){
     var sh='';
     for(var i=0;i<TIRE_ORDER.length;i++){
       var k=TIRE_ORDER[i],stk=tireStock[k];
-      sh+='<div class="ti-stock-item'+(stk<=0?' empty':'')+'"><div class="ts-letter" style="color:'+TIRES[k].color+'">'+TIRES[k].short+'</div><div class="ts-num">'+stk+'</div></div>';
+      var stkTxt=stk===Infinity?'∞':stk;
+      sh+='<div class="ti-stock-item"><div class="ts-letter" style="color:'+TIRES[k].color+'">'+TIRES[k].short+'</div><div class="ts-num">'+stkTxt+'</div></div>';
     }
     sk.innerHTML=sh;
   }
