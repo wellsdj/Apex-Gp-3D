@@ -458,13 +458,13 @@ function updateTireDynamics(dt){
   var steerMag=Math.abs(ST);
   var optMid=(t.optTemp.lo+t.optTemp.hi)/2;
   var optRange=(t.optTemp.hi-t.optTemp.lo)/2;
-  // Racing baseline: just moving keeps tires near the lower edge of optimum
+  // Racing baseline: just moving keeps tires near the lower-to-mid edge of optimum
   var driving=Math.min(spdMS,25)/25;
-  var baseTarget=AMBIENT_TEMP+driving*(optMid-AMBIENT_TEMP)*0.7;
-  // Driving heat — cornering, braking, sliding push toward the upper edge of optimum
-  var driveHeat=brkIn*24+slip*42+steerMag*Math.min(spdMS,55)*0.65+gasIn*7;
+  var baseTarget=AMBIENT_TEMP+driving*(optMid-AMBIENT_TEMP)*0.78;
+  // Driving heat — cornering, braking, sliding push toward (and past) the upper edge of optimum
+  var driveHeat=brkIn*34+slip*58+steerMag*Math.min(spdMS,55)*0.85+gasIn*10;
   // Cooling above cruise speed
-  var coolFromSpd=Math.max(0,spdMS-25)*0.55;
+  var coolFromSpd=Math.max(0,spdMS-25)*0.45;
   var targetTemp=baseTarget+driveHeat-coolFromSpd;
   if(targetTemp<AMBIENT_TEMP)targetTemp=AMBIENT_TEMP;
   if(targetTemp>165)targetTemp=165;
