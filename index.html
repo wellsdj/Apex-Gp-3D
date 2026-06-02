@@ -420,8 +420,8 @@ var WEATHER={
   dry_bright:{name:'CLEAR',gripMul:1,brkMul:1,accMul:1,steerMul:1,slideFactor:0,topSpdMul:1,skyOver:0x5599dd,fogOver:0x6eaadd,ambOver:.55,sunOver:.85,sunCOver:0xffffff,hemiSkyOver:0x77bbee,hemiGndOver:0x556644,grassOver:0x3a8a3a,rain:false},
   sunset:{name:'SUNSET',gripMul:1,brkMul:1,accMul:1,steerMul:1,slideFactor:0,topSpdMul:1,skyOver:0xf08030,fogOver:0xd0703a,ambOver:.45,sunOver:.8,sunCOver:0xffaa55,hemiSkyOver:0xffaa66,hemiGndOver:0x443322,grassOver:null,rain:false},
   sunset_low:{name:'LOW SUNSET',gripMul:1,brkMul:1,accMul:1,steerMul:1,slideFactor:0,topSpdMul:1,skyOver:0x8a3818,fogOver:0x6a2818,ambOver:.2,sunOver:.35,sunCOver:0xff6622,hemiSkyOver:0x884422,hemiGndOver:0x221108,grassOver:0x1a3a12,rain:false},
-  night:{name:'NIGHT',gripMul:1,brkMul:1,accMul:1,steerMul:1,slideFactor:0,topSpdMul:1,skyOver:0x151530,fogOver:0x101028,ambOver:.12,sunOver:.15,sunCOver:0x556688,hemiSkyOver:0x222244,hemiGndOver:0x0a0a0a,grassOver:null,rain:false},
-  night_dark:{name:'VERY DARK',gripMul:1,brkMul:1,accMul:1,steerMul:1,slideFactor:0,topSpdMul:1,skyOver:0x0a0a1a,fogOver:0x080818,ambOver:.04,sunOver:.03,sunCOver:0x223344,hemiSkyOver:0x0a0a18,hemiGndOver:0x030303,grassOver:null,rain:false},
+  night:{name:'NIGHT',gripMul:1,brkMul:1,accMul:1,steerMul:1,slideFactor:0,topSpdMul:1,skyOver:0x151530,fogOver:0x101028,ambOver:.45,sunOver:.35,sunCOver:0x778899,hemiSkyOver:0x334466,hemiGndOver:0x1a1a22,grassOver:null,rain:false},
+  night_dark:{name:'VERY DARK',gripMul:1,brkMul:1,accMul:1,steerMul:1,slideFactor:0,topSpdMul:1,skyOver:0x0a0a1a,fogOver:0x080818,ambOver:.3,sunOver:.2,sunCOver:0x445566,hemiSkyOver:0x1a1a30,hemiGndOver:0x101015,grassOver:null,rain:false},
   rain:{name:'RAIN',gripMul:.6,brkMul:.7,accMul:1,steerMul:.95,slideFactor:.18,topSpdMul:1,skyOver:0x556677,fogOver:0x4a5a6a,ambOver:.35,sunOver:.3,sunCOver:0x99aacc,hemiSkyOver:0x6688aa,hemiGndOver:0x334444,grassOver:0x2a5a2a,rain:'rain'},
   rain_heavy:{name:'HEAVY RAIN',gripMul:.45,brkMul:.55,accMul:1,steerMul:.92,slideFactor:.3,topSpdMul:1,skyOver:0x3a4450,fogOver:0x2a3340,ambOver:.2,sunOver:.15,sunCOver:0x778899,hemiSkyOver:0x445566,hemiGndOver:0x222233,grassOver:0x1a3a1a,rain:'rain_heavy'},
   snow:{name:'SNOW',gripMul:.5,brkMul:.55,accMul:1,steerMul:.93,slideFactor:.16,topSpdMul:1,skyOver:0xc0c8d0,fogOver:0xb0b8c0,ambOver:.5,sunOver:.4,sunCOver:0xdde4ee,hemiSkyOver:0xbbccdd,hemiGndOver:0x778888,grassOver:0xd8dde0,rain:'snow'},
@@ -643,7 +643,7 @@ var amI=W.ambOver!==null?W.ambOver:T.ambI,snI=W.sunOver!==null?W.sunOver:T.sunI;
 var snC=W.sunCOver!==null?W.sunCOver:T.sunC,hsC=W.hemiSkyOver!==null?W.hemiSkyOver:T.hemiSky;
 var hgC=W.hemiGndOver!==null?W.hemiGndOver:T.hemiGnd,grC=W.grassOver!==null?W.grassOver:T.grass;
 scene.background=new THREE.Color(skC);scene.fog=new THREE.Fog(fgC,300,1200);
-scene.add(new THREE.AmbientLight(0xffffff,amI));var sun=new THREE.DirectionalLight(snC,snI);sun.position.set(250,400,250);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);var sc=sun.shadow.camera;sc.left=-200;sc.right=200;sc.top=200;sc.bottom=-200;scene.add(sun);scene.add(new THREE.HemisphereLight(hsC,hgC,.3));skidMat=new THREE.MeshBasicMaterial({color:0x333333,transparent:true,opacity:0.6});skidMarks=[];mkTrack(grC);car=bldCar(carBodyColor,false);scene.add(car);
+scene.add(new THREE.AmbientLight(0xffffff,amI));var sun=new THREE.DirectionalLight(snC,snI);sun.position.set(250,400,250);var _isNight=selWeather==='night'||selWeather==='night_dark';sun.castShadow=!_isNight;if(sun.castShadow){sun.shadow.mapSize.set(1024,1024);var sc=sun.shadow.camera;sc.left=-200;sc.right=200;sc.top=200;sc.bottom=-200}scene.add(sun);scene.add(new THREE.HemisphereLight(hsC,hgC,.3));skidMat=new THREE.MeshBasicMaterial({color:0x333333,transparent:true,opacity:0.6});skidMarks=[];mkTrack(grC);car=bldCar(carBodyColor,false);scene.add(car);
 // Auto-enable headlights at night
 if(selWeather==='night'||selWeather==='night_dark'){car.hlOn=true;if(car.headlights)car.headlights.forEach(function(l){l.visible=true});if(car.hlMeshes)car.hlMeshes.forEach(function(m){m.material.emissiveIntensity=1});if(car.carGlow)car.carGlow.visible=true}
 ghostCar=bldCar(0x4488ff,true);ghostCar.visible=false;scene.add(ghostCar);allTimeCar=bldCar(0xddaa00,true);allTimeCar.visible=false;scene.add(allTimeCar);opCar=bldCar(0x44ff88,true);opCar.visible=false;scene.add(opCar);opBestCar=bldCar(0xff8844,true);opBestCar.visible=false;scene.add(opBestCar);mkWorld();
@@ -684,11 +684,6 @@ if(selWeather==='night'||selWeather==='night_dark'){
       var lamp=new THREE.Mesh(new THREE.BoxGeometry(.4,.15,.4),lampMat);
       var lx=px-s.n.x*side*4,lz=pz-s.n.z*side*4;
       lamp.position.set(lx,11.7,lz);scene.add(lamp);
-      // Spotlight shining down onto track
-      var fl=new THREE.SpotLight(0xffeedd,isVDark?2.5:1.8,80,Math.PI*.45,.7,1.5);
-      fl.position.set(lx,11.5,lz);
-      var ft=new THREE.Object3D();ft.position.set(s.c.x,0,s.c.z);scene.add(ft);
-      fl.target=ft;scene.add(fl);
       side*=-1;lightIdx++;
     }
   }
