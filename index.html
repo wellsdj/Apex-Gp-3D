@@ -414,11 +414,11 @@ var WEATHER={
 var selWeather='dry',weatherKeys=['dry','dry_bright','sunset','sunset_low','night','night_dark','rain','rain_heavy','snow','snow_heavy'];
 // Tire compounds: condition multiplier, optimum temperature window, wear rate
 var TIRES={
-  soft:{name:'SOFT',short:'S',color:'#ff3333',eff:{dry:1.10,rain:0.55,snow:0.45},optTemp:{lo:90,hi:110},wearRate:0.12,heatRate:1.2},
-  medium:{name:'MEDIUM',short:'M',color:'#ffcc00',eff:{dry:1.03,rain:0.65,snow:0.55},optTemp:{lo:85,hi:105},wearRate:0.07,heatRate:1.0},
-  hard:{name:'HARD',short:'H',color:'#dddddd',eff:{dry:0.97,rain:0.70,snow:0.62},optTemp:{lo:80,hi:100},wearRate:0.045,heatRate:0.8},
-  inter:{name:'INTER',short:'I',color:'#44cc44',eff:{dry:0.85,rain:1.10,snow:0.85},optTemp:{lo:55,hi:80},wearRate:0.06,heatRate:1.0},
-  wet:{name:'WET',short:'W',color:'#44aaff',eff:{dry:0.70,rain:0.95,snow:1.10},optTemp:{lo:40,hi:65},wearRate:0.05,heatRate:0.9}
+  soft:{name:'SOFT',short:'S',color:'#ff3333',eff:{dry:1.10,rain:0.55,snow:0.45},optTemp:{lo:75,hi:125},wearRate:0.12,heatRate:1.2},
+  medium:{name:'MEDIUM',short:'M',color:'#ffcc00',eff:{dry:1.03,rain:0.65,snow:0.55},optTemp:{lo:70,hi:120},wearRate:0.07,heatRate:1.0},
+  hard:{name:'HARD',short:'H',color:'#dddddd',eff:{dry:0.97,rain:0.70,snow:0.62},optTemp:{lo:65,hi:115},wearRate:0.045,heatRate:0.8},
+  inter:{name:'INTER',short:'I',color:'#44cc44',eff:{dry:0.85,rain:1.10,snow:0.85},optTemp:{lo:45,hi:95},wearRate:0.06,heatRate:1.0},
+  wet:{name:'WET',short:'W',color:'#44aaff',eff:{dry:0.70,rain:0.95,snow:1.10},optTemp:{lo:30,hi:80},wearRate:0.05,heatRate:0.9}
 };
 var TIRE_ORDER=['soft','medium','hard','inter','wet'];
 var currentTire='medium';
@@ -440,18 +440,22 @@ function updateTireDynamics(dt){
   var brkIn=(KY['s']||KY['arrowdown'])?1:0;
   var gasIn=(KY['w']||KY['arrowup'])?1:0;
   var steerMag=Math.abs(ST);
-  // Heat input: braking, slip, cornering at speed, gas (wheelspin)
-  var heat=brkIn*75+slip*110+steerMag*Math.min(spdMS,55)*1.4+gasIn*12+Math.min(spdMS,30)*0.8;
-  // Cooling: airflow scales with speed
-  var cool=spdMS*1.3+6;
-  var targetTemp=AMBIENT_TEMP+Math.max(-10,heat-cool)*0.6;
-  if(targetTemp<AMBIENT_TEMP)targetTemp=AMBIENT_TEMP;
-  if(targetTemp>170)targetTemp=170;
-  // Slow lerp — F1-style multi-lap warmup
-  tireTemp+=(targetTemp-tireTemp)*dt*0.05*t.heatRate;
-  // Wear: base rate scaled by driving stress and bad temp
   var optMid=(t.optTemp.lo+t.optTemp.hi)/2;
   var optRange=(t.optTemp.hi-t.optTemp.lo)/2;
+  // Racing baseline: just moving keeps tires near the lower edge of optimum
+  var driving=Math.min(spdMS,25)/25;
+  var baseTarget=AMBIENT_TEMP+driving*(optMid-AMBIENT_TEMP)*0.7;
+  // Driving heat — cornering, braking, sliding push toward the upper edge of optimum
+  var driveHeat=brkIn*24+slip*42+steerMag*Math.min(spdMS,55)*0.65+gasIn*7;
+  // Cooling above cruise speed
+  var coolFromSpd=Math.max(0,spdMS-25)*0.55;
+  var targetTemp=baseTarget+driveHeat-coolFromSpd;
+  if(targetTemp<AMBIENT_TEMP)targetTemp=AMBIENT_TEMP;
+  if(targetTemp>165)targetTemp=165;
+  // Asymmetric lerp: warm fast, cool slow (tires retain heat from friction)
+  var rate=(targetTemp>tireTemp?0.16:0.07)*t.heatRate;
+  tireTemp+=(targetTemp-tireTemp)*dt*rate;
+  // Wear
   var tempOff=Math.max(0,Math.abs(tireTemp-optMid)-optRange);
   var tempStress=1+tempOff/35;
   var stress=1+slip*1.8+brkIn*0.4+steerMag*0.4;
@@ -1600,14 +1604,16 @@ function pickTire(key){
   if(tireStock[key]<=0)return;
   tireStock[key]--;
   currentTire=key;
-  tireTemp=AMBIENT_TEMP;
+  var t=TIRES[key];
+  tireTemp=(t.optTemp.lo+t.optTemp.hi)/2;
   tireWear=100;
   renderTireRow();
 }
 function resetTiresForRace(){
   tireStock={soft:10,medium:10,hard:10,inter:10,wet:10};
   currentTire=recommendedTire(selWeather);
-  tireTemp=AMBIENT_TEMP;
+  var t=TIRES[currentTire];
+  tireTemp=(t.optTemp.lo+t.optTemp.hi)/2;
   tireWear=100;
 }
 function toggleTireInfo(){
