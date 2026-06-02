@@ -1099,8 +1099,6 @@ function toggleNuke(){
 }
 function setNukedState(on){
   nuked=!!on;
-  var ov=document.getElementById('nukedOverlay');
-  if(ov){if(nuked)ov.classList.add('show');else ov.classList.remove('show')}
 }
 function resetNuke(){
   if(nukeActive&&mpSocket&&mpSocket.readyState===1)mpSend({t:'nuke',on:false});
