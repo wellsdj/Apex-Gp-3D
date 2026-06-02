@@ -246,9 +246,22 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .pit-box{background:rgba(15,15,20,.96);border:1px solid rgba(255,200,0,.5);border-radius:14px;padding:30px 40px;min-width:380px;text-align:center;font-family:'Orbitron'}
 .pit-title{font-size:22px;font-weight:900;letter-spacing:6px;color:#ffc800;margin-bottom:20px}
 .pit-section{font-size:11px;letter-spacing:3px;color:rgba(255,255,255,.5);margin-top:18px;margin-bottom:6px;text-align:left}
-.pit-stub{padding:14px;background:rgba(255,255,255,.05);border-radius:6px;color:rgba(255,255,255,.4);font-size:11px;letter-spacing:2px}
 .pit-leave{margin-top:24px;background:rgba(0,200,100,.85);color:#000;border:none;padding:12px 30px;font-family:'Orbitron';font-size:13px;font-weight:700;letter-spacing:3px;border-radius:8px;cursor:pointer}
 .pit-leave:hover{background:rgba(0,255,130,.95)}
+.tire-row{display:flex;justify-content:center;gap:8px;margin:6px 0 4px}
+.tireBtn{position:relative;padding:8px 6px 6px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.25);border-radius:8px;cursor:pointer;text-align:center;min-width:54px;font-family:'Orbitron'}
+.tireBtn.active{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.8);border-width:2px}
+.tireBtn.rec{box-shadow:0 0 20px rgba(60,255,140,.65);border-color:#3cff8c}
+.tireBtn.rec.active{box-shadow:0 0 28px rgba(60,255,140,.95);border-color:#3cff8c}
+.tireDot{width:18px;height:18px;border-radius:50%;margin:0 auto 4px;border:1px solid rgba(0,0,0,.4)}
+.tireLbl{font-size:11px;letter-spacing:2px;color:#fff;font-weight:700}
+.pit-rec{font-size:10px;color:#3cff8c;margin-left:6px;font-weight:500;letter-spacing:1px}
+.pit-setup-row{margin:4px 0 10px}
+.pit-setup-header{display:flex;justify-content:space-between;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.7);margin:3px 0}
+.pit-setup-val{color:#fff;font-weight:700}
+.pit-setup-lbl{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:1px}
+.pit-setup-labels{display:flex;justify-content:space-between;font-family:'Orbitron'}
+.pit-slider{width:100%;margin:4px 0}
 /* Flip crash overlay */
 #flipOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;opacity:0;z-index:500;pointer-events:none;display:none;align-items:center;justify-content:center}
 .crash-txt{font-family:'Orbitron';font-size:48px;font-weight:900;color:#ff2222;letter-spacing:6px;text-shadow:0 0 30px rgba(255,0,0,.6),0 0 60px rgba(255,0,0,.3);opacity:0;transition:opacity .3s}
@@ -267,7 +280,7 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 <div id="hudScreen" class="hide"><div class="cl" id="camLbl">CHASE CAM</div><button class="ghostBtn" id="ghostBtn" onclick="toggleGhost()">GHOST: ON</button><button class="ghostBtn" id="hudSetupBtn" style="top:80px;left:140px;background:rgba(255,140,0,.4);border-color:rgba(255,140,0,.3)" onclick="openSetup()">SETUP</button><button class="cog-btn" style="position:absolute;top:110px;left:70px" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="hb lbb" id="lapBox"><div class="lt">Current Lap</div><div class="lv" id="curLap">00:00.000</div><div class="lt" style="margin-top:7px">Best Lap</div><div class="lbv" id="bestLap">--:--.---</div><div class="lt" style="margin-top:7px">Last Lap</div><div class="lc" id="lastLap">--:--.---</div><div class="lc" id="lapCnt" style="margin-top:5px">LAP 1</div></div><div class="hb sbb" id="spdBox"><svg id="spdOutlineSvg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible"><rect id="spdOutlineRect" x="0" y="0" width="10" height="10" rx="10" ry="10" fill="none" stroke="#ff3333" stroke-width="9" stroke-dasharray="0 9999" stroke-linecap="round"/></svg><div class="sv" id="spdVal">0</div><div class="su">KM/H</div><div class="sbc"><div class="sb2" id="spdBar"></div></div></div><div class="gearBox" id="gearBox"><div class="gearLbl">VS GHOST</div><div class="gearNum" id="gearD">--</div><div class="gearBar"><div class="gearFill" id="gearFill"></div></div></div><div class="hb mmb" id="mapBox"><canvas id="mmC" width="150" height="150"></canvas></div><div class="nb" id="nB">&#9733; NEW BEST LAP &#9733;</div><div class="opDeltaBox" id="opDeltaBox"><div class="opDeltaLbl">VS OPPONENT</div><div class="opDeltaNum" id="opDeltaD">--</div></div><div class="opLiveBox" id="opLiveBox"><div class="opLiveLbl">OPPONENT</div><div class="opLiveSpd" id="opLiveSpd">0</div><div class="opLiveSpdU">KM/H</div><div class="opLiveTimeLbl">CURRENT LAP</div><div class="opLiveTime" id="opLiveTime">--:--.---</div></div><button class="nukeBtn" id="nukeBtn" onclick="toggleNuke()">☢ NUKE</button><button class="blackoutBtn" id="blackoutBtn" onclick="toggleBlackout()">⬛ BLACKOUT</button><div class="pitLaneInd" id="pitLaneInd">PIT LANE — 70 KM/H</div><div class="nukedOverlay" id="nukedOverlay">☢ NUKED ☢<div class="nukedSub">CONTROLS DISABLED</div></div><div class="buildSpd" id="buildSpd"><div class="bt">BUILDING SPEED</div><div class="bbar"><div class="bfill" id="buildFill"></div></div></div></div>
 <div id="flipOverlay"><div class="crash-txt" id="flipTxt">FATAL CRASH</div></div>
 <div id="crashOverlay"><div class="crash-txt" id="crashTxt">FATAL CRASH</div></div>
-<div id="pitModal"><div class="pit-box"><div class="pit-title">PIT BOX</div><div class="pit-section">TIRE COMPOUND</div><div class="pit-stub">Tire selection coming soon</div><div class="pit-section">CAR SETUP</div><div class="pit-stub">Setup adjustments coming soon</div><button class="pit-leave" onclick="leavePit()">LEAVE PIT</button></div></div>
+<div id="pitModal"><div class="pit-box"><div class="pit-title">PIT BOX</div><div class="pit-section">TIRE COMPOUND<span class="pit-rec" id="pitRec"></span></div><div class="tire-row" id="tireRow"></div><div class="pit-section">DOWNFORCE</div><div class="pit-setup-row"><div class="pit-setup-header"><span>LEVEL</span><span class="pit-setup-val" id="pitDfVal">BALANCED</span></div><input type="range" class="pit-slider" id="pitDf" min="0" max="10" value="5" oninput="onPitSetupChange()"><div class="pit-setup-labels"><span class="pit-setup-lbl">LOW DRAG</span><span class="pit-setup-lbl">MAX GRIP</span></div></div><div class="pit-section">BRAKE BIAS</div><div class="pit-setup-row"><div class="pit-setup-header"><span>BIAS</span><span class="pit-setup-val" id="pitBbVal">50:50</span></div><input type="range" class="pit-slider" id="pitBb" min="0" max="10" value="5" oninput="onPitSetupChange()"><div class="pit-setup-labels"><span class="pit-setup-lbl">FRONT</span><span class="pit-setup-lbl">REAR</span></div></div><button class="pit-leave" onclick="leavePit()">LEAVE PIT — DRIVE OFF</button></div></div>
 <div id="setupModal">
   <div class="setup-box">
     <button class="setup-close" onclick="closeSetup()">&#10005;</button>
@@ -375,6 +388,19 @@ var WEATHER={
   snow_heavy:{name:'HEAVY SNOW',gripMul:.38,brkMul:.4,accMul:.6,steerMul:.9,slideFactor:.18,topSpdMul:.97,skyOver:0x999faa,fogOver:0x888e98,ambOver:.35,sunOver:.25,sunCOver:0xbbccdd,hemiSkyOver:0x8899aa,hemiGndOver:0x556666,grassOver:0xccd0d4,rain:'snow_heavy'}
 };
 var selWeather='dry',weatherKeys=['dry','dry_bright','sunset','sunset_low','night','night_dark','rain','rain_heavy','snow','snow_heavy'];
+// Tire compounds: per-condition grip multiplier (stacks with weather multipliers)
+var TIRES={
+  soft:{name:'SOFT',short:'S',color:'#ff3333',eff:{dry:1.10,rain:0.55,snow:0.45}},
+  medium:{name:'MEDIUM',short:'M',color:'#ffcc00',eff:{dry:1.03,rain:0.65,snow:0.55}},
+  hard:{name:'HARD',short:'H',color:'#dddddd',eff:{dry:0.97,rain:0.70,snow:0.62}},
+  inter:{name:'INTER',short:'I',color:'#44cc44',eff:{dry:0.85,rain:1.10,snow:0.85}},
+  wet:{name:'WET',short:'W',color:'#44aaff',eff:{dry:0.70,rain:0.95,snow:1.10}}
+};
+var TIRE_ORDER=['soft','medium','hard','inter','wet'];
+var currentTire='medium';
+function weatherCond(w){if(!w)return 'dry';if(w.indexOf('rain')>=0)return 'rain';if(w.indexOf('snow')>=0)return 'snow';return 'dry'}
+function recommendedTire(w){var c=weatherCond(w);if(c==='rain')return w==='rain_heavy'?'wet':'inter';if(c==='snow')return w==='snow_heavy'?'wet':'inter';return 'soft'}
+function tireFactor(){var t=TIRES[currentTire];if(!t)return 1;return t.eff[weatherCond(selWeather)]||1}
 var WCATEGORIES=[
   {name:'DAY',sub:'Daytime',variants:[{key:'dry',label:'CLOUDY'},{key:'dry_bright',label:'CLEAR'}]},
   {name:'SUNSET',sub:'Golden hour',variants:[{key:'sunset',label:'NORMAL'},{key:'sunset_low',label:'LOW SUNSET'}]},
@@ -530,7 +556,7 @@ function toggleHeadlights(){if(!car||!car.headlights)return;car.hlOn=!car.hlOn;c
 function toggleGhost(){ghostMode=(ghostMode+1)%3;var btn=document.getElementById('ghostBtn');if(ghostMode===0){btn.textContent='GHOST: ON';btn.className='ghostBtn';btn.style.background='';btn.style.borderColor=''}else if(ghostMode===1){btn.textContent='GHOST: BEST';btn.className='ghostBtn';btn.style.background='rgba(200,170,0,.4)';btn.style.borderColor='rgba(200,170,0,.3)'}else{btn.textContent='GHOST: OFF';btn.className='ghostBtn off';btn.style.background='';btn.style.borderColor=''}if(ghostCar)ghostCar.visible=ghostMode===0&&ghostPlaying;if(allTimeCar)allTimeCar.visible=ghostMode===1&&allTimeGhostPlaying}
 function showGarage(){mRun=false;document.getElementById('menuScreen').classList.add('hide');document.getElementById('garageScreen').classList.remove('hide');initGarage();startLobbyMusic();drawTrackPreview();checkRankUp();if(mpMode==='join'&&mpConn){document.getElementById('startBtn').textContent='WAITING FOR HOST...';document.getElementById('startBtn').style.pointerEvents='none';document.getElementById('startBtn').style.opacity='0.5'}else{document.getElementById('startBtn').textContent='RACE';document.getElementById('startBtn').style.pointerEvents='';document.getElementById('startBtn').style.opacity=''}}
 function backToMenu(){racing=false;gRun=false;document.getElementById('hudScreen').classList.add('hide');document.getElementById('garageScreen').classList.add('hide');document.getElementById('menuScreen').classList.remove('hide');mRun=true;initMenu();startLobbyMusic();}
-function startDrive(){if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}fadeLobbyMusic();gRun=false;document.getElementById('garageScreen').classList.add('hide');document.getElementById('hudScreen').classList.remove('hide');applyHUD();initRace();resetCar();racing=true;raceStartedAt=performance.now();audioStarted=false;prevEngineActive=false;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;s.currentTime=0;});clk.getDelta();opPos=null;opPrevPos=null;opGhostFrame=0;lastMpSend=0;opSpd=0;opLapT=-1;opLapTRcvAt=0;resetNuke();resetBlackout();closePit();recentlyPitted=false;if(mpMode==='host'&&mpSocket){mpSend({t:'start',weather:selWeather})}if(opBestGhost.length>1&&tPts){opGhostTimeLookup=buildGhostLookupGeneric(opBestGhost)}allTimeGhost=getTrackGhost(TRACKS[selTrack].name)||[];allTimeGhostPlaying=allTimeGhost.length>1;allTimeGhostFrame=0;allTimeGhostLookup=allTimeGhostPlaying?buildGhostLookupGeneric(allTimeGhost):null}
+function startDrive(){if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}fadeLobbyMusic();gRun=false;document.getElementById('garageScreen').classList.add('hide');document.getElementById('hudScreen').classList.remove('hide');applyHUD();initRace();resetCar();racing=true;raceStartedAt=performance.now();audioStarted=false;prevEngineActive=false;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;s.currentTime=0;});clk.getDelta();opPos=null;opPrevPos=null;opGhostFrame=0;lastMpSend=0;opSpd=0;opLapT=-1;opLapTRcvAt=0;resetNuke();resetBlackout();closePit();recentlyPitted=false;currentTire=recommendedTire(selWeather);if(mpMode==='host'&&mpSocket){mpSend({t:'start',weather:selWeather})}if(opBestGhost.length>1&&tPts){opGhostTimeLookup=buildGhostLookupGeneric(opBestGhost)}allTimeGhost=getTrackGhost(TRACKS[selTrack].name)||[];allTimeGhostPlaying=allTimeGhost.length>1;allTimeGhostFrame=0;allTimeGhostLookup=allTimeGhostPlaying?buildGhostLookupGeneric(allTimeGhost):null}
 
 function buildScene(){var T=TRACKS[selTrack],W=WEATHER[selWeather];WP=T.wp;scene=new THREE.Scene();
 var skC=W.skyOver!==null?W.skyOver:T.sky,fgC=W.fogOver!==null?W.fogOver:T.fog;
@@ -623,6 +649,22 @@ function mkTrack(grassCOverride){var pts=WP.map(function(p){return new THREE.Vec
     for(var dpx=pit.dividerX1+5;dpx<=pit.dividerX2-5;dpx+=12){
       var post=new THREE.Mesh(new THREE.BoxGeometry(.4,1.2,.4),divPostMat);post.position.set(dpx,.6,pit.dividerZ);scene.add(post);
     }
+    // Red/white striped wall between pit and main straight (track-side of divider)
+    var pwZ=pit.dividerZ-0.4,pwSegs=Math.max(4,Math.floor((pit.dividerX2-pit.dividerX1)/5));
+    var pwV=[],pwC=[],pwI=[];
+    for(var pw=0;pw<=pwSegs;pw++){
+      var pwX=pit.dividerX1+(pw*(pit.dividerX2-pit.dividerX1)/pwSegs);
+      pwV.push(pwX,.05,pwZ,pwX,1.1,pwZ);
+      var pwCol=pw%2===0?[.85,.1,.1]:[.92,.92,.92];
+      pwC.push(pwCol[0],pwCol[1],pwCol[2],pwCol[0],pwCol[1],pwCol[2]);
+    }
+    for(var pw2=0;pw2<pwSegs;pw2++){var pwJ=pw2*2;pwI.push(pwJ,pwJ+2,pwJ+1,pwJ+1,pwJ+2,pwJ+3)}
+    var pwGeo=new THREE.BufferGeometry();
+    pwGeo.setAttribute('position',new THREE.Float32BufferAttribute(pwV,3));
+    pwGeo.setAttribute('color',new THREE.Float32BufferAttribute(pwC,3));
+    pwGeo.setIndex(pwI);
+    pwGeo.computeVertexNormals();
+    scene.add(new THREE.Mesh(pwGeo,new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide})));
     // Pit box marker: yellow rectangle on ground
     var pb=pit.boxAABB,pbw=pb.x2-pb.x1,pbh=pb.z2-pb.z1;
     var boxFill=new THREE.Mesh(new THREE.PlaneGeometry(pbw,pbh),new THREE.MeshBasicMaterial({color:0xffcc00,transparent:true,opacity:0.35}));boxFill.rotation.x=-Math.PI/2;boxFill.position.set((pb.x1+pb.x2)/2,.58,(pb.z1+pb.z2)/2);scene.add(boxFill);
@@ -656,7 +698,7 @@ var onCurb=false,curbShakeT=0;
 // ── Rear view mirror ──
 var mirrorCam=null;
 var _mirFwd=new THREE.Vector3(),_mirPos=new THREE.Vector3(),_mirLook=new THREE.Vector3();
-function updateCar(dt){var steps=Math.max(1,Math.min(8,Math.ceil(dt*100))),sdt=dt/steps;var W=WEATHER[selWeather];var effTOPMS=TOPMS*(1-getDmgPenalty())*(W.topSpdMul||1);for(var i=0;i<steps;i++){var gas=(KY['w']||KY['arrowup'])?1:0,brk=(KY['s']||KY['arrowdown'])?1:0;var str=((KY['a']||KY['arrowleft'])?1:0)-((KY['d']||KY['arrowright'])?1:0);if(nuked){gas=1;brk=0;str=0}if(pitOpen){gas=0;brk=0;str=0;V.x=0;V.z=0;V.y=0;AV=0;spinV=0;ST=0}var wSteer=W.steerMul;ST+=(str-ST)*Math.min(1,sdt*25);var fwd=_ucFwd.set(Math.sin(A),0,Math.cos(A)),rgt=_ucRgt.set(fwd.z,0,-fwd.x);var fs=V.dot(fwd),ls=V.dot(rgt);if(!ab){var acc=0,r=Math.abs(fs)/effTOPMS;var aM=stat0to100/5;var wAcc=W.accMul,wBrk=W.brkMul;if(gas>0){acc=50*aM*wAcc*(1-r*r*.45);if(fs<-.5)acc=30*aM*wAcc}if(brk>0){acc=fs>1?-60*(statBraking/5)*wBrk:-25*(statBraking/5)*wBrk;var bbRot=(setupBb-5)/5*0.4*Math.min(Math.abs(fs)/8,1);if(Math.abs(ST)>.1)AV+=ST*bbRot*sdt*4}acc-=fs*.18+Math.sign(fs)*.6;V.addScaledVector(fwd,acc*sdt);var wGrip=W.gripMul;V.addScaledVector(rgt,-ls*(18*(statGrip/5)*wGrip)*sdt);
+function updateCar(dt){var steps=Math.max(1,Math.min(8,Math.ceil(dt*100))),sdt=dt/steps;var W=WEATHER[selWeather];var _tf=tireFactor();var effTOPMS=TOPMS*(1-getDmgPenalty())*(W.topSpdMul||1);for(var i=0;i<steps;i++){var gas=(KY['w']||KY['arrowup'])?1:0,brk=(KY['s']||KY['arrowdown'])?1:0;var str=((KY['a']||KY['arrowleft'])?1:0)-((KY['d']||KY['arrowright'])?1:0);if(nuked){gas=1;brk=0;str=0}if(pitOpen){gas=0;brk=0;str=0;V.x=0;V.z=0;V.y=0;AV=0;spinV=0;ST=0}var wSteer=W.steerMul;ST+=(str-ST)*Math.min(1,sdt*25);var fwd=_ucFwd.set(Math.sin(A),0,Math.cos(A)),rgt=_ucRgt.set(fwd.z,0,-fwd.x);var fs=V.dot(fwd),ls=V.dot(rgt);if(!ab){var acc=0,r=Math.abs(fs)/effTOPMS;var aM=stat0to100/5;var wAcc=W.accMul*_tf,wBrk=W.brkMul*_tf;if(gas>0){acc=50*aM*wAcc*(1-r*r*.45);if(fs<-.5)acc=30*aM*wAcc}if(brk>0){acc=fs>1?-60*(statBraking/5)*wBrk:-25*(statBraking/5)*wBrk;var bbRot=(setupBb-5)/5*0.4*Math.min(Math.abs(fs)/8,1);if(Math.abs(ST)>.1)AV+=ST*bbRot*sdt*4}acc-=fs*.18+Math.sign(fs)*.6;V.addScaledVector(fwd,acc*sdt);var wGrip=W.gripMul*_tf;V.addScaledVector(rgt,-ls*(18*(statGrip/5)*wGrip)*sdt);
       var wSlide=W.slideFactor;if(wSlide>0&&Math.abs(fs)>5){var slideStr=wSlide*Math.min((Math.abs(fs)-5)/20,1);var sNoise=(Math.sin(performance.now()*.003+P.x*.3)*0.6+Math.sin(performance.now()*.006+P.z*.2)*0.4);V.addScaledVector(rgt,sNoise*slideStr*12*sdt);if(gas>0&&Math.abs(fs)>8){var wheelSpin=wSlide*0.3*Math.min(r,.5);AV+=sNoise*wheelSpin*sdt*2}if(Math.abs(ST)>.3&&Math.abs(fs)>10){var overStr=wSlide*Math.abs(ST)*Math.min((Math.abs(fs)-10)/15,1);AV+=ST*overStr*sdt*2}}
       var sf=Math.min(Math.abs(fs)/3,1),sp=Math.abs(fs),sr=1/(1+sp*.0028+sp*sp*.00000004);var steerYaw=ST*6.5*sf*sr*Math.sign(fs+.001);AV+=(steerYaw*(1-(1-wSteer)*.5)-AV*6)*sdt*12}else{V.y-=9.8*sdt;AV*=.998}A+=AV*sdt+spinV*sdt;spinV*=(1-sdt*3);if(inPitLane&&!pitOpen){var _pitMaxV=70/3.6,_pitVxz=Math.sqrt(V.x*V.x+V.z*V.z);if(_pitVxz>_pitMaxV){var _ps=_pitMaxV/_pitVxz;V.x*=_ps;V.z*=_ps}}P.addScaledVector(V,sdt);doCol();if(!ab){pitchV+=-pitchA*8*sdt;pitchV*=(1-sdt*2.5);rollV+=-rollA*8*sdt;rollV*=(1-sdt*2.5)}else{pitchV*=(1-sdt*.1);rollV*=(1-sdt*.1)}pitchA+=pitchV*sdt;rollA+=rollV*sdt;if(P.y<=.8){P.y=.8;if(V.y<0)V.y=0;ab=false}else ab=true}SPD=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;car.position.copy(P);car.rotation.set(pitchA,A,rollA-ST*Math.min(SPD/120,1)*.02,'YXZ');if(car.tl)car.tl.material.emissiveIntensity=(KY['s']||KY['arrowdown'])?1.2:.2;recordGhostFrame()}
 
@@ -1212,6 +1254,11 @@ function curPit(){var T=TRACKS[selTrack];return T&&T.pit?T.pit:null}
 function openPit(){
   pitOpen=true;
   V.x=0;V.z=0;V.y=0;AV=0;spinV=0;
+  var pdf=document.getElementById('pitDf'),pbb=document.getElementById('pitBb');
+  if(pdf)pdf.value=setupDf;
+  if(pbb)pbb.value=setupBb;
+  applySetup(setupDf,setupBb);
+  renderTireRow();
   document.getElementById('pitModal').classList.add('show');
 }
 function leavePit(){closePit()}
@@ -1450,28 +1497,44 @@ function rLoop(){requestAnimationFrame(rLoop);var dt=Math.min(clk.getDelta(),.05
 // ---- Stat editor ----
 function openSetup(){document.getElementById('setupModal').classList.add('show');document.getElementById('setupDf').value=setupDf;document.getElementById('setupBb').value=setupBb;onSetupChange()}
 function closeSetup(){document.getElementById('setupModal').classList.remove('show')}
-function onSetupChange(){
-  setupDf=parseInt(document.getElementById('setupDf').value);
-  setupBb=parseInt(document.getElementById('setupBb').value);
-  var dfT=(setupDf-5)/5;
-  var dfK=0.25;
-  var dfGripMul=Math.exp(dfK*dfT), dfSpdMul=Math.exp(-dfK*dfT);
+function applySetup(df,bb){
+  setupDf=df;setupBb=bb;
+  var dfT=(setupDf-5)/5,dfK=0.25;
+  var dfGripMul=Math.exp(dfK*dfT),dfSpdMul=Math.exp(-dfK*dfT);
   var bbT=(setupBb-5)/5;
-  var bbBrkMul=Math.exp(-0.2*bbT), bbTurnMul=Math.exp(0.2*bbT);
+  var bbBrkMul=Math.exp(-0.2*bbT),bbTurnMul=Math.exp(0.2*bbT);
   statTopSpeed=Math.round(160*dfSpdMul);
   TOPMS=statTopSpeed*400/130/3.6;
   statGrip=5*dfGripMul;
   stat0to100=5;
   statBraking=5*bbBrkMul;
-  document.getElementById('setupDfVal').textContent=setupDf<=1?'LOW DRAG':setupDf>=9?'MAX GRIP':setupDf===5?'BALANCED':setupDf<5?'LOW':'HIGH';
-  document.getElementById('setupBbVal').textContent=setupBb<=1?'FULL FRONT':setupBb>=9?'FULL REAR':setupBb===5?'50:50':(setupBb<5?Math.round(50+(5-setupBb)*8)+':'+(100-Math.round(50+(5-setupBb)*8)):Math.round(50-(setupBb-5)*8)+':'+(100-Math.round(50-(setupBb-5)*8)));
-  function effTxt(el,val,label){var pct=Math.round((val-1)*100);el.textContent=(pct>=0?'+':'')+pct+'% '+label;el.className='setup-eff '+(pct>0?'pos':pct<0?'neg':'neu')}
+  localStorage.setItem('apexgp_setup',JSON.stringify({df:setupDf,bb:setupBb}));
+  var dfLbl=setupDf<=1?'LOW DRAG':setupDf>=9?'MAX GRIP':setupDf===5?'BALANCED':setupDf<5?'LOW':'HIGH';
+  var bbLbl=setupBb<=1?'FULL FRONT':setupBb>=9?'FULL REAR':setupBb===5?'50:50':(setupBb<5?Math.round(50+(5-setupBb)*8)+':'+(100-Math.round(50+(5-setupBb)*8)):Math.round(50-(setupBb-5)*8)+':'+(100-Math.round(50-(setupBb-5)*8)));
+  ['setupDfVal','pitDfVal'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=dfLbl});
+  ['setupBbVal','pitBbVal'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=bbLbl});
+  function effTxt(el,val,label){if(!el)return;var pct=Math.round((val-1)*100);el.textContent=(pct>=0?'+':'')+pct+'% '+label;el.className='setup-eff '+(pct>0?'pos':pct<0?'neg':'neu')}
   effTxt(document.getElementById('setupDfEff1'),dfSpdMul,'TOP SPD');
   effTxt(document.getElementById('setupDfEff2'),dfGripMul,'GRIP');
   effTxt(document.getElementById('setupBbEff1'),bbBrkMul,'BRAKING');
   effTxt(document.getElementById('setupBbEff2'),bbTurnMul,'ROTATION');
-  localStorage.setItem('apexgp_setup',JSON.stringify({df:setupDf,bb:setupBb}));
 }
+function onSetupChange(){applySetup(parseInt(document.getElementById('setupDf').value),parseInt(document.getElementById('setupBb').value))}
+function onPitSetupChange(){applySetup(parseInt(document.getElementById('pitDf').value),parseInt(document.getElementById('pitBb').value))}
+function renderTireRow(){
+  var row=document.getElementById('tireRow');if(!row)return;
+  var rec=recommendedTire(selWeather);
+  var html='';
+  for(var i=0;i<TIRE_ORDER.length;i++){
+    var key=TIRE_ORDER[i],t=TIRES[key],isCur=key===currentTire,isRec=key===rec;
+    html+='<div class="tireBtn'+(isCur?' active':'')+(isRec?' rec':'')+'" onclick="pickTire(\''+key+'\')"><div class="tireDot" style="background:'+t.color+'"></div><div class="tireLbl">'+t.short+'</div></div>';
+  }
+  row.innerHTML=html;
+  var recEl=document.getElementById('pitRec');
+  if(recEl&&rec)recEl.textContent='RECOMMENDED: '+TIRES[rec].name;
+  else if(recEl)recEl.textContent='';
+}
+function pickTire(key){if(!TIRES[key])return;currentTire=key;renderTireRow()}
 function resetSetup(){
   document.getElementById('setupDf').value=5;
   document.getElementById('setupBb').value=5;
