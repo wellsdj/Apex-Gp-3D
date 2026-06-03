@@ -269,6 +269,9 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .cyc-lbl{font-family:'Orbitron';font-size:11px;letter-spacing:2px;color:#fff;font-weight:700;min-width:78px;text-align:center}
 #imgRemoveBtn{background:rgba(255,60,60,.3);border:1px solid rgba(255,60,60,.5);border-radius:6px;color:#fff;padding:4px 10px;font-size:12px;cursor:pointer}
 #imgRemoveBtn:hover{background:rgba(255,60,60,.5)}
+#raceLbUI{position:fixed;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.82);border:1px solid rgba(0,200,120,.55);border-radius:10px;padding:9px 18px;display:none;z-index:340;backdrop-filter:blur(8px);min-width:280px;text-align:center;font-family:'Orbitron'}
+#raceLbUI.show{display:block}
+#raceLbUI .quali-title{color:#3cff8c}
 #qualiUI{position:fixed;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.82);border:1px solid rgba(255,200,0,.55);border-radius:10px;padding:9px 18px;display:none;z-index:340;backdrop-filter:blur(8px);min-width:300px;text-align:center;font-family:'Orbitron'}
 #qualiUI.show{display:block}
 .quali-title{font-size:13px;font-weight:900;letter-spacing:4px;color:#ffc800}
@@ -346,6 +349,7 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 <div id="flipOverlay"><div class="crash-txt" id="flipTxt">FATAL CRASH</div></div>
 <div id="crashOverlay"><div class="crash-txt" id="crashTxt">FATAL CRASH</div></div>
 <div id="qualiUI"><div class="quali-title">QUALIFYING<span class="quali-time" id="qualiTime">3:00</span></div><div class="quali-standings" id="qualiStandings"></div></div>
+<div id="raceLbUI"><div class="quali-title">LIVE STANDINGS</div><div class="quali-standings" id="raceLbStandings"></div></div>
 <div id="raceLights"><div class="rl-light" id="rl1"></div><div class="rl-light" id="rl2"></div><div class="rl-light" id="rl3"></div><div class="rl-light" id="rl4"></div><div class="rl-light" id="rl5"></div></div>
 <div id="endResultOv"><div class="end-box"><div class="end-title">RACE COMPLETE</div><div class="end-new" id="endResNew">★ NEW PERSONAL BEST ★</div><div class="end-stat"><div class="end-lbl">TOTAL TIME</div><div class="end-val" id="endResTotal">--:--.---</div></div><div class="end-stat"><div class="end-lbl">BEST EVER</div><div class="end-val" id="endResBest">--:--.---</div></div><div class="end-stat"><div class="end-lbl">FASTEST LAP</div><div class="end-val" id="endResFastest">--:--.---</div></div><button class="pit-leave" onclick="dismissEndResult()">RETURN TO GARAGE</button></div></div>
 <div id="pitModal"><div class="pit-box"><div class="pit-title">PIT BOX</div><div class="pit-section">TIRE COMPOUND<span class="pit-rec" id="pitRec"></span></div><div class="tire-row" id="tireRow"></div><div class="pit-section">DOWNFORCE</div><div class="pit-setup-row"><div class="pit-setup-header"><span>LEVEL</span><span class="pit-setup-val" id="pitDfVal">BALANCED</span></div><input type="range" class="pit-slider" id="pitDf" min="0" max="10" value="5" oninput="onPitSetupChange()"><div class="pit-setup-labels"><span class="pit-setup-lbl">LOW DRAG</span><span class="pit-setup-lbl">MAX GRIP</span></div></div><div class="pit-section">BRAKE BIAS</div><div class="pit-setup-row"><div class="pit-setup-header"><span>BIAS</span><span class="pit-setup-val" id="pitBbVal">50:50</span></div><input type="range" class="pit-slider" id="pitBb" min="0" max="10" value="5" oninput="onPitSetupChange()"><div class="pit-setup-labels"><span class="pit-setup-lbl">FRONT</span><span class="pit-setup-lbl">REAR</span></div></div><button class="pit-leave" onclick="leavePit()">LEAVE PIT — DRIVE OFF</button></div></div>
@@ -531,7 +535,7 @@ var RECORD_INTERVAL=50,lastRecordTime=0;
 var mpConn=null,mpMode=null; // null|'host'|'join'
 var mpCode='',mpReady=false;
 var opCar=null,opPos=null,opPrevPos=null,opPosTime=0;
-var opSpd=0,opLapT=-1,opLapTRcvAt=0;
+var opSpd=0,opLapT=-1,opLapTRcvAt=0,opLapN=0;
 var nuked=false,nukeActive=false;
 var blackedOut=false,blackoutActive=false;
 var inPitLane=false,inPitBox=false,pitOpen=false,recentlyPitted=false;
@@ -1378,6 +1382,7 @@ function handleMpMessage(raw){
     opPosTime=performance.now();
     if(typeof d.s==='number')opSpd=d.s;
     if(typeof d.lt==='number'){opLapT=d.lt;opLapTRcvAt=performance.now()}
+    if(typeof d.ln==='number')opLapN=d.ln;
     return;
   }
   if(d.t==='nuke'&&mpMode==='join'){setNukedState(!!d.on);return}
@@ -1532,9 +1537,11 @@ function setOpponentSolid(solid){
     if(ch.material&&ch.material.transparent!==undefined){
       ch.material.transparent=!solid;
       ch.material.opacity=solid?1:0.3;
+      ch.material.depthWrite=solid;
       ch.material.needsUpdate=true;
     }
   });
+  if(solid&&opPos)opCar.visible=true;
 }
 function startQualifying(){
   racePhase='quali';qualiActive=true;qualiStartedAt=performance.now();
@@ -1553,7 +1560,10 @@ function endQualifying(){
     pendingLightsDelay=nd;
     mpSend({t:'qualiEnd',lightsDelay:nd});
   }
-  var myPos=(qualiMyBest<=qualiOpBest)?0:1;
+  var myPos;
+  if(qualiMyBest<qualiOpBest)myPos=0;
+  else if(qualiMyBest>qualiOpBest)myPos=1;
+  else myPos=(mpMode==='host')?0:1;
   if(!mpConn)myPos=0;
   applyGridSpawn(myPos);
   racePhase='race';
@@ -1565,7 +1575,7 @@ function endQualifying(){
 }
 function applyGridSpawn(gridPos){
   if(!sd||!sd[sfIdx])return;
-  var spacing=2;
+  var spacing=6;
   var pi=(sfIdx-400-gridPos*spacing+tPts.length)%tPts.length;
   if(!sd[pi])return;
   P.set(sd[pi].c.x,.8,sd[pi].c.z);V.set(0,0,0);
@@ -1594,6 +1604,31 @@ function renderQualiStandings(){
 function cancelQualifying(){
   qualiActive=false;racePhase='race';
   var ui=document.getElementById('qualiUI');if(ui)ui.classList.remove('show');
+  var rb=document.getElementById('raceLbUI');if(rb)rb.classList.remove('show');
+}
+var _rbTickT=0;
+function renderRaceLeaderboard(){
+  var el=document.getElementById('raceLbStandings');if(!el)return;
+  var rows=[{n:'YOU',ln:lapN,me:true}];
+  if(mpConn)rows.push({n:qualiOpName,ln:opLapN,me:false});
+  rows.sort(function(a,b){return b.ln-a.ln});
+  var h='';
+  for(var i=0;i<rows.length;i++){
+    var r=rows[i];
+    var lapTxt=r.ln>0?('LAP '+r.ln+'/'+END_LAPS):'GRID';
+    h+='<div class="quali-row'+(r.me?' me':'')+'"><span class="qn">P'+(i+1)+' '+r.n+'</span><span class="qt">'+lapTxt+'</span></div>';
+  }
+  el.innerHTML=h;
+}
+function tickRaceLeaderboard(dt){
+  var rb=document.getElementById('raceLbUI');if(!rb)return;
+  if(racePhase==='race'&&racing){
+    rb.classList.add('show');
+    _rbTickT-=dt;
+    if(_rbTickT<=0){renderRaceLeaderboard();_rbTickT=0.4}
+  } else {
+    rb.classList.remove('show');
+  }
 }
 function startRaceLights(){
   raceLightsActive=true;raceLightsStep=0;
@@ -1889,13 +1924,13 @@ function doMirror(){
   ren.setScissorTest(false);
   ren.setViewport(0,0,cw,ch);
 }
-function rLoop(){requestAnimationFrame(rLoop);var dt=Math.min(clk.getDelta(),.05);if(racing){if(KY['c']&&!KY._cp){camM=(camM+1)%3;document.getElementById('camLbl').textContent=camN[camM]}KY._cp=KY['c'];if(KY['r']&&!KY._rp)resetCar();KY._rp=KY['r'];updateRaceLights();updateQualifying();updatePitState();updateTireDynamics(dt);updateCar(dt);updateAI(dt);if(tireInfoOpen)renderTireInfo();
+function rLoop(){requestAnimationFrame(rLoop);var dt=Math.min(clk.getDelta(),.05);if(racing){if(KY['c']&&!KY._cp){camM=(camM+1)%3;document.getElementById('camLbl').textContent=camN[camM]}KY._cp=KY['c'];if(KY['r']&&!KY._rp)resetCar();KY._rp=KY['r'];updateRaceLights();updateQualifying();tickRaceLeaderboard(dt);updatePitState();updateTireDynamics(dt);updateCar(dt);updateAI(dt);if(tireInfoOpen)renderTireInfo();
     if(!flipCrashActive){var upY=Math.cos(rollA)*Math.cos(pitchA);if(upY<-0.3){flipUpsideTime+=dt;}else{flipUpsideTime=0;}if(flipUpsideTime>0.5){flipCrashActive=true;raceFadeTimer=3.0;sndCrashFatal.currentTime=0;sndCrashFatal.volume=sfxEnabled?sfxVolume:0;sndCrashFatal.play().catch(function(){});var fo=document.getElementById('flipOverlay');fo.style.display='flex';fo.style.opacity=0;document.getElementById('flipTxt').style.opacity=0;}}
     if(flipCrashActive){raceFadeTimer-=dt;var prog=raceFadeTimer>2?Math.max(0,1-(raceFadeTimer-2)/1):1;document.getElementById('flipOverlay').style.opacity=prog;if(raceFadeTimer<2)document.getElementById('flipTxt').style.opacity=1;if(raceFadeTimer<=0){[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;if(mpConn){respawnInPlace()}else{flipCrashActive=false;flipUpsideTime=0;var fo2=document.getElementById('flipOverlay');fo2.style.opacity=0;fo2.style.display='none';document.getElementById('flipTxt').style.opacity=0;racing=false;document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar();startLobbyMusic();}}}
     if(wallCrashActive){wallCrashTimer-=dt;var wProg=wallCrashTimer>2?Math.max(0,1-(wallCrashTimer-2)/0.8):1;document.getElementById('crashOverlay').style.opacity=wProg;if(wallCrashTimer<2)document.getElementById('crashTxt').style.opacity=1;if(wallCrashTimer<=0){[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;if(mpConn){respawnInPlace()}else{wallCrashActive=false;var co2=document.getElementById('crashOverlay');co2.style.opacity=0;co2.style.display='none';document.getElementById('crashTxt').style.opacity=0;racing=false;document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar();startLobbyMusic();}}}
     updateDebris(dt);for(var si=skidMarks.length-1;si>=0;si--){skidMarks[si].life-=dt;if(skidMarks[si].life<=0){scene.remove(skidMarks[si]);skidMarks.splice(si,1)}else if(skidMarks[si].life<2){if(!skidMarks[si]._fadeMat){skidMarks[si]._fadeMat=skidMat.clone();skidMarks[si].material=skidMarks[si]._fadeMat}skidMarks[si]._fadeMat.opacity=skidMarks[si].life/2*.6}}if(rainDrops&&rainGeo){var rPos=rainGeo.attributes.position.array,rv2=rainGeo.rv,rCnt=rainGeo.pCount;for(var ri2=0;ri2<rCnt;ri2++){rPos[ri2*3+1]-=rv2[ri2]*dt;if(rPos[ri2*3+1]<-P.y){rPos[ri2*3+1]=40+Math.random()*40;rPos[ri2*3]=(Math.random()-.5)*160;rPos[ri2*3+2]=(Math.random()-.5)*160}};rainGeo.attributes.position.needsUpdate=true;rainDrops.position.set(P.x,0,P.z)}
     if(sprayGeo&&sprayPts&&SPD>15){var spPos=sprayGeo.attributes.position.array,spVa=sprayGeo.spV,spLi=sprayGeo.spL,spC=sprayGeo.spCnt;var bwdx=-Math.sin(A),bwdz=-Math.cos(A);var spRate=Math.min(SPD/40,3)*dt*60;for(var spi=0;spi<Math.ceil(spRate);spi++){var idx=sprayGeo.spIdx%spC;spPos[idx*3]=P.x+bwdx*2.5+(Math.random()-.5)*1.2;spPos[idx*3+1]=0.3+Math.random()*0.3;spPos[idx*3+2]=P.z+bwdz*2.5+(Math.random()-.5)*1.2;var spSpd=SPD/80;spVa[idx*3]=bwdx*spSpd+(Math.random()-.5)*1.5;spVa[idx*3+1]=1.5+Math.random()*2;spVa[idx*3+2]=bwdz*spSpd+(Math.random()-.5)*1.5;spLi[idx]=0.4+Math.random()*0.3;sprayGeo.spIdx++}for(var sj=0;sj<spC;sj++){if(spLi[sj]>0){spPos[sj*3]+=spVa[sj*3]*dt;spPos[sj*3+1]+=spVa[sj*3+1]*dt;spVa[sj*3+1]-=6*dt;spPos[sj*3+2]+=spVa[sj*3+2]*dt;spLi[sj]-=dt;if(spLi[sj]<=0)spPos[sj*3+1]=-10}}sprayGeo.attributes.position.needsUpdate=true}else if(sprayGeo){var spHide=sprayGeo.spL,spHPos=sprayGeo.attributes.position.array;for(var sh=0;sh<sprayGeo.spCnt;sh++){if(spHide[sh]>0){spHide[sh]-=dt;if(spHide[sh]<=0)spHPos[sh*3+1]=-10;else{spHPos[sh*3]+=sprayGeo.spV[sh*3]*dt;spHPos[sh*3+1]+=sprayGeo.spV[sh*3+1]*dt;sprayGeo.spV[sh*3+1]-=6*dt;spHPos[sh*3+2]+=sprayGeo.spV[sh*3+2]*dt}}};sprayGeo.attributes.position.needsUpdate=true}
-    playGhost(dt);playAllTimeGhost(dt);playOpponent(dt);playOpGhost(dt);doLaps();doCam(dt);doHUD();doMM();updateSound(dt);if(mpConn&&mpSocket&&performance.now()-lastMpSend>100){mpSend({t:'pos',x:P.x,y:P.y,z:P.z,a:A,pa:pitchA,ra:rollA,s:SPD,lt:lapN>=1?(performance.now()-lapSt):-1});lastMpSend=performance.now()}}if(ren)ren.render(scene,cam)}
+    playGhost(dt);playAllTimeGhost(dt);playOpponent(dt);playOpGhost(dt);doLaps();doCam(dt);doHUD();doMM();updateSound(dt);if(mpConn&&mpSocket&&performance.now()-lastMpSend>100){mpSend({t:'pos',x:P.x,y:P.y,z:P.z,a:A,pa:pitchA,ra:rollA,s:SPD,lt:lapN>=1?(performance.now()-lapSt):-1,ln:lapN});lastMpSend=performance.now()}}if(ren)ren.render(scene,cam)}
 // ---- Stat editor ----
 function openSetup(){document.getElementById('setupModal').classList.add('show');document.getElementById('setupDf').value=setupDf;document.getElementById('setupBb').value=setupBb;onSetupChange()}
 function closeSetup(){document.getElementById('setupModal').classList.remove('show')}
