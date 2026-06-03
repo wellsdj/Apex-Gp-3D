@@ -1297,7 +1297,8 @@ function joinParty(){
     if(mpMode==='join'&&!mpConn){
       var msg='Disconnected.';
       if(code==='PARTY_NOT_FOUND')msg='Party not found. Check the code.';
-      else if(code==='PARTY_FULL')msg='Party is full.';
+      else if(code==='PARTY_FULL')msg='Party is full (max 8 players).';
+      else if(code==='PARTY_CLOSED')msg='Race already started. Join the next one.';
       document.getElementById('mpJoinStatus').textContent=msg;
     } else if(mpMode==='join'&&mpConn){
       onMpDisconnect();

@@ -11,6 +11,8 @@ export default class Server {
     this.track = 0;
     this.weather = 'dry';
     this.admitted = new Set();
+    this.closed = false;
+    this.MAX_PLAYERS = 8;
   }
 
   liveHost() {
@@ -44,22 +46,27 @@ export default class Server {
       if (this.liveHost()) return this.reject(conn, 'PARTY_EXISTS');
       this.hostId = conn.id;
       this.admitted.add(conn.id);
-      this.send(conn, { type: 'welcome', role: 'host' });
+      this.send(conn, { type: 'welcome', role: 'host', id: conn.id });
       return;
     }
 
     if (role === 'join') {
       if (!this.liveHost()) return this.reject(conn, 'PARTY_NOT_FOUND');
-      if (this.admitted.size >= 2) return this.reject(conn, 'PARTY_FULL');
+      if (this.closed) return this.reject(conn, 'PARTY_CLOSED');
+      if (this.admitted.size >= this.MAX_PLAYERS) return this.reject(conn, 'PARTY_FULL');
       this.admitted.add(conn.id);
       this.send(conn, {
         type: 'welcome',
         role: 'joiner',
+        id: conn.id,
         track: this.track,
         weather: this.weather,
       });
-      const host = this.liveHost();
-      if (host) this.send(host, { type: 'peerJoined' });
+      for (const c of this.party.getConnections()) {
+        if (c.id !== conn.id && this.admitted.has(c.id)) {
+          this.send(c, { type: 'peerJoined', id: conn.id });
+        }
+      }
       return;
     }
 
@@ -72,7 +79,7 @@ export default class Server {
     if (!wasAdmitted) return;
     for (const c of this.party.getConnections()) {
       if (c.id !== conn.id && this.admitted.has(c.id)) {
-        this.send(c, { type: 'peerLeft' });
+        this.send(c, { type: 'peerLeft', id: conn.id });
       }
     }
   }
@@ -84,15 +91,18 @@ export default class Server {
     if (d && typeof d.t === 'string') {
       if ((d.t === 'track' || d.t === 'trackReq') && typeof d.track === 'number') {
         this.track = d.track;
-      } else if (d.t === 'start' && typeof d.weather === 'string') {
-        this.weather = d.weather;
+      } else if (d.t === 'start') {
+        if (typeof d.weather === 'string') this.weather = d.weather;
+        this.closed = true;
       }
     }
 
     if (!this.admitted.has(sender.id)) return;
+    if (d) d.from = sender.id;
+    const enriched = d ? JSON.stringify(d) : message;
     for (const c of this.party.getConnections()) {
       if (c.id !== sender.id && this.admitted.has(c.id)) {
-        try { c.send(message); } catch (_) {}
+        try { c.send(enriched); } catch (_) {}
       }
     }
   }
