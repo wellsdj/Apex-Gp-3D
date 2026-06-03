@@ -866,7 +866,7 @@ var mirrorCam=null;
 var _mirFwd=new THREE.Vector3(),_mirPos=new THREE.Vector3(),_mirLook=new THREE.Vector3();
 function updateCar(dt){var steps=Math.max(1,Math.min(8,Math.ceil(dt*100))),sdt=dt/steps;var W=WEATHER[selWeather];var _tf=tireFactor();var _tT=TIRES[currentTire];var effTOPMS=TOPMS*(1-getDmgPenalty())*(W.topSpdMul||1)*((_tT&&_tT.topSpdMul)||1);for(var i=0;i<steps;i++){var gas=(KY['w']||KY['arrowup'])?1:0,brk=(KY['s']||KY['arrowdown'])?1:0;var str=((KY['a']||KY['arrowleft'])?1:0)-((KY['d']||KY['arrowright'])?1:0);if(nuked){gas=1;brk=0;str=0}if(pitOpen||(raceLightsActive&&raceLightsStep<6)){gas=0;brk=0;str=0;V.x=0;V.z=0;V.y=0;AV=0;spinV=0;ST=0}var wSteer=W.steerMul;ST+=(str-ST)*Math.min(1,sdt*25);var fwd=_ucFwd.set(Math.sin(A),0,Math.cos(A)),rgt=_ucRgt.set(fwd.z,0,-fwd.x);var fs=V.dot(fwd),ls=V.dot(rgt);if(!ab){var acc=0,r=Math.abs(fs)/effTOPMS;var aM=stat0to100/5;var wAcc=W.accMul*_tf,wBrk=W.brkMul*_tf;if(gas>0){acc=50*aM*wAcc*(1-r*r*.45);if(fs<-.5)acc=30*aM*wAcc}if(brk>0){acc=fs>1?-60*(statBraking/5)*wBrk:-25*(statBraking/5)*wBrk;var bbRot=(setupBb-5)/5*0.4*Math.min(Math.abs(fs)/8,1);if(Math.abs(ST)>.1)AV+=ST*bbRot*sdt*4}acc-=fs*.18+Math.sign(fs)*.6;V.addScaledVector(fwd,acc*sdt);var wGrip=W.gripMul*_tf;V.addScaledVector(rgt,-ls*(18*(statGrip/5)*wGrip)*sdt);
       var wSlide=W.slideFactor+Math.max(0,0.85-_tf*W.gripMul)*0.35;if(wSlide>0&&Math.abs(fs)>5){var slideStr=wSlide*Math.min((Math.abs(fs)-5)/20,1);var sNoise=(Math.sin(performance.now()*.003+P.x*.3)*0.6+Math.sin(performance.now()*.006+P.z*.2)*0.4);V.addScaledVector(rgt,sNoise*slideStr*12*sdt);if(gas>0&&Math.abs(fs)>6){var wheelSpin=wSlide*0.45*Math.min(r,.6);AV+=sNoise*wheelSpin*sdt*2.2}if(Math.abs(ST)>.25&&Math.abs(fs)>8){var overStr=wSlide*Math.abs(ST)*Math.min((Math.abs(fs)-8)/15,1);AV+=ST*overStr*sdt*2.6}}
-      var sf=Math.min(Math.abs(fs)/3,1),sp=Math.abs(fs),sr=1/(1+sp*.0028+sp*sp*.00000004);var steerYaw=ST*6.5*sf*sr*Math.sign(fs+.001);AV+=(steerYaw*(1-(1-wSteer)*.5)-AV*6)*sdt*12}else{V.y-=9.8*sdt;AV*=.998}A+=AV*sdt+spinV*sdt;spinV*=(1-sdt*3);if(inPitLane&&!pitOpen){var _plim=(TRACKS[selTrack].pit&&TRACKS[selTrack].pit.speedLimit)||70;var _pitMaxV=_plim*400/130/3.6,_pitVxz=Math.sqrt(V.x*V.x+V.z*V.z);if(_pitVxz>_pitMaxV){var _ps=_pitMaxV/_pitVxz;V.x*=_ps;V.z*=_ps}}P.addScaledVector(V,sdt);doCol();if(TRACKS[selTrack]&&TRACKS[selTrack].pit){var _ptr=TRACKS[selTrack].pit,_rMid=(_ptr.roadZ1+_ptr.roadZ2)/2,_pbZ=_ptr.dividerZ+(_ptr.dividerZ>_rMid?0.4:-0.4),_pbH=CAR_HW+0.1;if(P.x>_ptr.dividerX1-_pbH&&P.x<_ptr.dividerX2+_pbH){var _pbDz=P.z-_pbZ;if(Math.abs(_pbDz)<_pbH){var _pbS=V.z>0.05?-1:(V.z<-0.05?1:(_pbDz>=0?1:-1));P.z=_pbZ+_pbS*_pbH;if((_pbS===1&&V.z<0)||(_pbS===-1&&V.z>0))V.z*=-0.2}}}if(!ab){pitchV+=-pitchA*8*sdt;pitchV*=(1-sdt*2.5);rollV+=-rollA*8*sdt;rollV*=(1-sdt*2.5)}else{pitchV*=(1-sdt*.1);rollV*=(1-sdt*.1)}pitchA+=pitchV*sdt;rollA+=rollV*sdt;if(P.y<=.8){P.y=.8;if(V.y<0)V.y=0;ab=false}else ab=true}SPD=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;car.position.copy(P);car.rotation.set(pitchA,A,rollA-ST*Math.min(SPD/120,1)*.02,'YXZ');if(car.tl)car.tl.material.emissiveIntensity=(KY['s']||KY['arrowdown'])?1.2:.2;recordGhostFrame()}
+      var sf=Math.min(Math.abs(fs)/3,1),sp=Math.abs(fs),sr=1/(1+sp*.0028+sp*sp*.00000004);var steerYaw=ST*6.5*sf*sr*Math.sign(fs+.001);AV+=(steerYaw*(1-(1-wSteer)*.5)-AV*6)*sdt*12}else{V.y-=9.8*sdt;AV*=.998}A+=AV*sdt+spinV*sdt;spinV*=(1-sdt*3);if(inPitLane&&!pitOpen){var _plim=(TRACKS[selTrack].pit&&TRACKS[selTrack].pit.speedLimit)||70;var _pitMaxV=_plim*400/130/3.6,_pitVxz=Math.sqrt(V.x*V.x+V.z*V.z);if(_pitVxz>_pitMaxV){var _ps=_pitMaxV/_pitVxz;V.x*=_ps;V.z*=_ps}}P.addScaledVector(V,sdt);doCol();if(racePhase==='race'&&opPos){var _odx=P.x-opPos.x,_odz=P.z-opPos.z,_od=Math.sqrt(_odx*_odx+_odz*_odz);if(_od<2.7&&_od>0.05){var _onx=_odx/_od,_onz=_odz/_od,_opn=2.7-_od;P.x+=_onx*_opn*0.6;P.z+=_onz*_opn*0.6;var _ovd=V.x*_onx+V.z*_onz;if(_ovd<0){V.x-=_ovd*_onx*0.65;V.z-=_ovd*_onz*0.65}V.x*=0.93;V.z*=0.93}}if(TRACKS[selTrack]&&TRACKS[selTrack].pit){var _ptr=TRACKS[selTrack].pit,_rMid=(_ptr.roadZ1+_ptr.roadZ2)/2,_pbZ=_ptr.dividerZ+(_ptr.dividerZ>_rMid?0.4:-0.4),_pbH=CAR_HW+0.1;if(P.x>_ptr.dividerX1-_pbH&&P.x<_ptr.dividerX2+_pbH){var _pbDz=P.z-_pbZ;if(Math.abs(_pbDz)<_pbH){var _pbS=V.z>0.05?-1:(V.z<-0.05?1:(_pbDz>=0?1:-1));P.z=_pbZ+_pbS*_pbH;if((_pbS===1&&V.z<0)||(_pbS===-1&&V.z>0))V.z*=-0.2}}}if(!ab){pitchV+=-pitchA*8*sdt;pitchV*=(1-sdt*2.5);rollV+=-rollA*8*sdt;rollV*=(1-sdt*2.5)}else{pitchV*=(1-sdt*.1);rollV*=(1-sdt*.1)}pitchA+=pitchV*sdt;rollA+=rollV*sdt;if(P.y<=.8){P.y=.8;if(V.y<0)V.y=0;ab=false}else ab=true}SPD=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;car.position.copy(P);car.rotation.set(pitchA,A,rollA-ST*Math.min(SPD/120,1)*.02,'YXZ');if(car.tl)car.tl.material.emissiveIntensity=(KY['s']||KY['arrowdown'])?1.2:.2;recordGhostFrame()}
 
 function doCol(){var minD=Infinity,ci=0;if(_colGrid){var gc=Math.floor((P.x-_colGridOX)/_colGridSize),gr=Math.floor((P.z-_colGridOZ)/_colGridSize);for(var gri=gr-1;gri<=gr+1;gri++)for(var gci=gc-1;gci<=gc+1;gci++){if(gri<0||gri>=_colGridRows||gci<0||gci>=_colGridCols)continue;var cell=_colGrid[gri*_colGridCols+gci];for(var gi=0;gi<cell.length;gi++){var idx=cell[gi],dx=tPts[idx].x-P.x,dz=tPts[idx].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=idx}}}}else{for(var i=0;i<tPts.length;i+=8){var dx=tPts[i].x-P.x,dz=tPts[i].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=i}}for(var i2=Math.max(0,ci-15);i2<Math.min(tPts.length,ci+15);i2++){var dx2=tPts[i2].x-P.x,dz2=tPts[i2].z-P.z,d2=dx2*dx2+dz2*dz2;if(d2<minD){minD=d2;ci=i2}}}var t=ci/tPts.length,tp=spl.getPoint(t),tn=spl.getTangent(t).normalize(),nm=_tv1.set(-tn.z,0,tn.x);var lat=_tv2.subVectors(P,tp).dot(nm),aL=Math.abs(lat),ss=Math.sign(lat);var fwd=_tv3.set(Math.sin(A),0,Math.cos(A));_tv4.copy(P).addScaledVector(fwd,3);var nL=Math.abs(_tv5.subVectors(_tv4,tp).dot(nm));carNearIdx=ci;onCurb=aL>(TW/2-1.5)&&aL<(TW/2+CWW)&&trackCurv[ci]>.015;var effWL=WL-CAR_HW;if(nL>=effWL||aL>=effWL){if(aL>=effWL){_tv6.copy(tp).addScaledVector(nm,ss*(effWL-.05));P.copy(_tv6)}var vN=V.dot(nm)*ss,spd=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;if(vN>.5){var tV=V.dot(tn),iA=Math.atan2(Math.abs(vN),Math.abs(tV));
       var displaySpd=spd*(130/400);
@@ -1464,6 +1464,8 @@ function closePit(){
 var aiCars=[],AI_COLORS=[0x44ff88,0xff8844,0xaa66ff],_aiTrackLen=0;
 function _computeTrackLen(){var l=0;for(var i=1;i<tPts.length;i++){var dx=tPts[i].x-tPts[i-1].x,dz=tPts[i].z-tPts[i-1].z;l+=Math.sqrt(dx*dx+dz*dz)}_aiTrackLen=Math.max(100,l)}
 function spawnAI(){
+  // AI disabled — user request, the spline-following AI felt wrong
+  return;
   cleanupAI();
   if(raceMode!=='endurance'||mpMode)return;
   if(!tPts||tPts.length<10||!sd||!scene)return;
@@ -1523,12 +1525,23 @@ function setRaceLaps(n){
   if(l5)l5.classList.toggle('active',n===5);
   if(l10)l10.classList.toggle('active',n===10);
 }
+function setOpponentSolid(solid){
+  if(!opCar)return;
+  opCar.traverse(function(ch){
+    if(ch.material&&ch.material.transparent!==undefined){
+      ch.material.transparent=!solid;
+      ch.material.opacity=solid?1:0.3;
+      ch.material.needsUpdate=true;
+    }
+  });
+}
 function startQualifying(){
   racePhase='quali';qualiActive=true;qualiStartedAt=performance.now();
   qualiMyBest=Infinity;qualiOpBest=Infinity;
   var ui=document.getElementById('qualiUI');if(ui)ui.classList.add('show');
   renderQualiStandings();
   D('lapCnt').textContent='QUALI';
+  setOpponentSolid(false);
 }
 function endQualifying(){
   if(!qualiActive)return;
@@ -1546,7 +1559,7 @@ function endQualifying(){
   lapN=0;lapSt=performance.now();curGhost=[];lastRecordTime=0;cpHit=0;prevCpDot=null;prevSFDot=null;
   endRaceStart=0;endFastestLap=Infinity;
   D('lapCnt').textContent='LAP 1/'+END_LAPS;
-  if(raceMode==='endurance'&&!mpConn)spawnAI();
+  setOpponentSolid(true);
   startRaceLights();
 }
 function applyGridSpawn(gridPos){
@@ -1618,7 +1631,17 @@ function getEnduranceBests(){try{return JSON.parse(localStorage.getItem('apexgp_
 function saveEnduranceBest(trackName,ms){var b=getEnduranceBests();if(!b[trackName]||ms<b[trackName]){b[trackName]=ms;localStorage.setItem('apexgp_endurance_bests',JSON.stringify(b));return true}return false}
 function getEnduranceBest(trackName){var b=getEnduranceBests();return b[trackName]||null}
 var endFastestLap=Infinity;
+function fadeAudioOut(){
+  var iv=setInterval(function(){
+    var done=true;
+    [sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){
+      if(s&&s.volume>0.01){s.volume=Math.max(0,s.volume-0.035);done=false}
+    });
+    if(done)clearInterval(iv);
+  },45);
+}
 function endEnduranceRace(totalMs,lastLapMs){
+  fadeAudioOut();
   racing=false;
   cleanupAI();
   cancelRaceLights();
