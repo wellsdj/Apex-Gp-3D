@@ -263,6 +263,12 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .tireDot{width:18px;height:18px;border-radius:50%;margin:0 auto 4px;border:1px solid rgba(0,0,0,.4)}
 .tireLbl{font-size:11px;letter-spacing:2px;color:#fff;font-weight:700}
 .pit-rec{font-size:10px;color:#3cff8c;margin-left:6px;font-weight:500;letter-spacing:1px}
+.stripe-cyc{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:3px 6px;flex:1;justify-content:center}
+.cyc-arr{background:transparent;border:none;color:#fff;cursor:pointer;font-size:14px;padding:2px 6px;font-family:'Orbitron'}
+.cyc-arr:hover{color:#ffc800}
+.cyc-lbl{font-family:'Orbitron';font-size:11px;letter-spacing:2px;color:#fff;font-weight:700;min-width:78px;text-align:center}
+#imgRemoveBtn{background:rgba(255,60,60,.3);border:1px solid rgba(255,60,60,.5);border-radius:6px;color:#fff;padding:4px 10px;font-size:12px;cursor:pointer}
+#imgRemoveBtn:hover{background:rgba(255,60,60,.5)}
 #raceLights{position:fixed;top:8%;left:50%;transform:translateX(-50%);display:none;gap:18px;z-index:350;padding:14px 22px;background:rgba(0,0,0,.6);border-radius:18px;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15)}
 #raceLights.show{display:flex}
 .rl-light{width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#3a0a0a,#1a0606 70%);border:2px solid rgba(255,255,255,.15);box-shadow:inset 0 0 14px rgba(0,0,0,.7);transition:background .1s,box-shadow .1s}
@@ -360,8 +366,8 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
       <div class="custom-preview" id="carPreview">CAR PREVIEW</div>
       <div class="custom-controls">
         <div class="custom-row"><span class="custom-lbl">COLOUR</span><input type="color" class="cpick" id="carColorPick" value="#dd1111" onchange="applyCarColor(this.value)"></div>
-        <div class="custom-row"><span class="custom-lbl">STRIPE</span><div class="tog-sm" id="stripeToggle" onclick="toggleStripe()">OFF</div><input type="color" class="cpick" id="stripeColorPick" value="#ffffff" onchange="applyStripeColor(this.value)"></div>
-        <div class="custom-row"><span class="custom-lbl">IMAGE</span><label class="img-upload-lbl" id="imgUploadLbl">UPLOAD<input type="file" accept="image/*" style="display:none" onchange="handleCarImage(event)"></label></div>
+        <div class="custom-row"><span class="custom-lbl">STRIPE</span><div class="stripe-cyc"><button class="cyc-arr" onclick="cycleStripeStyle(-1)">&#9664;</button><span class="cyc-lbl" id="stripeStyleLbl">CENTER</span><button class="cyc-arr" onclick="cycleStripeStyle(1)">&#9654;</button></div><input type="color" class="cpick" id="stripeColorPick" value="#ffffff" onchange="applyStripeColor(this.value)"></div>
+        <div class="custom-row"><span class="custom-lbl">LIVERY</span><label class="img-upload-lbl" id="imgUploadLbl">UPLOAD<input type="file" accept="image/*" style="display:none" onchange="handleCarImage(event)"></label><button class="cyc-arr" id="imgRemoveBtn" style="display:none" onclick="removeCarImage()">&#10005;</button></div>
       </div>
     </div>
   </div>
@@ -536,7 +542,8 @@ var hudShow={spd:true,lap:true,map:true,grip:true,ghost:true,opponent:true,opGho
 var buildingSpdTimer=0;
 // Car customisation
 var _saved=JSON.parse(localStorage.getItem('apexgp_custom')||'{}');
-var carBodyColor=_saved.body||0xdd1111,stripeEnabled=!!_saved.stripe,stripeColorVal=_saved.stripeCol||0xffffff,carImageTexture=null;
+var STRIPE_STYLES=['NONE','CENTER','TWIN','BOLD','V-STRIPE'];
+var carBodyColor=_saved.body||0xdd1111,stripeStyle=(typeof _saved.stripeStyle==='number'?_saved.stripeStyle:(_saved.stripe?1:0)),stripeColorVal=_saved.stripeCol||0xffffff,carImageTexture=null;
 // Performance stats
 var statTopSpeed=160,stat0to100=5,statGrip=5,statBraking=5;
 var _setupSaved=JSON.parse(localStorage.getItem('apexgp_setup')||'{}');
@@ -605,8 +612,15 @@ if(!isGhost){
 }
 g.bodyMat=rd;
 var sMat=new THREE.MeshStandardMaterial({color:stripeColorVal,roughness:.2,metalness:.6,transparent:isGhost,opacity:op});
-var sMesh=new THREE.Mesh(new THREE.BoxGeometry(.13,.015,4.6),sMat);sMesh.position.set(0,.595,-.1);sMesh.visible=stripeEnabled&&!isGhost;g.stripeMesh=sMesh;g.stripeMat=sMat;g.add(sMesh);
-if(carImageTexture&&!isGhost){var iMat=new THREE.MeshStandardMaterial({map:carImageTexture,roughness:.3,transparent:true,opacity:.95,depthWrite:false});var iMesh=new THREE.Mesh(new THREE.PlaneGeometry(1.15,2.2),iMat);iMesh.rotation.x=-Math.PI/2;iMesh.position.set(0,.585,-.15);g.imgPlane=iMesh;g.add(iMesh)}
+g.stripeMat=sMat;g.stripeMeshes=[];
+function _addStripe(geo,x,y,z,style,rotY){var m=new THREE.Mesh(geo,sMat);m.position.set(x,y,z);if(rotY)m.rotation.y=rotY;m.visible=!isGhost&&style===stripeStyle;g.add(m);g.stripeMeshes.push({s:style,m:m})}
+_addStripe(new THREE.BoxGeometry(.13,.015,4.6),0,.595,-.1,1);
+_addStripe(new THREE.BoxGeometry(.10,.015,4.6),-.18,.595,-.1,2);
+_addStripe(new THREE.BoxGeometry(.10,.015,4.6),.18,.595,-.1,2);
+_addStripe(new THREE.BoxGeometry(.32,.015,4.6),0,.595,-.1,3);
+_addStripe(new THREE.BoxGeometry(.08,.015,2.4),-.16,.595,-.1,4,-0.35);
+_addStripe(new THREE.BoxGeometry(.08,.015,2.4),.16,.595,-.1,4,0.35);
+if(carImageTexture&&!isGhost){rd.map=carImageTexture;rd.needsUpdate=true}
 return g}
 
 var woStep='cats'; // 'cats' or 'variants'
@@ -1188,7 +1202,7 @@ function drawTrackPreview(){
   frame();
 }
 // ── Customization modal ───────────────────────────────────────────────────
-function openCustom(){document.getElementById('customModal').classList.add('show');var hexColor='#'+carBodyColor.toString(16).padStart(6,'0');document.getElementById('carColorPick').value=hexColor;document.getElementById('carPreview').style.setProperty('--car-color',hexColor);document.getElementById('stripeColorPick').value='#'+stripeColorVal.toString(16).padStart(6,'0');var st=document.getElementById('stripeToggle');st.className='tog-sm'+(stripeEnabled?' on':'');st.textContent=stripeEnabled?'ON':'OFF'}
+function openCustom(){document.getElementById('customModal').classList.add('show');var hexColor='#'+carBodyColor.toString(16).padStart(6,'0');document.getElementById('carColorPick').value=hexColor;document.getElementById('carPreview').style.setProperty('--car-color',hexColor);document.getElementById('stripeColorPick').value='#'+stripeColorVal.toString(16).padStart(6,'0');var lbl=document.getElementById('stripeStyleLbl');if(lbl)lbl.textContent=STRIPE_STYLES[stripeStyle];var rb=document.getElementById('imgRemoveBtn');if(rb)rb.style.display=carImageTexture?'inline-block':'none'}
 function closeCustom(){document.getElementById('customModal').classList.remove('show');}
 // ── Settings panel ─────────────────────────────────────────────────────────
 function openSettings(){document.getElementById('settingsModal').classList.remove('hide');}
@@ -1873,7 +1887,7 @@ function resetSetup(){
 document.addEventListener('click',function(e){if(e.target.id==='setupModal')closeSetup()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('setupModal').classList.contains('show')){closeSetup();e.stopImmediatePropagation()}},true);
 // ---- Car styling ----
-function saveCustom(){localStorage.setItem('apexgp_custom',JSON.stringify({body:carBodyColor,stripe:stripeEnabled,stripeCol:stripeColorVal}))}
+function saveCustom(){localStorage.setItem('apexgp_custom',JSON.stringify({body:carBodyColor,stripeStyle:stripeStyle,stripeCol:stripeColorVal}))}
 function applyCarColor(hexStr){
   carBodyColor=parseInt(hexStr.replace('#',''),16);
   if(gCar&&gCar.bodyMat)gCar.bodyMat.color.setHex(carBodyColor);
@@ -1881,13 +1895,17 @@ function applyCarColor(hexStr){
   var el=document.getElementById('carPreview');if(el)el.style.setProperty('--car-color',hexStr);
   saveCustom();
 }
-function toggleStripe(){
-  stripeEnabled=!stripeEnabled;
-  var el=document.getElementById('stripeToggle');
-  el.className='tog-sm'+(stripeEnabled?' on':'');el.textContent=stripeEnabled?'ON':'OFF';
-  if(gCar&&gCar.stripeMesh)gCar.stripeMesh.visible=stripeEnabled;
-  if(car&&car.stripeMesh)car.stripeMesh.visible=stripeEnabled;
+function cycleStripeStyle(dir){
+  stripeStyle=(stripeStyle+dir+STRIPE_STYLES.length)%STRIPE_STYLES.length;
+  var lbl=document.getElementById('stripeStyleLbl');if(lbl)lbl.textContent=STRIPE_STYLES[stripeStyle];
+  [gCar,car].forEach(function(c){if(!c||!c.stripeMeshes)return;c.stripeMeshes.forEach(function(s){s.m.visible=(s.s===stripeStyle)})});
   saveCustom();
+}
+function removeCarImage(){
+  carImageTexture=null;
+  [gCar,car].forEach(function(c){if(!c)return;if(c.imgPlane){c.remove(c.imgPlane);c.imgPlane=null}for(var i=0;i<c.children.length;i++){var ch=c.children[i];if(ch.material&&ch.material.color&&ch.material.color.getHex()===carBodyColor){ch.material.map=null;ch.material.needsUpdate=true;break}}});
+  var lbl=document.getElementById('imgUploadLbl');if(lbl)lbl.childNodes[0].textContent='UPLOAD';
+  var rb=document.getElementById('imgRemoveBtn');if(rb)rb.style.display='none';
 }
 function applyStripeColor(hexStr){
   stripeColorVal=parseInt(hexStr.replace('#',''),16);
@@ -1899,10 +1917,11 @@ function handleCarImage(evt){
   var file=evt.target.files[0];if(!file)return;
   var url=URL.createObjectURL(file);
   new THREE.TextureLoader().load(url,function(tex){
+    tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;
     carImageTexture=tex;
-    function applyToCar(c){if(!c)return;if(c.imgPlane){c.remove(c.imgPlane);c.imgPlane=null}var iMat=new THREE.MeshStandardMaterial({map:tex,roughness:.3,transparent:true,opacity:.95,depthWrite:false});var iMesh=new THREE.Mesh(new THREE.PlaneGeometry(1.15,2.2),iMat);iMesh.rotation.x=-Math.PI/2;iMesh.position.set(0,.585,-.15);c.imgPlane=iMesh;c.add(iMesh)}
-    applyToCar(gCar);applyToCar(car);
+    [gCar,car].forEach(function(c){if(!c)return;if(c.imgPlane){c.remove(c.imgPlane);c.imgPlane=null}for(var i=0;i<c.children.length;i++){var ch=c.children[i];if(ch.material&&ch.material.color&&ch.material.color.getHex()===carBodyColor){ch.material.map=tex;ch.material.needsUpdate=true;break}}});
     var lbl=document.getElementById('imgUploadLbl');lbl.childNodes[0].textContent='\u2713 '+file.name.substring(0,14)+(file.name.length>14?'\u2026':'');
+    var rb=document.getElementById('imgRemoveBtn');if(rb)rb.style.display='inline-block';
   });
 }
 // Apply saved setup on load
@@ -2016,7 +2035,7 @@ function updateAcctUI(){
   else{btn.textContent='SIGN IN';lbl.textContent='ACCOUNT'}
 }
 function _gatherSaveData(){
-  var data={laps:totalLaps,bests:getTrackBests(),custom:{body:carBodyColor,stripe:stripeEnabled,stripeCol:stripeColorVal},setup:{df:setupDf,bb:setupBb},ghosts:{}};
+  var data={laps:totalLaps,bests:getTrackBests(),custom:{body:carBodyColor,stripeStyle:stripeStyle,stripeCol:stripeColorVal},setup:{df:setupDf,bb:setupBb},ghosts:{}};
   TRACKS.forEach(function(t){var g=getTrackGhost(t.name);if(g)data.ghosts[t.name]=g});
   return data;
 }
@@ -2024,10 +2043,10 @@ function _applySaveData(data){
   if(data.laps!=null){totalLaps=data.laps;localStorage.setItem('apexgp_laps',totalLaps)}
   if(data.bests){localStorage.setItem('apexgp_bests',JSON.stringify(data.bests))}
   if(data.custom){
-    carBodyColor=data.custom.body||0xdd1111;stripeEnabled=!!data.custom.stripe;stripeColorVal=data.custom.stripeCol||0xffffff;
+    carBodyColor=data.custom.body||0xdd1111;stripeStyle=(typeof data.custom.stripeStyle==='number')?data.custom.stripeStyle:(data.custom.stripe?1:0);stripeColorVal=data.custom.stripeCol||0xffffff;
     localStorage.setItem('apexgp_custom',JSON.stringify(data.custom));
     if(gCar&&gCar.bodyMat)gCar.bodyMat.color.setHex(carBodyColor);
-    if(gCar&&gCar.stripeMesh)gCar.stripeMesh.visible=stripeEnabled;
+    [gCar,car].forEach(function(c){if(!c||!c.stripeMeshes)return;c.stripeMeshes.forEach(function(s){s.m.visible=(s.s===stripeStyle)})});
   }
   if(data.setup){
     setupDf=data.setup.df!=null?data.setup.df:5;setupBb=data.setup.bb!=null?data.setup.bb:5;
