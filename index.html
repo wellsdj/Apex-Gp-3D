@@ -737,7 +737,7 @@ function toggleRaceSound(){
 function toggleGhost(){ghostMode=(ghostMode+1)%3;var btn=document.getElementById('ghostBtn');if(ghostMode===0){btn.textContent='GHOST: ON';btn.className='ghostBtn';btn.style.background='';btn.style.borderColor=''}else if(ghostMode===1){btn.textContent='GHOST: BEST';btn.className='ghostBtn';btn.style.background='rgba(200,170,0,.4)';btn.style.borderColor='rgba(200,170,0,.3)'}else{btn.textContent='GHOST: OFF';btn.className='ghostBtn off';btn.style.background='';btn.style.borderColor=''}if(ghostCar)ghostCar.visible=ghostMode===0&&ghostPlaying;if(allTimeCar)allTimeCar.visible=ghostMode===1&&allTimeGhostPlaying}
 function showGarage(){mRun=false;document.getElementById('menuScreen').classList.add('hide');document.getElementById('garageScreen').classList.remove('hide');initGarage();startLobbyMusic();drawTrackPreview();checkRankUp();if(mpMode==='join'&&mpConn){document.getElementById('startBtn').textContent='WAITING FOR HOST...';document.getElementById('startBtn').style.pointerEvents='none';document.getElementById('startBtn').style.opacity='0.5'}else{document.getElementById('startBtn').textContent='RACE';document.getElementById('startBtn').style.pointerEvents='';document.getElementById('startBtn').style.opacity=''}}
 function backToMenu(){racing=false;gRun=false;document.getElementById('hudScreen').classList.add('hide');document.getElementById('garageScreen').classList.add('hide');document.getElementById('menuScreen').classList.remove('hide');mRun=true;initMenu();startLobbyMusic();}
-function startDrive(){if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}fadeLobbyMusic();gRun=false;document.getElementById('garageScreen').classList.add('hide');document.getElementById('hudScreen').classList.remove('hide');applyHUD();initRace();resetCar();racing=true;raceStartedAt=performance.now();audioStarted=false;prevEngineActive=false;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;s.currentTime=0;});clk.getDelta();opPos=null;opPrevPos=null;opGhostFrame=0;lastMpSend=0;opSpd=0;opLapT=-1;opLapTRcvAt=0;resetNuke();resetBlackout();closePit();recentlyPitted=false;resetTiresForRace();endRaceStart=0;endFastestLap=Infinity;cleanupAI();cancelQualifying();if(raceMode==='endurance'){startQualifying()}else{startRaceLights()}if(pendingLightsDelay===null)pendingLightsDelay=1000+Math.random()*4000;if(mpMode==='host'&&mpSocket){mpSend({t:'start',weather:selWeather,track:selTrack,lightsDelay:pendingLightsDelay,laps:END_LAPS,mode:raceMode})}if(opBestGhost.length>1&&tPts){opGhostTimeLookup=buildGhostLookupGeneric(opBestGhost)}allTimeGhost=getTrackGhost(TRACKS[selTrack].name)||[];allTimeGhostPlaying=allTimeGhost.length>1;allTimeGhostFrame=0;allTimeGhostLookup=allTimeGhostPlaying?buildGhostLookupGeneric(allTimeGhost):null}
+function startDrive(){if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}fadeLobbyMusic();gRun=false;document.getElementById('garageScreen').classList.add('hide');document.getElementById('hudScreen').classList.remove('hide');applyHUD();initRace();resetCar();racing=true;raceStartedAt=performance.now();audioStarted=false;prevEngineActive=false;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;s.currentTime=0;});clk.getDelta();opPos=null;opPrevPos=null;opGhostFrame=0;lastMpSend=0;opSpd=0;opLapT=-1;opLapTRcvAt=0;resetNuke();resetBlackout();closePit();recentlyPitted=false;resetTiresForRace();endRaceStart=0;endFastestLap=Infinity;cleanupAI();cancelQualifying();if(raceMode==='endurance'){startQualifying()}/* TT = free practice — no 5-light start */if(pendingLightsDelay===null)pendingLightsDelay=1000+Math.random()*4000;if(mpMode==='host'&&mpSocket){mpSend({t:'start',weather:selWeather,track:selTrack,lightsDelay:pendingLightsDelay,laps:END_LAPS,mode:raceMode})}if(opBestGhost.length>1&&tPts){opGhostTimeLookup=buildGhostLookupGeneric(opBestGhost)}allTimeGhost=getTrackGhost(TRACKS[selTrack].name)||[];allTimeGhostPlaying=allTimeGhost.length>1;allTimeGhostFrame=0;allTimeGhostLookup=allTimeGhostPlaying?buildGhostLookupGeneric(allTimeGhost):null}
 
 function buildScene(){var T=TRACKS[selTrack],W=WEATHER[selWeather];WP=T.wp;scene=new THREE.Scene();
 var skC=W.skyOver!==null?W.skyOver:T.sky,fgC=W.fogOver!==null?W.fogOver:T.fog;
@@ -1279,7 +1279,7 @@ function closeCustom(){document.getElementById('customModal').classList.remove('
 // ── Settings panel ─────────────────────────────────────────────────────────
 var reviewMode=false,reviewFrames=[],reviewStartTime=0;
 // ── Voice chat (WebRTC) ──────────────────────────────────────────────────
-var voiceChatEnabled=true,voiceChatPromptDone=false,voiceChatStream=null,voicePeerConn=null,voiceAudioEl=null,voiceVolume=0.8,_voicePopupHideTimer=null,_voiceKeyP=false;
+var voiceChatEnabled=true,voiceChatPromptDone=false,voiceChatStream=null,voicePeerConn=null,voiceAudioEl=null,voiceVolume=1.0,_voicePopupHideTimer=null,_voiceKeyP=false;
 function showVoicePopup(){
   var p=document.getElementById('voicePopup');if(!p)return;
   p.classList.add('show');
@@ -1291,13 +1291,13 @@ function showVoicePopup(){
 function setVoiceVolume(v){voiceVolume=v;if(voiceAudioEl)voiceAudioEl.volume=voiceVolume}
 function ensureVoiceMic(cb){
   if(voiceChatStream){cb(voiceChatStream);return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){if(!voiceChatPromptDone)alert('Voice chat not supported in this browser');voiceChatPromptDone=true;cb(null);return}
   if(voiceChatPromptDone){cb(null);return}
   voiceChatPromptDone=true;
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Voice chat not supported in this browser');cb(null);return}
-  if(!confirm('Voice chat lets you talk to your party. Allow microphone access?')){cb(null);return}
+  if(!confirm('🎙 Voice chat: allow microphone access so you can talk to your party?')){voiceChatEnabled=false;cb(null);return}
   navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})
-    .then(function(stream){voiceChatStream=stream;cb(stream)})
-    .catch(function(e){console.warn('mic denied',e);voiceChatEnabled=false;cb(null)});
+    .then(function(stream){voiceChatStream=stream;console.log('mic granted, tracks:',stream.getAudioTracks().length);cb(stream)})
+    .catch(function(e){console.warn('mic denied',e);voiceChatEnabled=false;alert('Microphone access denied. Press V to try again.');cb(null)});
 }
 function startVoicePeer(){
   if(voicePeerConn||!voiceChatStream||!mpConn)return;
@@ -1305,10 +1305,13 @@ function startVoicePeer(){
   voicePeerConn=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
   voiceChatStream.getTracks().forEach(function(t){voicePeerConn.addTrack(t,voiceChatStream)});
   voicePeerConn.ontrack=function(e){
-    if(!voiceAudioEl){voiceAudioEl=new Audio();voiceAudioEl.autoplay=true;document.body.appendChild(voiceAudioEl)}
+    if(!voiceAudioEl){voiceAudioEl=new Audio();voiceAudioEl.autoplay=true;voiceAudioEl.playsInline=true;document.body.appendChild(voiceAudioEl)}
     voiceAudioEl.srcObject=e.streams[0];
     voiceAudioEl.volume=voiceVolume;
+    voiceAudioEl.muted=!voiceChatEnabled;
+    voiceAudioEl.play().then(function(){console.log('voice audio playing')}).catch(function(err){console.warn('voice audio play blocked — press V',err)});
   };
+  voicePeerConn.oniceconnectionstatechange=function(){console.log('voice ICE:',voicePeerConn.iceConnectionState)};
   voicePeerConn.onicecandidate=function(e){if(e.candidate&&mpSocket){try{mpSend({t:'iceCand',cand:e.candidate.toJSON()})}catch(_){}}};
   if(mpMode==='host'){
     voicePeerConn.createOffer().then(function(o){return voicePeerConn.setLocalDescription(o)}).then(function(){
@@ -1319,8 +1322,8 @@ function startVoicePeer(){
 function toggleVoiceChat(){
   voiceChatEnabled=!voiceChatEnabled;
   if(voiceChatStream)voiceChatStream.getAudioTracks().forEach(function(t){t.enabled=voiceChatEnabled});
-  if(voiceAudioEl)voiceAudioEl.muted=!voiceChatEnabled;
-  if(voiceChatEnabled&&!voicePeerConn&&mpConn)ensureVoiceMic(function(s){if(s)startVoicePeer()});
+  if(voiceAudioEl){voiceAudioEl.muted=!voiceChatEnabled;if(voiceChatEnabled)voiceAudioEl.play().catch(function(){})}
+  if(voiceChatEnabled&&!voicePeerConn&&mpConn){voiceChatPromptDone=false;ensureVoiceMic(function(s){if(s)startVoicePeer()})}
   showVoicePopup();
 }
 function autoEnableVoice(){if(!mpConn)return;ensureVoiceMic(function(s){if(s)startVoicePeer()})}
@@ -1469,6 +1472,7 @@ function mpSendHello(){
   mpSend({t:'hello',name:getPlayerName(),ghost:myGhost.length>200?[]:myGhost,best:myBest});
 }
 function createParty(){
+  ensureVoiceMic(function(){});
   mpCleanup();
   mpCode=genCode();mpMode='host';mpSlot='host';mpShowUI('mpHosting');
   document.getElementById('mpCode').textContent=mpCode;
@@ -1492,6 +1496,7 @@ function showJoinUI(){mpShowUI('mpJoining');document.getElementById('mpCodeInput
 function joinParty(){
   var code=document.getElementById('mpCodeInput').value.trim().toUpperCase();
   if(code.length!==5){document.getElementById('mpJoinStatus').textContent='Enter 5-char code';return}
+  ensureVoiceMic(function(){});
   mpCleanup();
   mpCode=code;mpMode='join';mpSlot='joiner';
   document.getElementById('mpJoinStatus').textContent='Connecting...';
