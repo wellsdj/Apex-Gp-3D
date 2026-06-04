@@ -12,7 +12,7 @@ export default class Server {
     this.weather = 'dry';
     this.admitted = new Set();
     this.closed = false;
-    this.MAX_PLAYERS = 8;
+    this.MAX_PLAYERS = 4;
   }
 
   liveHost() {
