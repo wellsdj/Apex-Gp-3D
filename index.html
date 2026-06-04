@@ -269,6 +269,20 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .cyc-lbl{font-family:'Orbitron';font-size:11px;letter-spacing:2px;color:#fff;font-weight:700;min-width:78px;text-align:center}
 #imgRemoveBtn{background:rgba(255,60,60,.3);border:1px solid rgba(255,60,60,.5);border-radius:6px;color:#fff;padding:4px 10px;font-size:12px;cursor:pointer}
 #imgRemoveBtn:hover{background:rgba(255,60,60,.5)}
+#controlsModal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:750;backdrop-filter:blur(10px)}
+#controlsModal.show{display:flex}
+.ctrl-box{background:rgba(15,15,20,.96);border:1px solid rgba(255,200,0,.5);border-radius:14px;padding:32px 44px;min-width:380px;text-align:center;font-family:'Orbitron';position:relative}
+.ctrl-close{position:absolute;top:12px;right:16px;background:transparent;border:none;color:rgba(255,255,255,.8);font-size:20px;cursor:pointer}
+.ctrl-close:hover{color:#fff}
+.ctrl-title{font-size:18px;font-weight:900;letter-spacing:6px;color:#ffc800;margin-bottom:22px}
+.ctrl-row{display:flex;align-items:center;justify-content:space-between;padding:11px 6px;gap:14px;border-bottom:1px solid rgba(255,255,255,.06)}
+.ctrl-act{font-size:12px;letter-spacing:2px;color:rgba(255,255,255,.85);font-weight:600;flex:1;text-align:left}
+.ctrl-key{font-size:13px;font-weight:800;background:rgba(255,255,255,.1);padding:6px 14px;border-radius:5px;color:#fff;min-width:60px;text-align:center;letter-spacing:1px}
+.ctrl-key.listening{background:rgba(255,200,0,.35);color:#ffc800;animation:ctrlPulse 0.7s infinite alternate}
+@keyframes ctrlPulse{from{background:rgba(255,200,0,.25)}to{background:rgba(255,200,0,.5)}}
+.ctrl-btn{background:rgba(0,200,100,.7);color:#000;border:none;padding:6px 14px;font-family:'Orbitron';font-size:10px;font-weight:700;letter-spacing:2px;border-radius:5px;cursor:pointer}
+.ctrl-btn:hover{background:rgba(0,255,140,.9)}
+.ctrl-hint{margin-top:18px;font-size:10px;color:rgba(255,255,255,.5);letter-spacing:1px}
 #raceLbUI{position:fixed;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.82);border:1px solid rgba(0,200,120,.55);border-radius:10px;padding:9px 18px;display:none;z-index:340;backdrop-filter:blur(8px);min-width:280px;text-align:center;font-family:'Orbitron'}
 #raceLbUI.show{display:block}
 #raceLbUI .quali-title{color:#3cff8c}
@@ -351,6 +365,7 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 <div id="qualiUI"><div class="quali-title">QUALIFYING<span class="quali-time" id="qualiTime">3:00</span></div><div class="quali-standings" id="qualiStandings"></div></div>
 <div id="raceLbUI"><div class="quali-title">LIVE STANDINGS</div><div class="quali-standings" id="raceLbStandings"></div></div>
 <div id="raceLights"><div class="rl-light" id="rl1"></div><div class="rl-light" id="rl2"></div><div class="rl-light" id="rl3"></div><div class="rl-light" id="rl4"></div><div class="rl-light" id="rl5"></div></div>
+<div id="controlsModal"><div class="ctrl-box"><button class="ctrl-close" onclick="closeControls()">&#10005;</button><div class="ctrl-title">EDIT CONTROLS</div><div class="ctrl-row"><span class="ctrl-act">ACCELERATE</span><span class="ctrl-key" id="key_accel">W</span><button class="ctrl-btn" onclick="startRebind('accel')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">BRAKE</span><span class="ctrl-key" id="key_brake">S</span><button class="ctrl-btn" onclick="startRebind('brake')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">STEER LEFT</span><span class="ctrl-key" id="key_left">A</span><button class="ctrl-btn" onclick="startRebind('left')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">STEER RIGHT</span><span class="ctrl-key" id="key_right">D</span><button class="ctrl-btn" onclick="startRebind('right')">EDIT</button></div><div class="ctrl-hint">Arrow keys always work as backup. Press a key after EDIT — Esc cancels.</div></div></div>
 <div id="endResultOv"><div class="end-box"><div class="end-title">RACE COMPLETE</div><div class="end-new" id="endResNew">★ NEW PERSONAL BEST ★</div><div class="end-stat"><div class="end-lbl">TOTAL TIME</div><div class="end-val" id="endResTotal">--:--.---</div></div><div class="end-stat"><div class="end-lbl">BEST EVER</div><div class="end-val" id="endResBest">--:--.---</div></div><div class="end-stat"><div class="end-lbl">FASTEST LAP</div><div class="end-val" id="endResFastest">--:--.---</div></div><button class="pit-leave" onclick="dismissEndResult()">RETURN TO GARAGE</button></div></div>
 <div id="pitModal"><div class="pit-box"><div class="pit-title">PIT BOX</div><div class="pit-section">TIRE COMPOUND<span class="pit-rec" id="pitRec"></span></div><div class="tire-row" id="tireRow"></div><div class="pit-section">DOWNFORCE</div><div class="pit-setup-row"><div class="pit-setup-header"><span>LEVEL</span><span class="pit-setup-val" id="pitDfVal">BALANCED</span></div><input type="range" class="pit-slider" id="pitDf" min="0" max="10" value="5" oninput="onPitSetupChange()"><div class="pit-setup-labels"><span class="pit-setup-lbl">LOW DRAG</span><span class="pit-setup-lbl">MAX GRIP</span></div></div><div class="pit-section">BRAKE BIAS</div><div class="pit-setup-row"><div class="pit-setup-header"><span>BIAS</span><span class="pit-setup-val" id="pitBbVal">50:50</span></div><input type="range" class="pit-slider" id="pitBb" min="0" max="10" value="5" oninput="onPitSetupChange()"><div class="pit-setup-labels"><span class="pit-setup-lbl">FRONT</span><span class="pit-setup-lbl">REAR</span></div></div><button class="pit-leave" onclick="leavePit()">LEAVE PIT — DRIVE OFF</button></div></div>
 <div id="setupModal">
@@ -405,6 +420,10 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
       </div>
     </div>
     <div class="sett-row" style="margin-top:8px;border-top:1px solid rgba(255,255,255,.06);padding-top:18px">
+      <span class="sett-lbl">CONTROLS</span>
+      <button class="sett-acct-btn" onclick="closeSettings();openControls()">EDIT</button>
+    </div>
+    <div class="sett-row">
       <span class="sett-lbl" id="settAcctLbl">ACCOUNT</span>
       <button class="sett-acct-btn" id="settAcctBtn" onclick="closeSettings();openAuth()">SIGN IN</button>
     </div>
@@ -869,9 +888,9 @@ var onCurb=false,curbShakeT=0;
 // ── Rear view mirror ──
 var mirrorCam=null;
 var _mirFwd=new THREE.Vector3(),_mirPos=new THREE.Vector3(),_mirLook=new THREE.Vector3();
-function updateCar(dt){var steps=Math.max(1,Math.min(8,Math.ceil(dt*100))),sdt=dt/steps;var W=WEATHER[selWeather];var _tf=tireFactor();var _tT=TIRES[currentTire];var effTOPMS=TOPMS*(1-getDmgPenalty())*(W.topSpdMul||1)*((_tT&&_tT.topSpdMul)||1);for(var i=0;i<steps;i++){var gas=(KY['w']||KY['arrowup'])?1:0,brk=(KY['s']||KY['arrowdown'])?1:0;var str=((KY['a']||KY['arrowleft'])?1:0)-((KY['d']||KY['arrowright'])?1:0);if(nuked){gas=1;brk=0;str=0}if(pitOpen||(raceLightsActive&&raceLightsStep<6)){gas=0;brk=0;str=0;V.x=0;V.z=0;V.y=0;AV=0;spinV=0;ST=0}var wSteer=W.steerMul;ST+=(str-ST)*Math.min(1,sdt*25);var fwd=_ucFwd.set(Math.sin(A),0,Math.cos(A)),rgt=_ucRgt.set(fwd.z,0,-fwd.x);var fs=V.dot(fwd),ls=V.dot(rgt);if(!ab){var acc=0,r=Math.abs(fs)/effTOPMS;var aM=stat0to100/5;var wAcc=W.accMul*_tf,wBrk=W.brkMul*_tf;if(gas>0){acc=50*aM*wAcc*(1-r*r*.45);if(fs<-.5)acc=30*aM*wAcc}if(brk>0){acc=fs>1?-60*(statBraking/5)*wBrk:-25*(statBraking/5)*wBrk;var bbRot=(setupBb-5)/5*0.4*Math.min(Math.abs(fs)/8,1);if(Math.abs(ST)>.1)AV+=ST*bbRot*sdt*4}acc-=fs*.18+Math.sign(fs)*.6;V.addScaledVector(fwd,acc*sdt);var wGrip=W.gripMul*_tf;V.addScaledVector(rgt,-ls*(18*(statGrip/5)*wGrip)*sdt);
+function updateCar(dt){var steps=Math.max(1,Math.min(8,Math.ceil(dt*100))),sdt=dt/steps;var W=WEATHER[selWeather];var _tf=tireFactor();var _tT=TIRES[currentTire];var effTOPMS=TOPMS*(1-getDmgPenalty())*(W.topSpdMul||1)*((_tT&&_tT.topSpdMul)||1);for(var i=0;i<steps;i++){var gas=(KY[keyBindings.accel]||KY['arrowup'])?1:0,brk=(KY[keyBindings.brake]||KY['arrowdown'])?1:0;var str=((KY[keyBindings.left]||KY['arrowleft'])?1:0)-((KY[keyBindings.right]||KY['arrowright'])?1:0);if(nuked){gas=1;brk=0;str=0}if(pitOpen||(raceLightsActive&&raceLightsStep<6)){gas=0;brk=0;str=0;V.x=0;V.z=0;V.y=0;AV=0;spinV=0;ST=0}var wSteer=W.steerMul;ST+=(str-ST)*Math.min(1,sdt*25);var fwd=_ucFwd.set(Math.sin(A),0,Math.cos(A)),rgt=_ucRgt.set(fwd.z,0,-fwd.x);var fs=V.dot(fwd),ls=V.dot(rgt);if(!ab){var acc=0,r=Math.abs(fs)/effTOPMS;var aM=stat0to100/5;var wAcc=W.accMul*_tf,wBrk=W.brkMul*_tf;if(gas>0){acc=50*aM*wAcc*(1-r*r*.45);if(fs<-.5)acc=30*aM*wAcc}if(brk>0){acc=fs>1?-60*(statBraking/5)*wBrk:-25*(statBraking/5)*wBrk;var bbRot=(setupBb-5)/5*0.4*Math.min(Math.abs(fs)/8,1);if(Math.abs(ST)>.1)AV+=ST*bbRot*sdt*4}acc-=fs*.18+Math.sign(fs)*.6;V.addScaledVector(fwd,acc*sdt);var wGrip=W.gripMul*_tf;V.addScaledVector(rgt,-ls*(18*(statGrip/5)*wGrip)*sdt);
       var wSlide=W.slideFactor+Math.max(0,0.85-_tf*W.gripMul)*0.35;if(wSlide>0&&Math.abs(fs)>5){var slideStr=wSlide*Math.min((Math.abs(fs)-5)/20,1);var sNoise=(Math.sin(performance.now()*.003+P.x*.3)*0.6+Math.sin(performance.now()*.006+P.z*.2)*0.4);V.addScaledVector(rgt,sNoise*slideStr*12*sdt);if(gas>0&&Math.abs(fs)>6){var wheelSpin=wSlide*0.45*Math.min(r,.6);AV+=sNoise*wheelSpin*sdt*2.2}if(Math.abs(ST)>.25&&Math.abs(fs)>8){var overStr=wSlide*Math.abs(ST)*Math.min((Math.abs(fs)-8)/15,1);AV+=ST*overStr*sdt*2.6}}
-      var sf=Math.min(Math.abs(fs)/3,1),sp=Math.abs(fs),sr=1/(1+sp*.0028+sp*sp*.00000004);var steerYaw=ST*6.5*sf*sr*Math.sign(fs+.001);AV+=(steerYaw*(1-(1-wSteer)*.5)-AV*6)*sdt*12}else{V.y-=9.8*sdt;AV*=.998}A+=AV*sdt+spinV*sdt;spinV*=(1-sdt*3);if(inPitLane&&!pitOpen){var _plim=(TRACKS[selTrack].pit&&TRACKS[selTrack].pit.speedLimit)||70;var _pitMaxV=_plim*400/130/3.6,_pitVxz=Math.sqrt(V.x*V.x+V.z*V.z);if(_pitVxz>_pitMaxV){var _ps=_pitMaxV/_pitVxz;V.x*=_ps;V.z*=_ps}}P.addScaledVector(V,sdt);doCol();if(racePhase==='race'&&opPos){var _odx=P.x-opPos.x,_odz=P.z-opPos.z,_od=Math.sqrt(_odx*_odx+_odz*_odz),_minD=2.8;if(_od<_minD&&_od>0.05){var _onx=_odx/_od,_onz=_odz/_od,_pen=_minD-_od;P.x+=_onx*_pen;P.z+=_onz*_pen;var _ovx=opVel?opVel.x:0,_ovz=opVel?opVel.z:0;var _rvN=(V.x-_ovx)*_onx+(V.z-_ovz)*_onz;if(_rvN<0){var _imp=-(1+0.45)*_rvN;V.x+=_imp*_onx;V.z+=_imp*_onz;var _impactKph=Math.abs(_rvN)*3.6*130/400;if(_impactKph>40)applyDamage(_impactKph,0.4,0);if(_impactKph>15)playCrash(Math.min(1,_impactKph/80))}}}if(TRACKS[selTrack]&&TRACKS[selTrack].pit){var _ptr=TRACKS[selTrack].pit,_rMid=(_ptr.roadZ1+_ptr.roadZ2)/2,_pbZ=_ptr.dividerZ+(_ptr.dividerZ>_rMid?0.4:-0.4),_pbH=CAR_HW+0.1;if(P.x>_ptr.dividerX1-_pbH&&P.x<_ptr.dividerX2+_pbH){var _pbDz=P.z-_pbZ;if(Math.abs(_pbDz)<_pbH){var _pbS=V.z>0.05?-1:(V.z<-0.05?1:(_pbDz>=0?1:-1));P.z=_pbZ+_pbS*_pbH;if((_pbS===1&&V.z<0)||(_pbS===-1&&V.z>0))V.z*=-0.2}}}if(!ab){pitchV+=-pitchA*8*sdt;pitchV*=(1-sdt*2.5);rollV+=-rollA*8*sdt;rollV*=(1-sdt*2.5)}else{pitchV*=(1-sdt*.1);rollV*=(1-sdt*.1)}pitchA+=pitchV*sdt;rollA+=rollV*sdt;if(P.y<=.8){P.y=.8;if(V.y<0)V.y=0;ab=false}else ab=true}SPD=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;car.position.copy(P);car.rotation.set(pitchA,A,rollA-ST*Math.min(SPD/120,1)*.02,'YXZ');if(car.tl)car.tl.material.emissiveIntensity=(KY['s']||KY['arrowdown'])?1.2:.2;recordGhostFrame()}
+      var sf=Math.min(Math.abs(fs)/3,1),sp=Math.abs(fs),sr=1/(1+sp*.0028+sp*sp*.00000004);var steerYaw=ST*6.5*sf*sr*Math.sign(fs+.001);AV+=(steerYaw*(1-(1-wSteer)*.5)-AV*6)*sdt*12}else{V.y-=9.8*sdt;AV*=.998}A+=AV*sdt+spinV*sdt;spinV*=(1-sdt*3);if(inPitLane&&!pitOpen){var _plim=(TRACKS[selTrack].pit&&TRACKS[selTrack].pit.speedLimit)||70;var _pitMaxV=_plim*400/130/3.6,_pitVxz=Math.sqrt(V.x*V.x+V.z*V.z);if(_pitVxz>_pitMaxV){var _ps=_pitMaxV/_pitVxz;V.x*=_ps;V.z*=_ps}}P.addScaledVector(V,sdt);doCol();if(racePhase==='race'&&opPos){var _odx=P.x-opPos.x,_odz=P.z-opPos.z,_od=Math.sqrt(_odx*_odx+_odz*_odz),_minD=2.8;if(_od<_minD&&_od>0.05){var _onx=_odx/_od,_onz=_odz/_od,_pen=_minD-_od;P.x+=_onx*_pen;P.z+=_onz*_pen;var _ovx=opVel?opVel.x:0,_ovz=opVel?opVel.z:0;var _rvN=(V.x-_ovx)*_onx+(V.z-_ovz)*_onz;if(_rvN<0){var _imp=-(1+0.45)*_rvN;V.x+=_imp*_onx;V.z+=_imp*_onz;var _impactKph=Math.abs(_rvN)*3.6*130/400;if(_impactKph>40)applyDamage(_impactKph,0.4,0);if(_impactKph>15)playCrash(Math.min(1,_impactKph/80))}}}if(TRACKS[selTrack]&&TRACKS[selTrack].pit){var _ptr=TRACKS[selTrack].pit,_rMid=(_ptr.roadZ1+_ptr.roadZ2)/2,_pbZ=_ptr.dividerZ+(_ptr.dividerZ>_rMid?0.4:-0.4),_pbH=CAR_HW+0.1;if(P.x>_ptr.dividerX1-_pbH&&P.x<_ptr.dividerX2+_pbH){var _pbDz=P.z-_pbZ;if(Math.abs(_pbDz)<_pbH){var _pbS=V.z>0.05?-1:(V.z<-0.05?1:(_pbDz>=0?1:-1));P.z=_pbZ+_pbS*_pbH;if((_pbS===1&&V.z<0)||(_pbS===-1&&V.z>0))V.z*=-0.2}}}if(!ab){pitchV+=-pitchA*8*sdt;pitchV*=(1-sdt*2.5);rollV+=-rollA*8*sdt;rollV*=(1-sdt*2.5)}else{pitchV*=(1-sdt*.1);rollV*=(1-sdt*.1)}pitchA+=pitchV*sdt;rollA+=rollV*sdt;if(P.y<=.8){P.y=.8;if(V.y<0)V.y=0;ab=false}else ab=true}SPD=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;car.position.copy(P);car.rotation.set(pitchA,A,rollA-ST*Math.min(SPD/120,1)*.02,'YXZ');if(car.tl)car.tl.material.emissiveIntensity=(KY[keyBindings.brake]||KY['arrowdown'])?1.2:.2;recordGhostFrame()}
 
 function doCol(){var minD=Infinity,ci=0;if(_colGrid){var gc=Math.floor((P.x-_colGridOX)/_colGridSize),gr=Math.floor((P.z-_colGridOZ)/_colGridSize);for(var gri=gr-1;gri<=gr+1;gri++)for(var gci=gc-1;gci<=gc+1;gci++){if(gri<0||gri>=_colGridRows||gci<0||gci>=_colGridCols)continue;var cell=_colGrid[gri*_colGridCols+gci];for(var gi=0;gi<cell.length;gi++){var idx=cell[gi],dx=tPts[idx].x-P.x,dz=tPts[idx].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=idx}}}}else{for(var i=0;i<tPts.length;i+=8){var dx=tPts[i].x-P.x,dz=tPts[i].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=i}}for(var i2=Math.max(0,ci-15);i2<Math.min(tPts.length,ci+15);i2++){var dx2=tPts[i2].x-P.x,dz2=tPts[i2].z-P.z,d2=dx2*dx2+dz2*dz2;if(d2<minD){minD=d2;ci=i2}}}var t=ci/tPts.length,tp=spl.getPoint(t),tn=spl.getTangent(t).normalize(),nm=_tv1.set(-tn.z,0,tn.x);var lat=_tv2.subVectors(P,tp).dot(nm),aL=Math.abs(lat),ss=Math.sign(lat);var fwd=_tv3.set(Math.sin(A),0,Math.cos(A));_tv4.copy(P).addScaledVector(fwd,3);var nL=Math.abs(_tv5.subVectors(_tv4,tp).dot(nm));carNearIdx=ci;onCurb=aL>(TW/2-1.5)&&aL<(TW/2+CWW)&&trackCurv[ci]>.015;var effWL=WL-CAR_HW;if(nL>=effWL||aL>=effWL){if(aL>=effWL){_tv6.copy(tp).addScaledVector(nm,ss*(effWL-.05));P.copy(_tv6)}var vN=V.dot(nm)*ss,spd=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;if(vN>.5){var tV=V.dot(tn),iA=Math.atan2(Math.abs(vN),Math.abs(tV));
       var displaySpd=spd*(130/400);
@@ -1232,6 +1251,33 @@ function drawTrackPreview(){
 function openCustom(){document.getElementById('customModal').classList.add('show');var hexColor='#'+carBodyColor.toString(16).padStart(6,'0');document.getElementById('carColorPick').value=hexColor;document.getElementById('carPreview').style.setProperty('--car-color',hexColor);document.getElementById('stripeColorPick').value='#'+stripeColorVal.toString(16).padStart(6,'0');var lbl=document.getElementById('stripeStyleLbl');if(lbl)lbl.textContent=STRIPE_STYLES[stripeStyle];var rb=document.getElementById('imgRemoveBtn');if(rb)rb.style.display=carImageTexture?'inline-block':'none'}
 function closeCustom(){document.getElementById('customModal').classList.remove('show');}
 // ── Settings panel ─────────────────────────────────────────────────────────
+var keyBindings={accel:'w',brake:'s',left:'a',right:'d'};
+try{var _kb=JSON.parse(localStorage.getItem('apexgp_keys')||'null');if(_kb&&_kb.accel&&_kb.brake&&_kb.left&&_kb.right)keyBindings=_kb}catch(e){}
+var rebindAction=null;
+function saveBindings(){try{localStorage.setItem('apexgp_keys',JSON.stringify(keyBindings))}catch(e){}}
+function refreshControlsUI(){
+  ['accel','brake','left','right'].forEach(function(a){
+    var el=document.getElementById('key_'+a);
+    if(!el)return;
+    if(rebindAction===a){el.textContent='PRESS KEY';el.classList.add('listening')}
+    else{el.textContent=keyBindings[a].toUpperCase();el.classList.remove('listening')}
+  });
+}
+function openControls(){document.getElementById('controlsModal').classList.add('show');refreshControlsUI()}
+function closeControls(){rebindAction=null;document.getElementById('controlsModal').classList.remove('show');refreshControlsUI()}
+function startRebind(action){rebindAction=action;refreshControlsUI()}
+document.addEventListener('keydown',function(e){
+  if(!rebindAction)return;
+  var k=e.key.toLowerCase();
+  if(k==='escape'){rebindAction=null;refreshControlsUI();e.preventDefault();return}
+  if(k===' ')k='space';
+  var conflict=null;
+  Object.keys(keyBindings).forEach(function(a){if(a!==rebindAction&&keyBindings[a]===k)conflict=a});
+  if(conflict){alert('"'+k.toUpperCase()+'" is already bound to '+conflict.toUpperCase()+'. Pick a different key.');e.preventDefault();return}
+  keyBindings[rebindAction]=k;saveBindings();
+  rebindAction=null;refreshControlsUI();
+  e.preventDefault();e.stopImmediatePropagation();
+},true);
 function openSettings(){document.getElementById('settingsModal').classList.remove('hide');}
 function closeSettings(){document.getElementById('settingsModal').classList.add('hide');}
 function toggleSettMusic(){musicEnabled=!musicEnabled;document.getElementById('settMusicTog').classList.toggle('on',musicEnabled);if(musicEnabled){startLobbyMusic();}else{if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}sndLobby.pause();lobbyPlaying=false;}}
@@ -1838,8 +1884,8 @@ function updateSound(dt){
   if(!sfxEnabled){[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){if(s.volume>0)s.volume=Math.max(0,s.volume-dt*6)});return;}
   if(flipCrashActive||wallCrashActive){var fr=wallCrashActive?dt/1.5:dt/3;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=Math.max(0,s.volume-fr);});return;}
   startAudio();
-  var gas=(KY['w']||KY['arrowup']);
-  var brk=(KY['s']||KY['arrowdown']);
+  var gas=(KY[keyBindings.accel]||KY['arrowup']);
+  var brk=(KY[keyBindings.brake]||KY['arrowdown']);
   var displaySpd=SPD*(130/400);
   var moving=SPD>1.5;
   var spd=Math.min(1,displaySpd/160);
