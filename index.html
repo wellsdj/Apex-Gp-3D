@@ -271,6 +271,14 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 #imgRemoveBtn:hover{background:rgba(255,60,60,.5)}
 .review-btn{margin-top:12px;font-size:14px;background:linear-gradient(135deg,rgba(255,200,0,.45),rgba(220,160,0,.3));border:1px solid rgba(255,200,0,.5)}
 .review-btn:hover{background:linear-gradient(135deg,rgba(255,220,40,.6),rgba(240,180,0,.45));border-color:rgba(255,220,40,.7)}
+#voicePopup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(15,15,20,.96);border:1px solid rgba(60,255,140,.55);border-radius:14px;padding:22px 30px;display:none;z-index:550;font-family:'Orbitron';text-align:center;min-width:280px;backdrop-filter:blur(8px)}
+#voicePopup.show{display:block}
+.vc-title{font-size:13px;font-weight:900;letter-spacing:5px;color:#3cff8c;margin-bottom:10px}
+.vc-state{font-size:18px;color:#fff;font-weight:800;letter-spacing:4px;margin:8px 0}
+.vc-state.off{color:rgba(255,255,255,.5)}
+.vc-vol-lbl{font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.5);margin-top:10px}
+.vc-vol{width:100%;margin:6px 0;accent-color:#3cff8c}
+.vc-hint{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:1.5px;margin-top:8px}
 #reviewModal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:750;backdrop-filter:blur(10px)}
 #reviewModal.show{display:flex}
 .rv-box{background:rgba(15,15,20,.96);border:1px solid rgba(255,200,0,.5);border-radius:14px;padding:32px 38px;min-width:380px;font-family:'Orbitron';position:relative}
@@ -382,7 +390,8 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 <div id="raceLights"><div class="rl-light" id="rl1"></div><div class="rl-light" id="rl2"></div><div class="rl-light" id="rl3"></div><div class="rl-light" id="rl4"></div><div class="rl-light" id="rl5"></div></div>
 <div id="reviewModal"><div class="rv-box"><button class="ctrl-close" onclick="closeReviewMenu()">&#10005;</button><div class="rv-title">REVIEW BEST LAP</div><div id="reviewList"></div><div class="rv-hint">Click a track to watch your fastest lap. Esc to exit.</div></div></div>
 <div id="reviewIndicator">▶ REVIEWING BEST LAP — ESC TO EXIT</div>
-<div id="controlsModal"><div class="ctrl-box"><button class="ctrl-close" onclick="closeControls()">&#10005;</button><div class="ctrl-title">EDIT CONTROLS</div><div class="ctrl-row"><span class="ctrl-act">ACCELERATE</span><span class="ctrl-key" id="key_accel">W</span><button class="ctrl-btn" onclick="startRebind('accel')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">BRAKE</span><span class="ctrl-key" id="key_brake">S</span><button class="ctrl-btn" onclick="startRebind('brake')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">STEER LEFT</span><span class="ctrl-key" id="key_left">A</span><button class="ctrl-btn" onclick="startRebind('left')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">STEER RIGHT</span><span class="ctrl-key" id="key_right">D</span><button class="ctrl-btn" onclick="startRebind('right')">EDIT</button></div><div class="ctrl-hint">Arrow keys always work as backup. Press a key after EDIT — Esc cancels.</div></div></div>
+<div id="voicePopup"><div class="vc-title">🎙 VOICE CHAT</div><div class="vc-state" id="vcState">ON</div><div class="vc-vol-lbl">VOLUME</div><input type="range" class="vc-vol" id="vcVol" min="0" max="100" value="80" oninput="setVoiceVolume(this.value/100)"><div class="vc-hint">PRESS V TO TOGGLE</div></div>
+<div id="controlsModal"><div class="ctrl-box"><button class="ctrl-close" onclick="closeControls()">&#10005;</button><div class="ctrl-title">EDIT CONTROLS</div><div class="ctrl-row"><span class="ctrl-act">ACCELERATE</span><span class="ctrl-key" id="key_accel">W</span><button class="ctrl-btn" onclick="startRebind('accel')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">BRAKE</span><span class="ctrl-key" id="key_brake">S</span><button class="ctrl-btn" onclick="startRebind('brake')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">STEER LEFT</span><span class="ctrl-key" id="key_left">A</span><button class="ctrl-btn" onclick="startRebind('left')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">STEER RIGHT</span><span class="ctrl-key" id="key_right">D</span><button class="ctrl-btn" onclick="startRebind('right')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">VOICE TOGGLE</span><span class="ctrl-key" id="key_voice">V</span><button class="ctrl-btn" onclick="startRebind('voice')">EDIT</button></div><div class="ctrl-hint">Arrow keys always work as backup. Press a key after EDIT — Esc cancels.</div></div></div>
 <div id="endResultOv"><div class="end-box"><div class="end-title">RACE COMPLETE</div><div class="end-new" id="endResNew">★ NEW PERSONAL BEST ★</div><div class="end-stat"><div class="end-lbl">TOTAL TIME</div><div class="end-val" id="endResTotal">--:--.---</div></div><div class="end-stat"><div class="end-lbl">BEST EVER</div><div class="end-val" id="endResBest">--:--.---</div></div><div class="end-stat"><div class="end-lbl">FASTEST LAP</div><div class="end-val" id="endResFastest">--:--.---</div></div><button class="pit-leave" onclick="dismissEndResult()">RETURN TO GARAGE</button></div></div>
 <div id="pitModal"><div class="pit-box"><div class="pit-title">PIT BOX</div><div class="pit-section">TIRE COMPOUND<span class="pit-rec" id="pitRec"></span></div><div class="tire-row" id="tireRow"></div><div class="pit-section">DOWNFORCE</div><div class="pit-setup-row"><div class="pit-setup-header"><span>LEVEL</span><span class="pit-setup-val" id="pitDfVal">BALANCED</span></div><input type="range" class="pit-slider" id="pitDf" min="0" max="10" value="5" oninput="onPitSetupChange()"><div class="pit-setup-labels"><span class="pit-setup-lbl">LOW DRAG</span><span class="pit-setup-lbl">MAX GRIP</span></div></div><div class="pit-section">BRAKE BIAS</div><div class="pit-setup-row"><div class="pit-setup-header"><span>BIAS</span><span class="pit-setup-val" id="pitBbVal">50:50</span></div><input type="range" class="pit-slider" id="pitBb" min="0" max="10" value="5" oninput="onPitSetupChange()"><div class="pit-setup-labels"><span class="pit-setup-lbl">FRONT</span><span class="pit-setup-lbl">REAR</span></div></div><button class="pit-leave" onclick="leavePit()">LEAVE PIT — DRIVE OFF</button></div></div>
 <div id="setupModal">
@@ -1269,6 +1278,82 @@ function openCustom(){document.getElementById('customModal').classList.add('show
 function closeCustom(){document.getElementById('customModal').classList.remove('show');}
 // ── Settings panel ─────────────────────────────────────────────────────────
 var reviewMode=false,reviewFrames=[],reviewStartTime=0;
+// ── Voice chat (WebRTC) ──────────────────────────────────────────────────
+var voiceChatEnabled=true,voiceChatPromptDone=false,voiceChatStream=null,voicePeerConn=null,voiceAudioEl=null,voiceVolume=0.8,_voicePopupHideTimer=null,_voiceKeyP=false;
+function showVoicePopup(){
+  var p=document.getElementById('voicePopup');if(!p)return;
+  p.classList.add('show');
+  var st=document.getElementById('vcState');if(st){st.textContent=voiceChatEnabled?'ON':'OFF';st.classList.toggle('off',!voiceChatEnabled)}
+  var v=document.getElementById('vcVol');if(v)v.value=Math.round(voiceVolume*100);
+  if(_voicePopupHideTimer)clearTimeout(_voicePopupHideTimer);
+  _voicePopupHideTimer=setTimeout(function(){p.classList.remove('show')},2800);
+}
+function setVoiceVolume(v){voiceVolume=v;if(voiceAudioEl)voiceAudioEl.volume=voiceVolume}
+function ensureVoiceMic(cb){
+  if(voiceChatStream){cb(voiceChatStream);return}
+  if(voiceChatPromptDone){cb(null);return}
+  voiceChatPromptDone=true;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Voice chat not supported in this browser');cb(null);return}
+  if(!confirm('Voice chat lets you talk to your party. Allow microphone access?')){cb(null);return}
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})
+    .then(function(stream){voiceChatStream=stream;cb(stream)})
+    .catch(function(e){console.warn('mic denied',e);voiceChatEnabled=false;cb(null)});
+}
+function startVoicePeer(){
+  if(voicePeerConn||!voiceChatStream||!mpConn)return;
+  if(typeof RTCPeerConnection==='undefined')return;
+  voicePeerConn=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+  voiceChatStream.getTracks().forEach(function(t){voicePeerConn.addTrack(t,voiceChatStream)});
+  voicePeerConn.ontrack=function(e){
+    if(!voiceAudioEl){voiceAudioEl=new Audio();voiceAudioEl.autoplay=true;document.body.appendChild(voiceAudioEl)}
+    voiceAudioEl.srcObject=e.streams[0];
+    voiceAudioEl.volume=voiceVolume;
+  };
+  voicePeerConn.onicecandidate=function(e){if(e.candidate&&mpSocket){try{mpSend({t:'iceCand',cand:e.candidate.toJSON()})}catch(_){}}};
+  if(mpMode==='host'){
+    voicePeerConn.createOffer().then(function(o){return voicePeerConn.setLocalDescription(o)}).then(function(){
+      mpSend({t:'voiceOffer',sdp:voicePeerConn.localDescription.sdp,sdpType:voicePeerConn.localDescription.type});
+    }).catch(function(e){console.warn('voice offer fail',e)});
+  }
+}
+function toggleVoiceChat(){
+  voiceChatEnabled=!voiceChatEnabled;
+  if(voiceChatStream)voiceChatStream.getAudioTracks().forEach(function(t){t.enabled=voiceChatEnabled});
+  if(voiceAudioEl)voiceAudioEl.muted=!voiceChatEnabled;
+  if(voiceChatEnabled&&!voicePeerConn&&mpConn)ensureVoiceMic(function(s){if(s)startVoicePeer()});
+  showVoicePopup();
+}
+function autoEnableVoice(){if(!mpConn)return;ensureVoiceMic(function(s){if(s)startVoicePeer()})}
+function cleanupVoice(){
+  if(voicePeerConn){try{voicePeerConn.close()}catch(_){};voicePeerConn=null}
+  if(voiceAudioEl){voiceAudioEl.srcObject=null;try{document.body.removeChild(voiceAudioEl)}catch(_){};voiceAudioEl=null}
+  if(voiceChatStream){voiceChatStream.getTracks().forEach(function(t){try{t.stop()}catch(_){}});voiceChatStream=null}
+  voiceChatPromptDone=false;
+}
+function handleVoiceSignal(d){
+  if(typeof RTCPeerConnection==='undefined')return;
+  if(d.t==='voiceOffer'){
+    ensureVoiceMic(function(stream){
+      if(!stream)return;
+      if(!voicePeerConn)startVoicePeer();
+      voicePeerConn.setRemoteDescription({sdp:d.sdp,type:d.sdpType||'offer'})
+        .then(function(){return voicePeerConn.createAnswer()})
+        .then(function(a){return voicePeerConn.setLocalDescription(a).then(function(){return a})})
+        .then(function(a){mpSend({t:'voiceAnswer',sdp:a.sdp,sdpType:a.type})})
+        .catch(function(e){console.warn('voice answer fail',e)});
+    });
+  } else if(d.t==='voiceAnswer'&&voicePeerConn){
+    voicePeerConn.setRemoteDescription({sdp:d.sdp,type:d.sdpType||'answer'}).catch(function(e){console.warn('set answer fail',e)});
+  } else if(d.t==='iceCand'&&voicePeerConn){
+    try{voicePeerConn.addIceCandidate(d.cand)}catch(_){}
+  }
+}
+document.addEventListener('keydown',function(e){
+  if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;
+  if(rebindAction)return;
+  if(e.key.toLowerCase()===keyBindings.voice&&!_voiceKeyP){_voiceKeyP=true;toggleVoiceChat();e.preventDefault()}
+});
+document.addEventListener('keyup',function(e){if(e.key.toLowerCase()===keyBindings.voice)_voiceKeyP=false});
 function openReviewMenu(){
   var list=document.getElementById('reviewList');if(!list)return;
   var h='';
@@ -1324,12 +1409,12 @@ function reviewTick(){
   P.x=px;P.y=py;P.z=pz;A=aa;pitchA=ppa;rollA=rra;V.set(0,0,0);
   SPD=0;ST=0;
 }
-var keyBindings={accel:'w',brake:'s',left:'a',right:'d'};
-try{var _kb=JSON.parse(localStorage.getItem('apexgp_keys')||'null');if(_kb&&_kb.accel&&_kb.brake&&_kb.left&&_kb.right)keyBindings=_kb}catch(e){}
+var keyBindings={accel:'w',brake:'s',left:'a',right:'d',voice:'v'};
+try{var _kb=JSON.parse(localStorage.getItem('apexgp_keys')||'null');if(_kb&&_kb.accel&&_kb.brake&&_kb.left&&_kb.right){keyBindings=_kb;if(!keyBindings.voice)keyBindings.voice='v'}}catch(e){}
 var rebindAction=null;
 function saveBindings(){try{localStorage.setItem('apexgp_keys',JSON.stringify(keyBindings))}catch(e){}}
 function refreshControlsUI(){
-  ['accel','brake','left','right'].forEach(function(a){
+  ['accel','brake','left','right','voice'].forEach(function(a){
     var el=document.getElementById('key_'+a);
     if(!el)return;
     if(rebindAction===a){el.textContent='PRESS KEY';el.classList.add('listening')}
@@ -1508,6 +1593,7 @@ function handleMpMessage(raw){
   }
   if(d.t==='nuke'&&mpMode==='join'){setNukedState(!!d.on);return}
   if(d.t==='blackout'&&mpMode==='join'){setBlackedOutState(!!d.on);return}
+  if(d.t==='voiceOffer'||d.t==='voiceAnswer'||d.t==='iceCand'){handleVoiceSignal(d);return}
 }
 function toggleNuke(){
   if(mpMode!=='host'||!mpConn||!racing)return;
@@ -1850,6 +1936,7 @@ function updatePitState(){
 function setupConnUI(){
   document.getElementById('togOpponent').style.display='';
   document.getElementById('togOpGhost').style.display='';
+  setTimeout(autoEnableVoice,300);
   if(mpMode==='join'){
     mpShowUI('mpConnected');
     document.getElementById('startBtn').textContent='WAITING...';
@@ -1865,6 +1952,7 @@ function setupConnUI(){
 }
 function cancelJoin(){mpShowUI('mpButtons');mpCleanup();mpMode=null;mpConn=null}
 function onMpDisconnect(){
+  cleanupVoice();
   if(opCar)opCar.visible=false;
   if(opBestCar)opBestCar.visible=false;
   opPos=null;opPrevPos=null;opGhostPlaying=false;
