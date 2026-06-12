@@ -256,6 +256,8 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .opLiveTime{font-family:'Orbitron';font-size:15px;font-weight:600;color:rgba(255,255,255,.9);letter-spacing:1px;margin-top:1px}
 #missileAim{position:fixed;inset:0;z-index:140;display:none;cursor:crosshair;pointer-events:all}
 #missileAim.show{display:block}
+#camHint{position:absolute;top:52px;left:25px;font-family:'Orbitron';font-size:9px;letter-spacing:2px;color:rgba(140,220,255,.85);background:rgba(0,0,0,.55);padding:6px 12px;border-radius:6px;border:1px solid rgba(80,180,255,.35);opacity:0;transition:opacity .3s;pointer-events:none}
+#camHint.show{opacity:1}
 .ma-hint{position:absolute;top:12%;left:50%;transform:translateX(-50%);font-family:'Orbitron';font-size:15px;font-weight:800;letter-spacing:4px;color:#ff7744;text-shadow:0 0 18px rgba(255,90,30,.7);background:rgba(0,0,0,.55);padding:10px 26px;border-radius:10px;border:1px solid rgba(255,120,60,.5);white-space:nowrap}
 .nukeBtn{position:absolute;top:178px;left:25px;font-family:'Orbitron';font-size:11px;background:rgba(255,40,40,.7);border:1px solid rgba(255,40,40,.6);color:#fff;padding:8px 18px;border-radius:6px;cursor:pointer;letter-spacing:2px;display:none;z-index:90;font-weight:700;pointer-events:auto}
 .nukeBtn.show{display:block}
@@ -302,6 +304,7 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .vc-vol-lbl{font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.5);margin-top:10px}
 .vc-vol{width:100%;margin:6px 0;accent-color:#3cff8c}
 .vc-hint{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:1.5px;margin-top:8px}
+.vc-peer{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.85);padding:4px 0;text-align:left;border-bottom:1px solid rgba(255,255,255,.07)}
 #reviewModal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:750;backdrop-filter:blur(10px)}
 #reviewModal.show{display:flex}
 .rv-box{background:rgba(15,15,20,.96);border:1px solid rgba(255,200,0,.5);border-radius:14px;padding:32px 38px;min-width:380px;font-family:'Orbitron';position:relative}
@@ -405,7 +408,7 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 <script>if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){document.getElementById('mobileBlock').style.display='flex'}</script>
 <div id="menuScreen"><canvas id="menuCanvas"></canvas><button class="cog-btn" style="position:absolute;top:18px;right:18px;z-index:10" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="menu-fx"></div><div class="menu-vig"></div><div class="mo"><div class="title">APEX<br>GP</div><div class="sub">Formula Apex &middot; World Championship</div><button class="play-btn" onclick="onPlayClick()"><span class="play-car-ico">🏎️</span><span class="play-txt">PLAY</span></button><button class="play-btn review-btn" id="reviewBtn" style="display:none" onclick="openReviewMenu()"><span class="play-car-ico">▶</span><span class="play-txt">REVIEW BEST LAP</span></button><div class="ci"><span>W/&#8593;</span> Accelerate &middot; <span>S/&#8595;</span> Brake &middot; <span>A/&#8592;</span> <span>D/&#8594;</span> Steer<br><span>C</span> Camera &middot; <span>R</span> Restart &middot; <span>G</span> Ghost &middot; <span>H</span> Headlights &middot; <span>SPACE</span> Drift &middot; <span>B</span> Look Back &middot; <span>1-4</span> Emotes (party)</div></div></div>
 <div id="garageScreen" class="hide"><canvas id="garageCanvas"></canvas><button class="cog-btn" style="position:absolute;top:18px;right:18px;z-index:10" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="gar-left"><div class="gar-brand">APEX GP &mdash; TIME ATTACK</div><div class="gar-car-name">APEX<br>GP</div><div class="gar-divider"></div><div class="gar-rank" id="garRank">BEGINNER</div><div class="gar-laps" id="garLaps">0 LAPS</div></div><div class="track-sel"><button class="track-arr" onclick="chgTrack(-1)">&#9664;</button><div class="track-info"><canvas id="trackPreview" width="120" height="120"></canvas><div class="track-name" id="trackName">SUNSET CIRCUIT</div><div class="track-best" id="trackBest">BEST: --:--.---</div><div class="track-num" id="trackNum">1 / 5</div></div><button class="track-arr" onclick="chgTrack(1)">&#9654;</button></div><div class="hud-bottom"><div class="gar-section">HUD DISPLAY</div><div class="tog-row"><div class="tog" id="togLap" onclick="togHUD('lap')">LAP TIMES</div><div class="tog" id="togMap" onclick="togHUD('map')">MINIMAP</div><div class="tog" id="togGrip" onclick="togHUD('grip')">DELTA</div><div class="tog" id="togGhost" onclick="togHUD('ghost')">GHOST</div><div class="tog" id="togLine" onclick="togHUD('line')">RACING LINE</div><div class="tog off" id="togOpponent" onclick="togHUD('opponent')" style="display:none">OPPONENT</div><div class="tog off" id="togOpGhost" onclick="togHUD('opGhost')" style="display:none">OPP. GHOST</div></div></div><button class="gar-btn" id="customBtn" onclick="openCustom();event.stopPropagation()">CUSTOMISE</button><button class="gar-btn" id="startBtn" onclick="showWeatherMenu()">RACE</button><div class="orbit-hint">DRAG TO ORBIT &middot; SCROLL TO ZOOM</div><div class="mp-panel" id="mpPanel"><div class="gar-section">MULTIPLAYER</div><div id="mpButtons" class="mp-buttons"><div class="tog" onclick="createParty()">CREATE PARTY</div><div class="tog" onclick="showJoinUI()">JOIN PARTY</div></div><div id="mpHosting" class="mp-hosting hide"><div class="mp-code-label">PARTY CODE</div><div class="mp-code" id="mpCode">-----</div><div class="mp-status" id="mpHostStatus">Waiting for opponent...</div><div class="tog mp-leave" onclick="leaveParty()">CANCEL</div></div><div id="mpJoining" class="mp-joining hide"><div class="mp-row"><input class="mp-input" id="mpCodeInput" maxlength="5" placeholder="CODE"><div class="tog" onclick="joinParty()">JOIN</div></div><div class="mp-status" id="mpJoinStatus"></div><div class="tog mp-leave" onclick="cancelJoin()">CANCEL</div></div><div id="mpConnected" class="mp-connected hide"><div class="mp-status ok">CONNECTED &#10003;</div><div class="mp-opponent" id="mpOpponent"></div><div class="tog mp-leave" onclick="leaveParty()">LEAVE</div></div></div></div>
-<div id="hudScreen" class="hide"><button class="ghostBtn" id="camLbl" style="top:18px;left:25px;background:rgba(80,180,255,.4);border-color:rgba(80,180,255,.3)" onclick="cycleCam()" title="Click or press C to change camera">CHASE CAM</button><button class="ghostBtn" id="ghostBtn" onclick="toggleGhost()">GHOST: ON</button><button class="ghostBtn soundBtn" id="soundBtn" onclick="toggleRaceSound()">♪ SOUND: ON</button><button class="ghostBtn" id="missileBtn" style="top:176px;display:none;background:rgba(255,90,40,.5);border-color:rgba(255,130,70,.55)" onclick="startMissileAim()">🚀 MISSILE</button><button class="cog-btn" style="position:absolute;top:110px;left:70px" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="hb lbb" id="lapBox"><div class="lt">Current Lap</div><div class="lv" id="curLap">00:00.000</div><div class="lt" style="margin-top:7px">Best Lap</div><div class="lbv" id="bestLap">--:--.---</div><div class="lt" style="margin-top:7px">Last Lap</div><div class="lc" id="lastLap">--:--.---</div><div class="lc" id="lapCnt" style="margin-top:5px">LAP 1</div></div><div class="hb sbb" id="spdBox"><svg id="spdOutlineSvg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible"><rect id="spdOutlineRect" x="0" y="0" width="10" height="10" rx="10" ry="10" fill="none" stroke="#ff3333" stroke-width="9" stroke-dasharray="0 9999" stroke-linecap="round"/></svg><div class="sv" id="spdVal">0</div><div class="su">KM/H</div><div class="sbc"><div class="sb2" id="spdBar"></div></div></div><div class="gearBox" id="gearBox"><div class="gearLbl">VS GHOST</div><div class="gearNum" id="gearD">--</div><div class="gearBar"><div class="gearFill" id="gearFill"></div></div></div><div class="hb mmb" id="mapBox"><canvas id="mmC" width="150" height="150"></canvas></div><div id="posBox"><div class="pv" id="posVal">P1</div><div class="pl">POSITION</div></div><div id="emoteToast"><div id="etEmoji">👋</div><div class="et-name" id="etName"></div></div><div class="nb" id="nB">&#9733; NEW BEST LAP &#9733;</div><div class="opDeltaBox" id="opDeltaBox"><div class="opDeltaLbl">VS OPPONENT</div><div class="opDeltaNum" id="opDeltaD">--</div></div><div class="opLiveBox" id="opLiveBox"><div class="opLiveLbl">OPPONENT</div><div class="opLiveSpd" id="opLiveSpd">0</div><div class="opLiveSpdU">KM/H</div><div class="opLiveTimeLbl">CURRENT LAP</div><div class="opLiveTime" id="opLiveTime">--:--.---</div></div><div class="emote-hint" id="emoteHint">1 👋 &nbsp; 2 😂 &nbsp; 3 🔥 &nbsp; 4 🏁</div><button class="nukeBtn" id="nukeBtn" onclick="toggleNuke()">☢ NUKE</button><button class="blackoutBtn" id="blackoutBtn" onclick="toggleBlackout()">⬛ BLACKOUT</button><div class="pitLaneInd" id="pitLaneInd">PIT LANE — 70 KM/H</div><div id="tireInfo"><div class="ti-title">TIRES</div><div class="ti-cur"><div class="ti-dot" id="tiDot"></div><div class="ti-name" id="tiName">MEDIUM</div></div><div class="ti-section">TEMPERATURE</div><div class="ti-temp-bar"><div class="ti-temp-opt-lo" id="tiTempOptLo"></div><div class="ti-temp-opt-hi" id="tiTempOptHi"></div><div class="ti-temp-marker" id="tiTempMarker"></div></div><div class="ti-temp-num" id="tiTempNum">25°C</div><div class="ti-temp-state" id="tiTempState">COLD</div><div class="ti-section">WEAR</div><div class="ti-wear-bar"><div class="ti-wear-fill" id="tiWearFill"></div></div><div class="ti-wear-num" id="tiWearNum">100%</div><div class="ti-section">STOCK</div><div class="ti-stock" id="tiStock"></div><div class="ti-hint">PRESS P TO CLOSE</div></div><div class="nukedOverlay" id="nukedOverlay">☢ NUKED ☢<div class="nukedSub">CONTROLS DISABLED</div></div><div class="buildSpd" id="buildSpd"><div class="bt">BUILDING SPEED</div><div class="bbar"><div class="bfill" id="buildFill"></div></div></div></div>
+<div id="hudScreen" class="hide"><button class="ghostBtn" id="camLbl" style="top:18px;left:25px;background:rgba(80,180,255,.4);border-color:rgba(80,180,255,.3)" onclick="cycleCam()" title="Click or press C to change camera">CHASE CAM</button><div id="camHint">DRAG TO AIM CAMERA &middot; SCROLL TO ZOOM</div><button class="ghostBtn" id="ghostBtn" onclick="toggleGhost()">GHOST: ON</button><button class="ghostBtn soundBtn" id="soundBtn" onclick="toggleRaceSound()">♪ SOUND: ON</button><button class="ghostBtn" id="missileBtn" style="top:176px;display:none;background:rgba(255,90,40,.5);border-color:rgba(255,130,70,.55)" onclick="startMissileAim()">🚀 MISSILE</button><button class="cog-btn" style="position:absolute;top:110px;left:70px" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="hb lbb" id="lapBox"><div class="lt">Current Lap</div><div class="lv" id="curLap">00:00.000</div><div class="lt" style="margin-top:7px">Best Lap</div><div class="lbv" id="bestLap">--:--.---</div><div class="lt" style="margin-top:7px">Last Lap</div><div class="lc" id="lastLap">--:--.---</div><div class="lc" id="lapCnt" style="margin-top:5px">LAP 1</div></div><div class="hb sbb" id="spdBox"><svg id="spdOutlineSvg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible"><rect id="spdOutlineRect" x="0" y="0" width="10" height="10" rx="10" ry="10" fill="none" stroke="#ff3333" stroke-width="9" stroke-dasharray="0 9999" stroke-linecap="round"/></svg><div class="sv" id="spdVal">0</div><div class="su">KM/H</div><div class="sbc"><div class="sb2" id="spdBar"></div></div></div><div class="gearBox" id="gearBox"><div class="gearLbl">VS GHOST</div><div class="gearNum" id="gearD">--</div><div class="gearBar"><div class="gearFill" id="gearFill"></div></div></div><div class="hb mmb" id="mapBox"><canvas id="mmC" width="150" height="150"></canvas></div><div id="posBox"><div class="pv" id="posVal">P1</div><div class="pl">POSITION</div></div><div id="emoteToast"><div id="etEmoji">👋</div><div class="et-name" id="etName"></div></div><div class="nb" id="nB">&#9733; NEW BEST LAP &#9733;</div><div class="opDeltaBox" id="opDeltaBox"><div class="opDeltaLbl">VS OPPONENT</div><div class="opDeltaNum" id="opDeltaD">--</div></div><div class="opLiveBox" id="opLiveBox"><div class="opLiveLbl">OPPONENT</div><div class="opLiveSpd" id="opLiveSpd">0</div><div class="opLiveSpdU">KM/H</div><div class="opLiveTimeLbl">CURRENT LAP</div><div class="opLiveTime" id="opLiveTime">--:--.---</div></div><div class="emote-hint" id="emoteHint">1 👋 &nbsp; 2 😂 &nbsp; 3 🔥 &nbsp; 4 🏁</div><button class="nukeBtn" id="nukeBtn" onclick="toggleNuke()">☢ NUKE</button><button class="blackoutBtn" id="blackoutBtn" onclick="toggleBlackout()">⬛ BLACKOUT</button><div class="pitLaneInd" id="pitLaneInd">PIT LANE — 70 KM/H</div><div id="tireInfo"><div class="ti-title">TIRES</div><div class="ti-cur"><div class="ti-dot" id="tiDot"></div><div class="ti-name" id="tiName">MEDIUM</div></div><div class="ti-section">TEMPERATURE</div><div class="ti-temp-bar"><div class="ti-temp-opt-lo" id="tiTempOptLo"></div><div class="ti-temp-opt-hi" id="tiTempOptHi"></div><div class="ti-temp-marker" id="tiTempMarker"></div></div><div class="ti-temp-num" id="tiTempNum">25°C</div><div class="ti-temp-state" id="tiTempState">COLD</div><div class="ti-section">WEAR</div><div class="ti-wear-bar"><div class="ti-wear-fill" id="tiWearFill"></div></div><div class="ti-wear-num" id="tiWearNum">100%</div><div class="ti-section">STOCK</div><div class="ti-stock" id="tiStock"></div><div class="ti-hint">PRESS P TO CLOSE</div></div><div class="nukedOverlay" id="nukedOverlay">☢ NUKED ☢<div class="nukedSub">CONTROLS DISABLED</div></div><div class="buildSpd" id="buildSpd"><div class="bt">BUILDING SPEED</div><div class="bbar"><div class="bfill" id="buildFill"></div></div></div></div>
 <div id="missileAim" onclick="missileAimClick(event)"><div class="ma-hint">CLICK TO TARGET THE MISSILE — ESC TO CANCEL</div></div>
 <div id="flipOverlay"><div class="crash-txt" id="flipTxt">FATAL CRASH</div></div>
 <div id="crashOverlay"><div class="crash-txt" id="crashTxt">FATAL CRASH</div></div>
@@ -414,7 +417,7 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 <div id="raceLights"><div class="rl-light" id="rl1"></div><div class="rl-light" id="rl2"></div><div class="rl-light" id="rl3"></div><div class="rl-light" id="rl4"></div><div class="rl-light" id="rl5"></div></div>
 <div id="reviewModal"><div class="rv-box"><button class="ctrl-close" onclick="closeReviewMenu()">&#10005;</button><div class="rv-title">REVIEW BEST LAP</div><div id="reviewList"></div><div class="rv-hint">Click a track to watch your fastest lap. Esc to exit.</div></div></div>
 <div id="reviewIndicator">▶ REVIEWING BEST LAP — C CAMERA · ESC EXIT</div>
-<div id="voicePopup"><div class="vc-title">🎙 VOICE CHAT</div><div class="vc-state" id="vcState">ON</div><div class="vc-vol-lbl">VOLUME</div><input type="range" class="vc-vol" id="vcVol" min="0" max="100" value="80" oninput="setVoiceVolume(this.value/100)"><div class="vc-hint">PRESS V TO TOGGLE</div></div>
+<div id="voicePopup"><div class="vc-title">🎙 VOICE CHAT</div><div class="vc-state" id="vcState">MIC ON</div><div id="vcPeers"></div><div class="vc-vol-lbl">VOLUME</div><input type="range" class="vc-vol" id="vcVol" min="0" max="100" value="80" oninput="setVoiceVolume(this.value/100)"><div class="vc-hint">PRESS V TO TOGGLE</div></div>
 <div id="controlsModal"><div class="ctrl-box"><button class="ctrl-close" onclick="closeControls()">&#10005;</button><div class="ctrl-title">EDIT CONTROLS</div><div class="ctrl-row"><span class="ctrl-act">ACCELERATE</span><span class="ctrl-key" id="key_accel">W</span><button class="ctrl-btn" onclick="startRebind('accel')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">BRAKE</span><span class="ctrl-key" id="key_brake">S</span><button class="ctrl-btn" onclick="startRebind('brake')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">STEER LEFT</span><span class="ctrl-key" id="key_left">A</span><button class="ctrl-btn" onclick="startRebind('left')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">STEER RIGHT</span><span class="ctrl-key" id="key_right">D</span><button class="ctrl-btn" onclick="startRebind('right')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">VOICE TOGGLE</span><span class="ctrl-key" id="key_voice">V</span><button class="ctrl-btn" onclick="startRebind('voice')">EDIT</button></div><div class="ctrl-hint">Arrow keys always work as backup. Press a key after EDIT — Esc cancels.</div></div></div>
 <div id="endResultOv"><div class="end-box"><div class="end-title">RACE COMPLETE</div><div class="end-new" id="endResNew">★ NEW PERSONAL BEST ★</div><div class="end-stat"><div class="end-lbl">TOTAL TIME</div><div class="end-val" id="endResTotal">--:--.---</div></div><div class="end-stat"><div class="end-lbl">BEST EVER</div><div class="end-val" id="endResBest">--:--.---</div></div><div class="end-stat"><div class="end-lbl">FASTEST LAP</div><div class="end-val" id="endResFastest">--:--.---</div></div><button class="pit-leave" onclick="dismissEndResult()">RETURN TO GARAGE</button></div></div>
 <div id="pitModal"><div class="pit-box"><div class="pit-title">PIT BOX</div><div class="pit-section">TIRE COMPOUND<span class="pit-rec" id="pitRec"></span></div><div class="tire-row" id="tireRow"></div><div class="pit-section">DOWNFORCE</div><div class="pit-setup-row"><div class="pit-setup-header"><span>LEVEL</span><span class="pit-setup-val" id="pitDfVal">BALANCED</span></div><input type="range" class="pit-slider" id="pitDf" min="0" max="10" value="5" oninput="onPitSetupChange()"><div class="pit-setup-labels"><span class="pit-setup-lbl">LOW DRAG</span><span class="pit-setup-lbl">MAX GRIP</span></div></div><div class="pit-section">BRAKE BIAS</div><div class="pit-setup-row"><div class="pit-setup-header"><span>BIAS</span><span class="pit-setup-val" id="pitBbVal">50:50</span></div><input type="range" class="pit-slider" id="pitBb" min="0" max="10" value="5" oninput="onPitSetupChange()"><div class="pit-setup-labels"><span class="pit-setup-lbl">FRONT</span><span class="pit-setup-lbl">REAR</span></div></div><button class="pit-leave" onclick="leavePit()">LEAVE PIT — DRIVE OFF</button></div></div>
@@ -616,7 +619,31 @@ var scene,cam,ren,clk,car,spl,tPts,sd,sfIdx=0,tCX=215,tCZ=272;
 var trackCurv=[],carNearIdx=0,curbCurvThresh=.03,flatCurvThresh=.012;
 var P=new THREE.Vector3(),V=new THREE.Vector3(),A=0,AV=0,ST=0,SPD=0;
 var spinV=0,pitchA=0,pitchV=0,rollA=0,rollV=0,ab=false;
-var KY={},camM=0,camN=['CHASE CAM','HOOD CAM','HELICOPTER'];
+var KY={},camN=['CHASE CAM','HOOD CAM','HELICOPTER','CUSTOM CAM'];
+var camM=Math.min(3,Math.max(0,parseInt(localStorage.getItem('apexgp_cammode'))||0));
+// Custom camera: an orbit you aim yourself (drag) and zoom freely (wheel),
+// remembered as your camera angle
+var camCustom=(function(){try{return JSON.parse(localStorage.getItem('apexgp_camcustom'))||{yaw:0,pitch:.38,dist:12}}catch(e){return{yaw:0,pitch:.38,dist:12}}})();
+var _ccDrag=false,_ccPX=0,_ccPY=0,_ccSaveT=null;
+function _ccSave(){clearTimeout(_ccSaveT);_ccSaveT=setTimeout(function(){try{localStorage.setItem('apexgp_camcustom',JSON.stringify(camCustom))}catch(e){}},600)}
+function _ccActive(){return (racing||reviewMode)&&camM===3&&!missileMode}
+document.addEventListener('mousedown',function(e){
+  if(!_ccActive())return;
+  var t=e.target;
+  if(t&&(t.tagName==='CANVAS'||t===document.body)){_ccDrag=true;_ccPX=e.clientX;_ccPY=e.clientY}
+});
+document.addEventListener('mousemove',function(e){
+  if(!_ccDrag)return;
+  camCustom.yaw-=(e.clientX-_ccPX)*.005;
+  camCustom.pitch=Math.max(.03,Math.min(1.45,camCustom.pitch+(e.clientY-_ccPY)*.004));
+  _ccPX=e.clientX;_ccPY=e.clientY;_ccSave();
+});
+document.addEventListener('mouseup',function(){_ccDrag=false});
+document.addEventListener('wheel',function(e){
+  if(!_ccActive())return;
+  camCustom.dist=Math.max(2.2,Math.min(220,camCustom.dist*(1+e.deltaY*.0012)));
+  _ccSave();
+},{passive:true});
 var lapSt=0,curLT=0,bestLT=Infinity,lastLT=0,lapN=0,racing=false,mmx,rInit=false,prevSFDot=null,prevCpDot=null;
 var ghostMode=0,ghostCar=null,bestGhost=[],curGhost=[],ghostFrame=0,ghostPlaying=false; // ghostMode: 0=session, 1=alltime, 2=off
 var allTimeGhost=[],allTimeGhostFrame=0,allTimeGhostPlaying=false,allTimeCar=null;
@@ -980,7 +1007,7 @@ function toggleRaceSound(){
 function toggleGhost(){ghostMode=(ghostMode+1)%3;var btn=document.getElementById('ghostBtn');if(ghostMode===0){btn.textContent='GHOST: ON';btn.className='ghostBtn';btn.style.background='';btn.style.borderColor=''}else if(ghostMode===1){btn.textContent='GHOST: BEST';btn.className='ghostBtn';btn.style.background='rgba(200,170,0,.4)';btn.style.borderColor='rgba(200,170,0,.3)'}else{btn.textContent='GHOST: OFF';btn.className='ghostBtn off';btn.style.background='';btn.style.borderColor=''}if(ghostCar)ghostCar.visible=ghostMode===0&&ghostPlaying;if(allTimeCar)allTimeCar.visible=ghostMode===1&&allTimeGhostPlaying}
 function showGarage(){mRun=false;document.getElementById('menuScreen').classList.add('hide');document.getElementById('garageScreen').classList.remove('hide');initGarage();startLobbyMusic();drawTrackPreview();checkRankUp();if(mpMode==='join'&&mpConn){document.getElementById('startBtn').textContent='WAITING FOR HOST...';document.getElementById('startBtn').style.pointerEvents='none';document.getElementById('startBtn').style.opacity='0.5'}else{document.getElementById('startBtn').textContent='RACE';document.getElementById('startBtn').style.pointerEvents='';document.getElementById('startBtn').style.opacity=''}}
 function backToMenu(){racing=false;gRun=false;document.getElementById('hudScreen').classList.add('hide');document.getElementById('garageScreen').classList.add('hide');document.getElementById('menuScreen').classList.remove('hide');mRun=true;initMenu();startLobbyMusic();}
-function startDrive(){if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}fadeLobbyMusic();gRun=false;document.getElementById('garageScreen').classList.add('hide');document.getElementById('hudScreen').classList.remove('hide');applyHUD();initRace();resetCar();racing=true;raceStartedAt=performance.now();audioStarted=false;prevEngineActive=false;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;s.currentTime=0;});clk.getDelta();opPos=null;opPrevPos=null;opGhostFrame=0;lastMpSend=0;opSpd=0;opLapT=-1;opLapTRcvAt=0;resetNuke();resetBlackout();resetMissiles();missileReadyAt=0;closePit();recentlyPitted=false;resetTiresForRace();endRaceStart=0;endFastestLap=Infinity;cleanupAI();cancelQualifying();if(raceMode==='endurance'){startQualifying()}else{setOpponentSolid(true)}/* TT = free practice — no 5-light start */if(pendingLightsDelay===null)pendingLightsDelay=1000+Math.random()*4000;if(mpMode==='host'&&mpSocket){mpSend({t:'start',weather:selWeather,track:selTrack,lightsDelay:pendingLightsDelay,laps:END_LAPS,mode:raceMode})}if(opBestGhost.length>1&&tPts){opGhostTimeLookup=buildGhostLookupGeneric(opBestGhost)}allTimeGhost=getTrackGhost(TRACKS[selTrack].name)||[];allTimeGhostPlaying=allTimeGhost.length>1;allTimeGhostFrame=0;allTimeGhostLookup=allTimeGhostPlaying?buildGhostLookupGeneric(allTimeGhost):null}
+function startDrive(){var _cl=document.getElementById('camLbl');if(_cl)_cl.textContent=camN[camM];if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}fadeLobbyMusic();gRun=false;document.getElementById('garageScreen').classList.add('hide');document.getElementById('hudScreen').classList.remove('hide');applyHUD();initRace();resetCar();racing=true;raceStartedAt=performance.now();audioStarted=false;prevEngineActive=false;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;s.currentTime=0;});clk.getDelta();opPos=null;opPrevPos=null;opGhostFrame=0;lastMpSend=0;opSpd=0;opLapT=-1;opLapTRcvAt=0;resetNuke();resetBlackout();resetMissiles();missileReadyAt=0;closePit();recentlyPitted=false;resetTiresForRace();endRaceStart=0;endFastestLap=Infinity;cleanupAI();cancelQualifying();if(raceMode==='endurance'){startQualifying()}else{setOpponentSolid(true)}/* TT = free practice — no 5-light start */if(pendingLightsDelay===null)pendingLightsDelay=1000+Math.random()*4000;if(mpMode==='host'&&mpSocket){mpSend({t:'start',weather:selWeather,track:selTrack,lightsDelay:pendingLightsDelay,laps:END_LAPS,mode:raceMode})}if(opBestGhost.length>1&&tPts){opGhostTimeLookup=buildGhostLookupGeneric(opBestGhost)}allTimeGhost=getTrackGhost(TRACKS[selTrack].name)||[];allTimeGhostPlaying=allTimeGhost.length>1;allTimeGhostFrame=0;allTimeGhostLookup=allTimeGhostPlaying?buildGhostLookupGeneric(allTimeGhost):null}
 
 // ── Gradient sky dome + sun disc + night stars ───────────────────────────────
 function _shade(hex,f){
@@ -1805,7 +1832,7 @@ function doCam(dt){if(missileMode&&racing){
     cam.position.copy(cS.p);cam.lookAt(cS.l);
     return;
   }
-  var fwd=_camFwd.set(Math.sin(A),0,Math.cos(A)),cpx=car.position.x,cpy=car.position.y,cpz=car.position.z;lookBack=!!KY['b'];if(lookBack){var d=7+SPD*.01,h=3.5+SPD*.006;_camTp.set(cpx+fwd.x*d,cpy+h,cpz+fwd.z*d);_camTl.set(cpx-fwd.x*30,cpy,cpz-fwd.z*30)}else if(camM===0){var d=9+SPD*.016,h=4.5+SPD*.009;_camTp.set(cpx-fwd.x*d,cpy+h,cpz-fwd.z*d);_camTl.set(cpx+fwd.x*12,cpy,cpz+fwd.z*12)}else if(camM===1){_camTp.set(cpx+fwd.x*1.5,cpy+1.5,cpz+fwd.z*1.5);_camTl.set(cpx+fwd.x*60,cpy,cpz+fwd.z*60)}else{_camTp.set(cpx-fwd.x*30,cpy+55,cpz-fwd.z*30);_camTl.set(cpx,cpy,cpz)}if(lookBack){cS.p.copy(_camTp);cS.l.copy(_camTl)}else{var lf=1-Math.exp(-(camM===1?18:5.5)*dt);cS.p.lerp(_camTp,lf);cS.l.lerp(_camTl,lf)}cam.position.copy(cS.p);
+  var fwd=_camFwd.set(Math.sin(A),0,Math.cos(A)),cpx=car.position.x,cpy=car.position.y,cpz=car.position.z;lookBack=!!KY['b'];if(lookBack){var d=7+SPD*.01,h=3.5+SPD*.006;_camTp.set(cpx+fwd.x*d,cpy+h,cpz+fwd.z*d);_camTl.set(cpx-fwd.x*30,cpy,cpz-fwd.z*30)}else if(camM===0){var d=9+SPD*.016,h=4.5+SPD*.009;_camTp.set(cpx-fwd.x*d,cpy+h,cpz-fwd.z*d);_camTl.set(cpx+fwd.x*12,cpy,cpz+fwd.z*12)}else if(camM===1){_camTp.set(cpx+fwd.x*1.5,cpy+1.5,cpz+fwd.z*1.5);_camTl.set(cpx+fwd.x*60,cpy,cpz+fwd.z*60)}else if(camM===2){_camTp.set(cpx-fwd.x*30,cpy+55,cpz-fwd.z*30);_camTl.set(cpx,cpy,cpz)}else{var ccy=Math.cos(camCustom.pitch),cca=A+Math.PI+camCustom.yaw;_camTp.set(cpx+Math.sin(cca)*camCustom.dist*ccy,cpy+1.1+Math.sin(camCustom.pitch)*camCustom.dist,cpz+Math.cos(cca)*camCustom.dist*ccy);_camTl.set(cpx+fwd.x*5,cpy+.8,cpz+fwd.z*5)}if(lookBack){cS.p.copy(_camTp);cS.l.copy(_camTl)}else{var lf=1-Math.exp(-(camM===1?18:5.5)*dt);cS.p.lerp(_camTp,lf);cS.l.lerp(_camTl,lf)}cam.position.copy(cS.p);
   // Curb shake
   if(onCurb&&SPD>10){curbShakeT+=dt*120;var shk=Math.min(1,(SPD-10)/80)*0.025;cam.position.y+=Math.sin(curbShakeT*25)*shk+Math.sin(curbShakeT*37)*shk*0.5}else{curbShakeT*=0.85}
   cam.lookAt(cS.l)}
@@ -1913,7 +1940,16 @@ function resetCar(){
   curGear=0;buildingSpdTimer=4;
   document.getElementById('buildSpd').classList.add('show');
 }
-function cycleCam(){camM=(camM+1)%3;document.getElementById('camLbl').textContent=camN[camM]}
+function cycleCam(){
+  camM=(camM+1)%4;
+  document.getElementById('camLbl').textContent=camN[camM];
+  try{localStorage.setItem('apexgp_cammode',camM)}catch(e){}
+  var ch=document.getElementById('camHint');
+  if(ch){
+    if(camM===3){ch.classList.add('show');clearTimeout(ch._h);ch._h=setTimeout(function(){ch.classList.remove('show')},3200)}
+    else ch.classList.remove('show');
+  }
+}
 
 // ── Audio ──────────────────────────────────────────────────────────────────
 // All 3 clips loop continuously — only volume/pitch changes, never stop
@@ -2094,78 +2130,183 @@ function toggleDecalSpot(k){
 }
 // ── Settings panel ─────────────────────────────────────────────────────────
 var reviewMode=false,reviewFrames=[],reviewStartTime=0;
-// ── Voice chat (WebRTC) ──────────────────────────────────────────────────
-var voiceChatEnabled=true,voiceChatPromptDone=false,voiceChatStream=null,voicePeerConn=null,voiceAudioEl=null,voiceVolume=1.0,_voicePopupHideTimer=null,_voiceKeyP=false;
-function showVoicePopup(){
-  var p=document.getElementById('voicePopup');if(!p)return;
-  p.classList.add('show');
-  var st=document.getElementById('vcState');if(st){st.textContent=voiceChatEnabled?'ON':'OFF';st.classList.toggle('off',!voiceChatEnabled)}
-  var v=document.getElementById('vcVol');if(v)v.value=Math.round(voiceVolume*100);
-  if(_voicePopupHideTimer)clearTimeout(_voicePopupHideTimer);
-  _voicePopupHideTimer=setTimeout(function(){p.classList.remove('show')},2800);
-}
-function setVoiceVolume(v){voiceVolume=v;if(voiceAudioEl)voiceAudioEl.volume=voiceVolume}
+// ── Voice chat (WebRTC, full mesh: everyone in the party hears everyone) ────
+var voiceMicOn=true,voiceMicDenied=false,voiceChatStream=null,voiceVolume=1.0;
+var voicePeers={},mpMyId=null,_voicePopupHideTimer=null,_voiceKeyP=false,_vcAudioCtx=null,_vcUITimer=null;
+var voiceChatEnabled=true; // legacy flag kept for compatibility
 function ensureVoiceMic(cb){
   if(voiceChatStream){cb(voiceChatStream);return}
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){if(!voiceChatPromptDone)alert('Voice chat not supported in this browser');voiceChatPromptDone=true;cb(null);return}
-  if(voiceChatPromptDone){cb(null);return}
-  voiceChatPromptDone=true;
-  if(!confirm('🎙 Voice chat: allow microphone access so you can talk to your party?')){voiceChatEnabled=false;cb(null);return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){cb(null);return}
+  if(voiceMicDenied){cb(null);return}
   navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})
-    .then(function(stream){voiceChatStream=stream;console.log('mic granted, tracks:',stream.getAudioTracks().length);cb(stream)})
-    .catch(function(e){console.warn('mic denied',e);voiceChatEnabled=false;alert('Microphone access denied. Press V to try again.');cb(null)});
+    .then(function(stream){
+      voiceChatStream=stream;
+      stream.getAudioTracks().forEach(function(t){t.enabled=voiceMicOn});
+      cb(stream);
+    })
+    .catch(function(e){console.warn('mic denied',e);voiceMicDenied=true;cb(null)});
 }
-function startVoicePeer(){
-  if(voicePeerConn||!voiceChatStream||!mpConn)return;
-  if(typeof RTCPeerConnection==='undefined')return;
-  voicePeerConn=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
-  voiceChatStream.getTracks().forEach(function(t){voicePeerConn.addTrack(t,voiceChatStream)});
-  voicePeerConn.ontrack=function(e){
-    if(!voiceAudioEl){voiceAudioEl=new Audio();voiceAudioEl.autoplay=true;voiceAudioEl.playsInline=true;document.body.appendChild(voiceAudioEl)}
-    voiceAudioEl.srcObject=e.streams[0];
-    voiceAudioEl.volume=voiceVolume;
-    voiceAudioEl.muted=!voiceChatEnabled;
-    voiceAudioEl.play().then(function(){console.log('voice audio playing')}).catch(function(err){console.warn('voice audio play blocked — press V',err)});
+function _vcPeer(id){
+  var v=voicePeers[id];
+  if(!v){v={pc:null,audioEl:null,pendingICE:[],state:'new',muted:false,analyser:null,retryT:null};voicePeers[id]=v}
+  return v;
+}
+function _vcAttachAnalyser(v,stream){
+  try{
+    if(!_vcAudioCtx)_vcAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    var src=_vcAudioCtx.createMediaStreamSource(stream);
+    var an=_vcAudioCtx.createAnalyser();an.fftSize=256;
+    src.connect(an);v.analyser=an;v._anData=new Uint8Array(an.frequencyBinCount);
+  }catch(e){}
+}
+function _vcLevel(v){
+  if(!v||!v.analyser)return 0;
+  v.analyser.getByteFrequencyData(v._anData);
+  var sum=0;for(var i=0;i<v._anData.length;i++)sum+=v._anData[i];
+  return sum/v._anData.length/255;
+}
+function _vcNewPC(id,initiator){
+  var v=_vcPeer(id);
+  if(v.pc){try{v.pc.close()}catch(_){}}
+  v.pendingICE=[];v.state='connecting';
+  var pc=new RTCPeerConnection({iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'stun:stun1.l.google.com:19302'}
+  ]});
+  v.pc=pc;
+  if(voiceChatStream)voiceChatStream.getTracks().forEach(function(t){pc.addTrack(t,voiceChatStream)});
+  else if(initiator){try{pc.addTransceiver('audio',{direction:'recvonly'})}catch(_){}}
+  pc.ontrack=function(e){
+    if(!v.audioEl){v.audioEl=new Audio();v.audioEl.autoplay=true;v.audioEl.playsInline=true;document.body.appendChild(v.audioEl)}
+    v.audioEl.srcObject=e.streams[0];
+    v.audioEl.volume=voiceVolume;
+    v.audioEl.play().catch(function(){});
+    _vcAttachAnalyser(v,e.streams[0]);
   };
-  voicePeerConn.oniceconnectionstatechange=function(){console.log('voice ICE:',voicePeerConn.iceConnectionState)};
-  voicePeerConn.onicecandidate=function(e){if(e.candidate&&mpSocket){try{mpSend({t:'iceCand',cand:e.candidate.toJSON()})}catch(_){}}};
-  if(mpMode==='host'){
-    voicePeerConn.createOffer().then(function(o){return voicePeerConn.setLocalDescription(o)}).then(function(){
-      mpSend({t:'voiceOffer',sdp:voicePeerConn.localDescription.sdp,sdpType:voicePeerConn.localDescription.type});
-    }).catch(function(e){console.warn('voice offer fail',e)});
+  pc.onicecandidate=function(e){if(e.candidate)mpSend({t:'iceCand',to:id,cand:e.candidate.toJSON()})};
+  pc.onconnectionstatechange=function(){
+    if(v.pc!==pc)return;
+    var st=pc.connectionState;
+    if(st==='connected'){v.state='connected';renderVoicePeers()}
+    else if(st==='failed'||st==='disconnected'||st==='closed'){
+      v.state='lost';renderVoicePeers();
+      // the calling side retries while the peer is still in the party
+      if(initiator&&peers[id]&&mpSocket){
+        if(v.retryT)clearTimeout(v.retryT);
+        v.retryT=setTimeout(function(){if(peers[id]&&mpSocket)voiceConnectTo(id,true)},2500);
+      }
+    }
+  };
+  if(initiator){
+    pc.onnegotiationneeded=function(){
+      pc.createOffer().then(function(o){return pc.setLocalDescription(o)}).then(function(){
+        mpSend({t:'voiceOffer',to:id,sdp:pc.localDescription.sdp,sdpType:pc.localDescription.type});
+      }).catch(function(e){console.warn('voice offer fail',e)});
+    };
+    if(!voiceChatStream){
+      // recvonly transceiver added above won't always trigger negotiation — force it
+      pc.createOffer().then(function(o){return pc.setLocalDescription(o)}).then(function(){
+        mpSend({t:'voiceOffer',to:id,sdp:pc.localDescription.sdp,sdpType:pc.localDescription.type});
+      }).catch(function(){});
+    }
   }
+  return pc;
 }
-function toggleVoiceChat(){
-  voiceChatEnabled=!voiceChatEnabled;
-  if(voiceChatStream)voiceChatStream.getAudioTracks().forEach(function(t){t.enabled=voiceChatEnabled});
-  if(voiceAudioEl){voiceAudioEl.muted=!voiceChatEnabled;if(voiceChatEnabled)voiceAudioEl.play().catch(function(){})}
-  if(voiceChatEnabled&&!voicePeerConn&&mpConn){voiceChatPromptDone=false;ensureVoiceMic(function(s){if(s)startVoicePeer()})}
-  showVoicePopup();
+function voiceConnectTo(id,force){
+  if(!id||id===mpMyId||!mpSocket)return;
+  // deterministic caller (lower id) avoids both sides offering at once
+  if(!(mpMyId&&mpMyId<id))return;
+  var v=voicePeers[id];
+  if(v&&v.pc&&!force&&(v.state==='connected'||v.state==='connecting'))return;
+  ensureVoiceMic(function(){_vcNewPC(id,true)});
 }
-function autoEnableVoice(){if(!mpConn)return;ensureVoiceMic(function(s){if(s)startVoicePeer()})}
+function voiceConnectAll(){for(var id in peers)voiceConnectTo(id)}
+function voiceDisconnect(id){
+  var v=voicePeers[id];if(!v)return;
+  if(v.retryT)clearTimeout(v.retryT);
+  if(v.pc){try{v.pc.close()}catch(_){}}
+  if(v.audioEl){v.audioEl.srcObject=null;try{document.body.removeChild(v.audioEl)}catch(_){}}
+  delete voicePeers[id];
+  renderVoicePeers();
+}
 function cleanupVoice(){
-  if(voicePeerConn){try{voicePeerConn.close()}catch(_){};voicePeerConn=null}
-  if(voiceAudioEl){voiceAudioEl.srcObject=null;try{document.body.removeChild(voiceAudioEl)}catch(_){};voiceAudioEl=null}
+  for(var id in voicePeers)voiceDisconnect(id);
   if(voiceChatStream){voiceChatStream.getTracks().forEach(function(t){try{t.stop()}catch(_){}});voiceChatStream=null}
-  voiceChatPromptDone=false;
+  voiceMicDenied=false;
 }
 function handleVoiceSignal(d){
   if(typeof RTCPeerConnection==='undefined')return;
+  if(d.to&&mpMyId&&d.to!==mpMyId)return; // addressed to someone else
+  var id=d.from;if(!id)return;
+  if(d.t==='voiceState'){var vs=_vcPeer(id);vs.muted=!!d.muted;renderVoicePeers();return}
   if(d.t==='voiceOffer'){
-    ensureVoiceMic(function(stream){
-      if(!stream)return;
-      if(!voicePeerConn)startVoicePeer();
-      voicePeerConn.setRemoteDescription({sdp:d.sdp,type:d.sdpType||'offer'})
-        .then(function(){return voicePeerConn.createAnswer()})
-        .then(function(a){return voicePeerConn.setLocalDescription(a).then(function(){return a})})
-        .then(function(a){mpSend({t:'voiceAnswer',sdp:a.sdp,sdpType:a.type})})
+    ensureVoiceMic(function(){
+      var pc=_vcNewPC(id,false),v=voicePeers[id];
+      pc.setRemoteDescription({sdp:d.sdp,type:d.sdpType||'offer'})
+        .then(function(){
+          v.pendingICE.forEach(function(c){pc.addIceCandidate(c).catch(function(){})});
+          v.pendingICE=[];
+          return pc.createAnswer();
+        })
+        .then(function(a){return pc.setLocalDescription(a)})
+        .then(function(){mpSend({t:'voiceAnswer',to:id,sdp:pc.localDescription.sdp,sdpType:pc.localDescription.type})})
         .catch(function(e){console.warn('voice answer fail',e)});
     });
-  } else if(d.t==='voiceAnswer'&&voicePeerConn){
-    voicePeerConn.setRemoteDescription({sdp:d.sdp,type:d.sdpType||'answer'}).catch(function(e){console.warn('set answer fail',e)});
-  } else if(d.t==='iceCand'&&voicePeerConn){
-    try{voicePeerConn.addIceCandidate(d.cand)}catch(_){}
+    return;
   }
+  var v2=voicePeers[id];
+  if(!v2||!v2.pc)return;
+  if(d.t==='voiceAnswer'){
+    v2.pc.setRemoteDescription({sdp:d.sdp,type:d.sdpType||'answer'})
+      .then(function(){
+        v2.pendingICE.forEach(function(c){v2.pc.addIceCandidate(c).catch(function(){})});
+        v2.pendingICE=[];
+      })
+      .catch(function(e){console.warn('set answer fail',e)});
+  } else if(d.t==='iceCand'&&d.cand){
+    if(v2.pc.remoteDescription&&v2.pc.remoteDescription.type)v2.pc.addIceCandidate(d.cand).catch(function(){});
+    else v2.pendingICE.push(d.cand);
+  }
+}
+function toggleVoiceChat(){
+  voiceMicOn=!voiceMicOn;
+  if(voiceChatStream)voiceChatStream.getAudioTracks().forEach(function(t){t.enabled=voiceMicOn});
+  else if(voiceMicOn){voiceMicDenied=false;ensureVoiceMic(function(st){if(st)voiceConnectAll()})}
+  mpSend({t:'voiceState',muted:!voiceMicOn});
+  showVoicePopup();
+}
+function autoEnableVoice(){
+  if(!mpConn)return;
+  ensureVoiceMic(function(){voiceConnectAll()});
+}
+function setVoiceVolume(v){
+  voiceVolume=v;
+  for(var id in voicePeers){if(voicePeers[id].audioEl)voicePeers[id].audioEl.volume=v}
+}
+function renderVoicePeers(){
+  var el=document.getElementById('vcPeers');if(!el)return;
+  var h='';
+  for(var id in peers){
+    var nm=(peers[id].name||'PLAYER').toUpperCase().slice(0,12);
+    var v=voicePeers[id];
+    var st=v?(v.state==='connected'?'🟢':(v.state==='lost'?'🔴':'🟡')):'⚪';
+    var spk=(v&&v.state==='connected'&&_vcLevel(v)>.05)?' 🎙':'';
+    var mut=(v&&v.muted)?' 🔇':'';
+    h+='<div class="vc-peer">'+st+' '+nm+mut+spk+'</div>';
+  }
+  el.innerHTML=h||'<div class="vc-peer" style="opacity:.5">NO ONE ELSE IN PARTY</div>';
+}
+function showVoicePopup(){
+  var p=document.getElementById('voicePopup');if(!p)return;
+  p.classList.add('show');
+  var st=document.getElementById('vcState');
+  if(st){st.textContent=voiceMicDenied?'NO MIC':(voiceMicOn?'MIC ON':'MUTED');st.classList.toggle('off',!voiceMicOn||voiceMicDenied)}
+  var v=document.getElementById('vcVol');if(v)v.value=Math.round(voiceVolume*100);
+  renderVoicePeers();
+  if(_vcUITimer)clearInterval(_vcUITimer);
+  _vcUITimer=setInterval(renderVoicePeers,180);
+  if(_voicePopupHideTimer)clearTimeout(_voicePopupHideTimer);
+  _voicePopupHideTimer=setTimeout(function(){p.classList.remove('show');if(_vcUITimer){clearInterval(_vcUITimer);_vcUITimer=null}},4500);
 }
 document.addEventListener('keydown',function(e){
   if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;
@@ -2452,6 +2593,7 @@ function handleMpMessage(raw){
   if(!d)return;
   // Control messages from the server
   if(d.type==='welcome'){
+    if(d.id)mpMyId=d.id;
     if(d.role==='host'){
       // Wait for peerJoined before doing anything else.
     } else {
@@ -2475,6 +2617,7 @@ function handleMpMessage(raw){
     return;
   }
   if(d.type==='peerLeft'){
+    voiceDisconnect(d.id);
     removePeer(d.id);
     if(peerCount===0)onMpDisconnect();
     return;
@@ -2486,6 +2629,7 @@ function handleMpMessage(raw){
     mpConn={open:true};
     var hp=ensurePeer(d.from,d.name,d.col);
     if(!primaryPeerId)primaryPeerId=hp.id;
+    voiceConnectTo(hp.id);
     if(hp.id===primaryPeerId){
       if(d.name)qualiOpName=d.name;
       if(d.ghost&&d.ghost.length>0){opBestGhost=d.ghost;opGhostPlaying=false}
@@ -2552,7 +2696,7 @@ function handleMpMessage(raw){
   if(d.t==='missile'){fireMissile(d.sx,d.sz,d.tx,d.tz,false);return}
   if(d.t==='nuke'&&mpMode==='join'){setNukedState(!!d.on);return}
   if(d.t==='blackout'&&mpMode==='join'){setBlackedOutState(!!d.on);return}
-  if(d.t==='voiceOffer'||d.t==='voiceAnswer'||d.t==='iceCand'){handleVoiceSignal(d);return}
+  if(d.t==='voiceOffer'||d.t==='voiceAnswer'||d.t==='iceCand'||d.t==='voiceState'){handleVoiceSignal(d);return}
 }
 function toggleNuke(){
   if(mpMode!=='host'||!mpConn||!racing)return;
