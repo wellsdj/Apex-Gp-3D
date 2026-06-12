@@ -1107,7 +1107,7 @@ function wheelFollow(g){
   var d=dx*Math.sin(g.rotation.y)+dz*Math.cos(g.rotation.y);
   for(var i=0;i<g.wheels.length;i++)g.wheels[i].rotation.x+=d/WHEEL_RAD;
   var da=g.rotation.y-g._pa;if(da>Math.PI)da-=Math.PI*2;if(da<-Math.PI)da+=Math.PI*2;
-  var st=Math.max(-.45,Math.min(.45,da*6));
+  var st=Math.max(-.22,Math.min(.22,da*6));
   if(g.steerL){g.steerL.rotation.y+=(st-g.steerL.rotation.y)*.25;g.steerR.rotation.y=g.steerL.rotation.y}
   g._pw.copy(g.position);g._pa=g.rotation.y;
 }
@@ -1856,7 +1856,7 @@ if(_drifting&&SPD>120&&performance.now()-_lastSkidT>30&&skidMat){
     _skm.rotation.y=A;_skm.life=7;scene.add(_skm);skidMarks.push(_skm);
   }
 }
-if(car.wheels){var _ws=(V.x*Math.sin(A)+V.z*Math.cos(A))*dt/WHEEL_RAD;for(var _wi=0;_wi<car.wheels.length;_wi++)car.wheels[_wi].rotation.x+=_ws;if(car.steerL){var _stt=ST*0.42;car.steerL.rotation.y+=(_stt-car.steerL.rotation.y)*Math.min(1,dt*18);car.steerR.rotation.y=car.steerL.rotation.y}}
+if(car.wheels){var _ws=(V.x*Math.sin(A)+V.z*Math.cos(A))*dt/WHEEL_RAD;for(var _wi=0;_wi<car.wheels.length;_wi++)car.wheels[_wi].rotation.x+=_ws;if(car.steerL){var _stt=ST*0.22;car.steerL.rotation.y+=(_stt-car.steerL.rotation.y)*Math.min(1,dt*18);car.steerR.rotation.y=car.steerL.rotation.y}}
 recordGhostFrame()}
 
 function doCol(){var minD=Infinity,ci=0;if(_colGrid){var gc=Math.floor((P.x-_colGridOX)/_colGridSize),gr=Math.floor((P.z-_colGridOZ)/_colGridSize);for(var gri=gr-1;gri<=gr+1;gri++)for(var gci=gc-1;gci<=gc+1;gci++){if(gri<0||gri>=_colGridRows||gci<0||gci>=_colGridCols)continue;var cell=_colGrid[gri*_colGridCols+gci];for(var gi=0;gi<cell.length;gi++){var idx=cell[gi],dx=tPts[idx].x-P.x,dz=tPts[idx].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=idx}}}}else{for(var i=0;i<tPts.length;i+=8){var dx=tPts[i].x-P.x,dz=tPts[i].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=i}}for(var i2=Math.max(0,ci-15);i2<Math.min(tPts.length,ci+15);i2++){var dx2=tPts[i2].x-P.x,dz2=tPts[i2].z-P.z,d2=dx2*dx2+dz2*dz2;if(d2<minD){minD=d2;ci=i2}}}var t=ci/tPts.length,tp=spl.getPoint(t),tn=spl.getTangent(t).normalize(),nm=_tv1.set(-tn.z,0,tn.x);var lat=_tv2.subVectors(P,tp).dot(nm),aL=Math.abs(lat),ss=Math.sign(lat);var fwd=_tv3.set(Math.sin(A),0,Math.cos(A));_tv4.copy(P).addScaledVector(fwd,3);var nL=Math.abs(_tv5.subVectors(_tv4,tp).dot(nm));carNearIdx=ci;onCurb=aL>(TW/2-1.5)&&aL<(TW/2+CWW)&&trackCurv[ci]>curbCurvThresh*.5;var effWL=WL-CAR_HW;if(nL>=effWL||aL>=effWL){if(aL>=effWL){_tv6.copy(tp).addScaledVector(nm,ss*(effWL-.05));P.copy(_tv6)}var vN=V.dot(nm)*ss,spd=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;if(vN>.5){var tV=V.dot(tn),iA=Math.atan2(Math.abs(vN),Math.abs(tV));
