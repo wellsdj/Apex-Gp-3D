@@ -254,6 +254,9 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .opLiveSpdU{font-family:'Orbitron';font-size:9px;color:rgba(255,255,255,.5);letter-spacing:2px;margin-top:2px}
 .opLiveTimeLbl{font-family:'Orbitron';font-size:8px;letter-spacing:2px;color:rgba(255,255,255,.4);margin-top:7px}
 .opLiveTime{font-family:'Orbitron';font-size:15px;font-weight:600;color:rgba(255,255,255,.9);letter-spacing:1px;margin-top:1px}
+#missileWarn{position:fixed;top:100px;left:50%;transform:translateX(-50%);z-index:96;font-family:'Orbitron';font-size:14px;font-weight:700;letter-spacing:2px;color:#fff;background:rgba(200,30,20,.88);padding:8px 22px;border-radius:8px;display:none;white-space:nowrap;animation:mwPulse 1s infinite}
+#missileWarn.show{display:block}
+@keyframes mwPulse{0%,100%{box-shadow:0 0 12px rgba(255,60,40,.7)}50%{box-shadow:0 0 30px rgba(255,60,40,1)}}
 #missileAim{position:fixed;inset:0;z-index:140;display:none;cursor:crosshair;pointer-events:all}
 #missileAim.show{display:block}
 #camHint{position:absolute;top:52px;left:25px;font-family:'Orbitron';font-size:9px;letter-spacing:2px;color:rgba(140,220,255,.85);background:rgba(0,0,0,.55);padding:6px 12px;border-radius:6px;border:1px solid rgba(80,180,255,.35);opacity:0;transition:opacity .3s;pointer-events:none}
@@ -407,9 +410,9 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 </div>
 <script>if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){document.getElementById('mobileBlock').style.display='flex'}</script>
 <div id="menuScreen"><canvas id="menuCanvas"></canvas><button class="cog-btn" style="position:absolute;top:18px;right:18px;z-index:10" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="menu-fx"></div><div class="menu-vig"></div><div class="mo"><div class="title">APEX<br>GP</div><div class="sub">Formula Apex &middot; World Championship</div><button class="play-btn" onclick="onPlayClick()"><span class="play-car-ico">🏎️</span><span class="play-txt">PLAY</span></button><button class="play-btn review-btn" id="reviewBtn" style="display:none" onclick="openReviewMenu()"><span class="play-car-ico">▶</span><span class="play-txt">REVIEW BEST LAP</span></button><div class="ci"><span>W/&#8593;</span> Accelerate &middot; <span>S/&#8595;</span> Brake &middot; <span>A/&#8592;</span> <span>D/&#8594;</span> Steer<br><span>C</span> Camera &middot; <span>R</span> Restart &middot; <span>G</span> Ghost &middot; <span>H</span> Headlights &middot; <span>SPACE</span> Drift &middot; <span>B</span> Look Back &middot; <span>1-4</span> Emotes (party)</div></div></div>
-<div id="garageScreen" class="hide"><canvas id="garageCanvas"></canvas><button class="cog-btn" style="position:absolute;top:18px;right:18px;z-index:10" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="gar-left"><div class="gar-brand">APEX GP &mdash; TIME ATTACK</div><div class="gar-car-name">APEX<br>GP</div><div class="gar-divider"></div><div class="gar-rank" id="garRank">BEGINNER</div><div class="gar-laps" id="garLaps">0 LAPS</div></div><div class="track-sel"><button class="track-arr" onclick="chgTrack(-1)">&#9664;</button><div class="track-info"><canvas id="trackPreview" width="120" height="120"></canvas><div class="track-name" id="trackName">SUNSET CIRCUIT</div><div class="track-best" id="trackBest">BEST: --:--.---</div><div class="track-num" id="trackNum">1 / 5</div></div><button class="track-arr" onclick="chgTrack(1)">&#9654;</button></div><div class="hud-bottom"><div class="gar-section">HUD DISPLAY</div><div class="tog-row"><div class="tog" id="togLap" onclick="togHUD('lap')">LAP TIMES</div><div class="tog" id="togMap" onclick="togHUD('map')">MINIMAP</div><div class="tog" id="togGrip" onclick="togHUD('grip')">DELTA</div><div class="tog" id="togGhost" onclick="togHUD('ghost')">GHOST</div><div class="tog" id="togLine" onclick="togHUD('line')">RACING LINE</div><div class="tog off" id="togOpponent" onclick="togHUD('opponent')" style="display:none">OPPONENT</div><div class="tog off" id="togOpGhost" onclick="togHUD('opGhost')" style="display:none">OPP. GHOST</div></div></div><button class="gar-btn" id="customBtn" onclick="openCustom();event.stopPropagation()">CUSTOMISE</button><button class="gar-btn" id="startBtn" onclick="showWeatherMenu()">RACE</button><div class="orbit-hint">DRAG TO ORBIT &middot; SCROLL TO ZOOM</div><div class="mp-panel" id="mpPanel"><div class="gar-section">MULTIPLAYER</div><div id="mpButtons" class="mp-buttons"><div class="tog" onclick="createParty()">CREATE PARTY</div><div class="tog" onclick="showJoinUI()">JOIN PARTY</div></div><div id="mpHosting" class="mp-hosting hide"><div class="mp-code-label">PARTY CODE</div><div class="mp-code" id="mpCode">-----</div><div class="mp-status" id="mpHostStatus">Waiting for opponent...</div><div class="tog mp-leave" onclick="leaveParty()">CANCEL</div></div><div id="mpJoining" class="mp-joining hide"><div class="mp-row"><input class="mp-input" id="mpCodeInput" maxlength="5" placeholder="CODE"><div class="tog" onclick="joinParty()">JOIN</div></div><div class="mp-status" id="mpJoinStatus"></div><div class="tog mp-leave" onclick="cancelJoin()">CANCEL</div></div><div id="mpConnected" class="mp-connected hide"><div class="mp-status ok">CONNECTED &#10003;</div><div class="mp-opponent" id="mpOpponent"></div><div class="tog mp-leave" onclick="leaveParty()">LEAVE</div></div></div></div>
-<div id="hudScreen" class="hide"><button class="ghostBtn" id="camLbl" style="top:18px;left:25px;background:rgba(80,180,255,.4);border-color:rgba(80,180,255,.3)" onclick="cycleCam()" title="Click or press C to change camera">CHASE CAM</button><div id="camHint">DRAG TO AIM CAMERA &middot; SCROLL TO ZOOM</div><button class="ghostBtn" id="ghostBtn" onclick="toggleGhost()">GHOST: ON</button><button class="ghostBtn soundBtn" id="soundBtn" onclick="toggleRaceSound()">♪ SOUND: ON</button><button class="ghostBtn" id="missileBtn" style="top:176px;display:none;background:rgba(255,90,40,.5);border-color:rgba(255,130,70,.55)" onclick="startMissileAim()">🚀 MISSILE</button><button class="cog-btn" style="position:absolute;top:110px;left:70px" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="hb lbb" id="lapBox"><div class="lt">Current Lap</div><div class="lv" id="curLap">00:00.000</div><div class="lt" style="margin-top:7px">Best Lap</div><div class="lbv" id="bestLap">--:--.---</div><div class="lt" style="margin-top:7px">Last Lap</div><div class="lc" id="lastLap">--:--.---</div><div class="lc" id="lapCnt" style="margin-top:5px">LAP 1</div></div><div class="hb sbb" id="spdBox"><svg id="spdOutlineSvg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible"><rect id="spdOutlineRect" x="0" y="0" width="10" height="10" rx="10" ry="10" fill="none" stroke="#ff3333" stroke-width="9" stroke-dasharray="0 9999" stroke-linecap="round"/></svg><div class="sv" id="spdVal">0</div><div class="su">KM/H</div><div class="sbc"><div class="sb2" id="spdBar"></div></div></div><div class="gearBox" id="gearBox"><div class="gearLbl">VS GHOST</div><div class="gearNum" id="gearD">--</div><div class="gearBar"><div class="gearFill" id="gearFill"></div></div></div><div class="hb mmb" id="mapBox"><canvas id="mmC" width="150" height="150"></canvas></div><div id="posBox"><div class="pv" id="posVal">P1</div><div class="pl">POSITION</div></div><div id="emoteToast"><div id="etEmoji">👋</div><div class="et-name" id="etName"></div></div><div class="nb" id="nB">&#9733; NEW BEST LAP &#9733;</div><div class="opDeltaBox" id="opDeltaBox"><div class="opDeltaLbl">VS OPPONENT</div><div class="opDeltaNum" id="opDeltaD">--</div></div><div class="opLiveBox" id="opLiveBox"><div class="opLiveLbl">OPPONENT</div><div class="opLiveSpd" id="opLiveSpd">0</div><div class="opLiveSpdU">KM/H</div><div class="opLiveTimeLbl">CURRENT LAP</div><div class="opLiveTime" id="opLiveTime">--:--.---</div></div><div class="emote-hint" id="emoteHint">1 👋 &nbsp; 2 😂 &nbsp; 3 🔥 &nbsp; 4 🏁</div><button class="nukeBtn" id="nukeBtn" onclick="toggleNuke()">☢ NUKE</button><button class="blackoutBtn" id="blackoutBtn" onclick="toggleBlackout()">⬛ BLACKOUT</button><div class="pitLaneInd" id="pitLaneInd">PIT LANE — 70 KM/H</div><div id="tireInfo"><div class="ti-title">TIRES</div><div class="ti-cur"><div class="ti-dot" id="tiDot"></div><div class="ti-name" id="tiName">MEDIUM</div></div><div class="ti-section">TEMPERATURE</div><div class="ti-temp-bar"><div class="ti-temp-opt-lo" id="tiTempOptLo"></div><div class="ti-temp-opt-hi" id="tiTempOptHi"></div><div class="ti-temp-marker" id="tiTempMarker"></div></div><div class="ti-temp-num" id="tiTempNum">25°C</div><div class="ti-temp-state" id="tiTempState">COLD</div><div class="ti-section">WEAR</div><div class="ti-wear-bar"><div class="ti-wear-fill" id="tiWearFill"></div></div><div class="ti-wear-num" id="tiWearNum">100%</div><div class="ti-section">STOCK</div><div class="ti-stock" id="tiStock"></div><div class="ti-hint">PRESS P TO CLOSE</div></div><div class="nukedOverlay" id="nukedOverlay">☢ NUKED ☢<div class="nukedSub">CONTROLS DISABLED</div></div><div class="buildSpd" id="buildSpd"><div class="bt">BUILDING SPEED</div><div class="bbar"><div class="bfill" id="buildFill"></div></div></div></div>
-<div id="missileAim" onclick="missileAimClick(event)"><div class="ma-hint">CLICK TO TARGET THE MISSILE — ESC TO CANCEL</div></div>
+<div id="garageScreen" class="hide"><canvas id="garageCanvas"></canvas><button class="cog-btn" style="position:absolute;top:18px;right:18px;z-index:10" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="gar-left"><div class="gar-brand">APEX GP &mdash; TIME ATTACK</div><div class="gar-car-name">APEX<br>GP</div><div class="gar-divider"></div><div class="gar-rank" id="garRank">BEGINNER</div><div class="gar-laps" id="garLaps">0 LAPS</div></div><div class="track-sel"><button class="track-arr" onclick="chgTrack(-1)">&#9664;</button><div class="track-info"><canvas id="trackPreview" width="120" height="120"></canvas><div class="track-name" id="trackName">SUNSET CIRCUIT</div><div class="track-best" id="trackBest">BEST: --:--.---</div><div class="track-num" id="trackNum">1 / 5</div><div class="tog" id="battleTog" onclick="toggleBattle()" style="margin-top:10px;font-size:10px;text-align:center">🚀 MISSILES: ON</div></div><button class="track-arr" onclick="chgTrack(1)">&#9654;</button></div><div class="hud-bottom"><div class="gar-section">HUD DISPLAY</div><div class="tog-row"><div class="tog" id="togLap" onclick="togHUD('lap')">LAP TIMES</div><div class="tog" id="togMap" onclick="togHUD('map')">MINIMAP</div><div class="tog" id="togGrip" onclick="togHUD('grip')">DELTA</div><div class="tog" id="togGhost" onclick="togHUD('ghost')">GHOST</div><div class="tog" id="togLine" onclick="togHUD('line')">RACING LINE</div><div class="tog off" id="togOpponent" onclick="togHUD('opponent')" style="display:none">OPPONENT</div><div class="tog off" id="togOpGhost" onclick="togHUD('opGhost')" style="display:none">OPP. GHOST</div></div></div><button class="gar-btn" id="customBtn" onclick="openCustom();event.stopPropagation()">CUSTOMISE</button><button class="gar-btn" id="startBtn" onclick="showWeatherMenu()">RACE</button><div class="orbit-hint">DRAG TO ORBIT &middot; SCROLL TO ZOOM</div><div class="mp-panel" id="mpPanel"><div class="gar-section">MULTIPLAYER</div><div id="mpButtons" class="mp-buttons"><div class="tog" onclick="createParty()">CREATE PARTY</div><div class="tog" onclick="showJoinUI()">JOIN PARTY</div></div><div id="mpHosting" class="mp-hosting hide"><div class="mp-code-label">PARTY CODE</div><div class="mp-code" id="mpCode">-----</div><div class="mp-status" id="mpHostStatus">Waiting for opponent...</div><div class="tog mp-leave" onclick="leaveParty()">CANCEL</div></div><div id="mpJoining" class="mp-joining hide"><div class="mp-row"><input class="mp-input" id="mpCodeInput" maxlength="5" placeholder="CODE"><div class="tog" onclick="joinParty()">JOIN</div></div><div class="mp-status" id="mpJoinStatus"></div><div class="tog mp-leave" onclick="cancelJoin()">CANCEL</div></div><div id="mpConnected" class="mp-connected hide"><div class="mp-status ok">CONNECTED &#10003;</div><div class="mp-opponent" id="mpOpponent"></div><div class="tog mp-leave" onclick="leaveParty()">LEAVE</div></div></div></div>
+<div id="hudScreen" class="hide"><button class="ghostBtn" id="camLbl" style="top:18px;left:25px;background:rgba(80,180,255,.4);border-color:rgba(80,180,255,.3)" onclick="cycleCam()" title="Click or press C to change camera">CHASE CAM</button><div id="camHint">DRAG TO AIM CAMERA &middot; SCROLL TO ZOOM</div><button class="ghostBtn" id="ghostBtn" onclick="toggleGhost()">GHOST: ON</button><button class="ghostBtn soundBtn" id="soundBtn" onclick="toggleRaceSound()">♪ SOUND: ON</button><button class="ghostBtn" id="missileBtn" style="top:176px;display:none;background:rgba(255,90,40,.5);border-color:rgba(255,130,70,.55)" onclick="startMissileAim()">🚀 MISSILE</button><button class="ghostBtn" id="shieldBtn" style="top:215px;display:none;background:rgba(60,160,255,.45);border-color:rgba(100,190,255,.5)" onclick="activateShield()">🛡 SHIELD (E)</button><div id="missileWarn"></div><button class="cog-btn" style="position:absolute;top:110px;left:70px" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="hb lbb" id="lapBox"><div class="lt">Current Lap</div><div class="lv" id="curLap">00:00.000</div><div class="lt" style="margin-top:7px">Best Lap</div><div class="lbv" id="bestLap">--:--.---</div><div class="lt" style="margin-top:7px">Last Lap</div><div class="lc" id="lastLap">--:--.---</div><div class="lc" id="lapCnt" style="margin-top:5px">LAP 1</div></div><div class="hb sbb" id="spdBox"><svg id="spdOutlineSvg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible"><rect id="spdOutlineRect" x="0" y="0" width="10" height="10" rx="10" ry="10" fill="none" stroke="#ff3333" stroke-width="9" stroke-dasharray="0 9999" stroke-linecap="round"/></svg><div class="sv" id="spdVal">0</div><div class="su">KM/H</div><div class="sbc"><div class="sb2" id="spdBar"></div></div></div><div class="gearBox" id="gearBox"><div class="gearLbl">VS GHOST</div><div class="gearNum" id="gearD">--</div><div class="gearBar"><div class="gearFill" id="gearFill"></div></div></div><div class="hb mmb" id="mapBox"><canvas id="mmC" width="150" height="150"></canvas></div><div id="posBox"><div class="pv" id="posVal">P1</div><div class="pl">POSITION</div></div><div id="emoteToast"><div id="etEmoji">👋</div><div class="et-name" id="etName"></div></div><div class="nb" id="nB">&#9733; NEW BEST LAP &#9733;</div><div class="opDeltaBox" id="opDeltaBox"><div class="opDeltaLbl">VS OPPONENT</div><div class="opDeltaNum" id="opDeltaD">--</div></div><div class="opLiveBox" id="opLiveBox"><div class="opLiveLbl">OPPONENT</div><div class="opLiveSpd" id="opLiveSpd">0</div><div class="opLiveSpdU">KM/H</div><div class="opLiveTimeLbl">CURRENT LAP</div><div class="opLiveTime" id="opLiveTime">--:--.---</div></div><div class="emote-hint" id="emoteHint">1 👋 &nbsp; 2 😂 &nbsp; 3 🔥 &nbsp; 4 🏁</div><button class="nukeBtn" id="nukeBtn" onclick="toggleNuke()">☢ NUKE</button><button class="blackoutBtn" id="blackoutBtn" onclick="toggleBlackout()">⬛ BLACKOUT</button><div class="pitLaneInd" id="pitLaneInd">PIT LANE — 70 KM/H</div><div id="tireInfo"><div class="ti-title">TIRES</div><div class="ti-cur"><div class="ti-dot" id="tiDot"></div><div class="ti-name" id="tiName">MEDIUM</div></div><div class="ti-section">TEMPERATURE</div><div class="ti-temp-bar"><div class="ti-temp-opt-lo" id="tiTempOptLo"></div><div class="ti-temp-opt-hi" id="tiTempOptHi"></div><div class="ti-temp-marker" id="tiTempMarker"></div></div><div class="ti-temp-num" id="tiTempNum">25°C</div><div class="ti-temp-state" id="tiTempState">COLD</div><div class="ti-section">WEAR</div><div class="ti-wear-bar"><div class="ti-wear-fill" id="tiWearFill"></div></div><div class="ti-wear-num" id="tiWearNum">100%</div><div class="ti-section">STOCK</div><div class="ti-stock" id="tiStock"></div><div class="ti-hint">PRESS P TO CLOSE</div></div><div class="nukedOverlay" id="nukedOverlay">☢ NUKED ☢<div class="nukedSub">CONTROLS DISABLED</div></div><div class="buildSpd" id="buildSpd"><div class="bt">BUILDING SPEED</div><div class="bbar"><div class="bfill" id="buildFill"></div></div></div></div>
+<div id="missileAim" onclick="missileAimClick(event)"><div class="ma-hint">CLICK GROUND TO STRIKE — CLICK A CAR TO LOCK A HOMING MISSILE — ESC TO CANCEL</div></div>
 <div id="flipOverlay"><div class="crash-txt" id="flipTxt">FATAL CRASH</div></div>
 <div id="crashOverlay"><div class="crash-txt" id="crashTxt">FATAL CRASH</div></div>
 <div id="qualiUI"><div class="quali-title">QUALIFYING<span class="quali-time" id="qualiTime">3:00</span></div><div class="quali-standings" id="qualiStandings"></div></div>
@@ -534,7 +537,7 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 // One-time reset of old best times (remove this block after first load)
 if(!localStorage.getItem('apexgp_v2')){localStorage.removeItem('apexgp_bests');['SUNSET CIRCUIT','T-BONE','THE BOOT'].forEach(function(n){localStorage.removeItem('apexgp_ghost_'+n)});localStorage.setItem('apexgp_v2','1')}
 var TRACKS=[
-{name:"SUNSET CIRCUIT",sky:0xf08030,fog:0xd0703a,ambI:.45,sunI:.8,sunC:0xffaa55,hemiSky:0xffaa66,hemiGnd:0x443322,grass:0x3a6a2a,sf:[200,0],wp:[[10,0],[60,0],[100,0],[200,0],[300,0],[400,0],[440,10],[465,35],[475,65],[475,130],[475,190],[468,218],[445,240],[420,248],[360,250],[300,250],[272,255],[255,272],[250,295],[250,330],[255,358],[272,375],[295,382],[360,385],[420,385],[448,390],[468,410],[475,435],[475,480],[468,510],[445,535],[418,545],[340,545],[240,545],[140,545],[10,545],[-18,538],[-38,515],[-45,488],[-45,400],[-45,300],[-45,200],[-45,55],[-41,34],[-29,16],[-11,4]],pit:{roadX1:90,roadX2:310,roadZ1:14,roadZ2:17,dividerX1:110,dividerX2:290,dividerZ:13.5,laneAABB:{x1:80,x2:320,z1:13.4,z2:17.5},boxAABB:{x1:195,x2:208,z1:14.4,z2:16.6},speedLimit:70}},
+{name:"SUNSET CIRCUIT",sky:0xf08030,fog:0xd0703a,ambI:.45,sunI:.8,sunC:0xffaa55,hemiSky:0xffaa66,hemiGnd:0x443322,grass:0x3a6a2a,sf:[200,0],pitSide:1,wp:[[10,0],[60,0],[100,0],[200,0],[300,0],[400,0],[440,10],[465,35],[475,65],[475,130],[475,190],[468,218],[445,240],[420,248],[360,250],[300,250],[272,255],[255,272],[250,295],[250,330],[255,358],[272,375],[295,382],[360,385],[420,385],[448,390],[468,410],[475,435],[475,480],[468,510],[445,535],[418,545],[340,545],[240,545],[140,545],[10,545],[-18,538],[-38,515],[-45,488],[-45,400],[-45,300],[-45,200],[-45,55],[-41,34],[-29,16],[-11,4]],pit:{roadX1:90,roadX2:310,roadZ1:14,roadZ2:17,dividerX1:110,dividerX2:290,dividerZ:13.5,laneAABB:{x1:80,x2:320,z1:13.4,z2:17.5},boxAABB:{x1:195,x2:208,z1:14.4,z2:16.6},speedLimit:70}},
 {name:"T-BONE",sky:0x87ceeb,fog:0x87ceeb,ambI:.55,sunI:.9,sunC:0xffffff,hemiSky:0x88aadd,hemiGnd:0x446633,grass:0x3a7a3a,sf:[250,0],wp:[[30,55],[35,25],[55,5],[90,0],[170,0],[250,0],[330,0],[410,0],[445,5],[465,25],[470,55],[470,80],[465,100],[445,115],[410,120],[365,120],[338,125],[322,145],[320,200],[320,280],[320,360],[318,410],[305,445],[280,465],[250,470],[220,465],[195,445],[182,410],[180,360],[180,280],[180,200],[178,145],[162,125],[135,120],[90,120],[55,115],[35,100],[30,80]],pit:{roadX1:130,roadX2:370,roadZ1:14,roadZ2:17,dividerX1:150,dividerX2:350,dividerZ:13.5,laneAABB:{x1:120,x2:380,z1:13.4,z2:17.5},boxAABB:{x1:243,x2:256,z1:14.4,z2:16.6},speedLimit:70}},
 {name:"THE BOOT",sky:0x6a7a8a,fog:0x5a6a78,ambI:.35,sunI:.5,sunC:0xcccccc,hemiSky:0x667788,hemiGnd:0x334433,grass:0x2d5a2d,sf:[125,0],wp:[[0,0],[125,0],[210,0],[210,310],[455,310],[455,510],[0,510]],pit:{roadX1:180,roadX2:360,roadZ1:537,roadZ2:540,dividerX1:200,dividerX2:340,dividerZ:541,laneAABB:{x1:170,x2:370,z1:535,z2:541.5},boxAABB:{x1:265,x2:278,z1:537.4,z2:539.6},speedLimit:70}},
 {name:"DRAGON'S TAIL",noCurbs:true,sky:0x4a3a6a,fog:0x3a2e54,ambI:.4,sunI:.7,sunC:0xff88cc,hemiSky:0x6a5a9a,hemiGnd:0x2a2238,grass:0x2d5a3a,sf:[148,82],wp:[[86,82],[107,82],[127,82],[148,82],[168,82],[189,82],[209,82],[230,82],[246,80],[261,72],[275,64],[292,61],[322,61],[338,58],[352,51],[367,43],[383,40],[405,40],[426,40],[448,40],[470,40],[491,40],[513,40],[534,40],[556,40],[578,40],[599,40],[618,42],[636,47],[652,56],[667,71],[675,91],[675,111],[667,131],[652,146],[636,155],[618,160],[599,162],[577,162],[555,162],[533,162],[511,165],[490,174],[473,188],[455,202],[435,210],[412,213],[390,216],[369,225],[352,239],[334,253],[314,262],[291,265],[271,265],[251,265],[231,265],[209,260],[191,246],[173,234],[152,229],[130,229],[108,229],[86,229],[63,223],[46,206],[40,183],[40,156],[40,128],[46,105],[63,89]],pit:{roadX1:100,roadX2:215,roadZ1:96,roadZ2:99,dividerX1:115,dividerX2:200,dividerZ:95.5,laneAABB:{x1:90,x2:220,z1:95.4,z2:99.5},boxAABB:{x1:142,x2:155,z1:96.4,z2:98.6},speedLimit:70}},
@@ -1007,7 +1010,7 @@ function toggleRaceSound(){
 function toggleGhost(){ghostMode=(ghostMode+1)%3;var btn=document.getElementById('ghostBtn');if(ghostMode===0){btn.textContent='GHOST: ON';btn.className='ghostBtn';btn.style.background='';btn.style.borderColor=''}else if(ghostMode===1){btn.textContent='GHOST: BEST';btn.className='ghostBtn';btn.style.background='rgba(200,170,0,.4)';btn.style.borderColor='rgba(200,170,0,.3)'}else{btn.textContent='GHOST: OFF';btn.className='ghostBtn off';btn.style.background='';btn.style.borderColor=''}if(ghostCar)ghostCar.visible=ghostMode===0&&ghostPlaying;if(allTimeCar)allTimeCar.visible=ghostMode===1&&allTimeGhostPlaying}
 function showGarage(){mRun=false;document.getElementById('menuScreen').classList.add('hide');document.getElementById('garageScreen').classList.remove('hide');initGarage();startLobbyMusic();drawTrackPreview();checkRankUp();if(mpMode==='join'&&mpConn){document.getElementById('startBtn').textContent='WAITING FOR HOST...';document.getElementById('startBtn').style.pointerEvents='none';document.getElementById('startBtn').style.opacity='0.5'}else{document.getElementById('startBtn').textContent='RACE';document.getElementById('startBtn').style.pointerEvents='';document.getElementById('startBtn').style.opacity=''}}
 function backToMenu(){racing=false;gRun=false;document.getElementById('hudScreen').classList.add('hide');document.getElementById('garageScreen').classList.add('hide');document.getElementById('menuScreen').classList.remove('hide');mRun=true;initMenu();startLobbyMusic();}
-function startDrive(){var _cl=document.getElementById('camLbl');if(_cl)_cl.textContent=camN[camM];if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}fadeLobbyMusic();gRun=false;document.getElementById('garageScreen').classList.add('hide');document.getElementById('hudScreen').classList.remove('hide');applyHUD();initRace();resetCar();racing=true;raceStartedAt=performance.now();audioStarted=false;prevEngineActive=false;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;s.currentTime=0;});clk.getDelta();opPos=null;opPrevPos=null;opGhostFrame=0;lastMpSend=0;opSpd=0;opLapT=-1;opLapTRcvAt=0;resetNuke();resetBlackout();resetMissiles();missileReadyAt=0;closePit();recentlyPitted=false;resetTiresForRace();endRaceStart=0;endFastestLap=Infinity;cleanupAI();cancelQualifying();if(raceMode==='endurance'){startQualifying()}else{setOpponentSolid(true)}/* TT = free practice — no 5-light start */if(pendingLightsDelay===null)pendingLightsDelay=1000+Math.random()*4000;if(mpMode==='host'&&mpSocket){mpSend({t:'start',weather:selWeather,track:selTrack,lightsDelay:pendingLightsDelay,laps:END_LAPS,mode:raceMode})}if(opBestGhost.length>1&&tPts){opGhostTimeLookup=buildGhostLookupGeneric(opBestGhost)}allTimeGhost=getTrackGhost(TRACKS[selTrack].name)||[];allTimeGhostPlaying=allTimeGhost.length>1;allTimeGhostFrame=0;allTimeGhostLookup=allTimeGhostPlaying?buildGhostLookupGeneric(allTimeGhost):null}
+function startDrive(){var _cl=document.getElementById('camLbl');if(_cl)_cl.textContent=camN[camM];if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}fadeLobbyMusic();gRun=false;document.getElementById('garageScreen').classList.add('hide');document.getElementById('hudScreen').classList.remove('hide');applyHUD();initRace();resetCar();racing=true;raceStartedAt=performance.now();audioStarted=false;prevEngineActive=false;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;s.currentTime=0;});clk.getDelta();opPos=null;opPrevPos=null;opGhostFrame=0;lastMpSend=0;opSpd=0;opLapT=-1;opLapTRcvAt=0;resetNuke();resetBlackout();resetMissiles();missileReadyAt=0;closePit();recentlyPitted=false;resetTiresForRace();endRaceStart=0;endFastestLap=Infinity;cleanupAI();cancelQualifying();if(raceMode==='endurance'){startQualifying()}else{setOpponentSolid(true)}/* TT = free practice — no 5-light start */if(pendingLightsDelay===null)pendingLightsDelay=1000+Math.random()*4000;if(mpMode==='host'&&mpSocket){mpSend({t:'start',weather:selWeather,track:selTrack,lightsDelay:pendingLightsDelay,laps:END_LAPS,mode:raceMode,battle:battleMode?1:0})}if(opBestGhost.length>1&&tPts){opGhostTimeLookup=buildGhostLookupGeneric(opBestGhost)}allTimeGhost=getTrackGhost(TRACKS[selTrack].name)||[];allTimeGhostPlaying=allTimeGhost.length>1;allTimeGhostFrame=0;allTimeGhostLookup=allTimeGhostPlaying?buildGhostLookupGeneric(allTimeGhost):null}
 
 // ── Gradient sky dome + sun disc + night stars ───────────────────────────────
 function _shade(hex,f){
@@ -1108,7 +1111,7 @@ if(selWeather==='night'||selWeather==='night_dark'){
   }
 }
 builtTrack=selTrack;builtWeather=selWeather;bestLT=Infinity;lastLT=0;bestGhost=[];ghostPlaying=false;_buildColGrid();_mmBounds=null;_mmTrackIdx=-1}
-function initRace(){if(rInit&&builtTrack===selTrack&&builtWeather===selWeather)return;if(!rInit){rInit=true;ren=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});ren.setSize(innerWidth,innerHeight);ren.setPixelRatio(Math.min(devicePixelRatio,1.5));ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;ren.toneMapping=THREE.NoToneMapping;document.body.insertBefore(ren.domElement,document.getElementById('menuScreen'));cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,2600);clk=new THREE.Clock();mirrorCam=new THREE.PerspectiveCamera(55,340/80,1,800);mmx=document.getElementById('mmC').getContext('2d');addEventListener('keydown',function(e){KY[e.key.toLowerCase()]=true;if(e.key==='Escape'&&missileMode==='aim'){cancelMissileAim();e.preventDefault();return}if(e.key==='Escape'&&reviewMode){exitReview();e.preventDefault();return}if(e.key==='Escape'&&racing){racing=false;resetNuke();resetBlackout();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()};if(e.key.toLowerCase()==='g')toggleGhost();if(e.key.toLowerCase()==='h')toggleHeadlights();if(e.key.toLowerCase()==='p'&&racing)toggleTireInfo();if(racing&&mpConn&&e.key>='1'&&e.key<='4')sendEmote(parseInt(e.key,10)-1);e.preventDefault()});addEventListener('keyup',function(e){KY[e.key.toLowerCase()]=false});addEventListener('resize',function(){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});buildScene();rLoop()}else{buildScene()}}
+function initRace(){if(rInit&&builtTrack===selTrack&&builtWeather===selWeather)return;if(!rInit){rInit=true;ren=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});ren.setSize(innerWidth,innerHeight);ren.setPixelRatio(Math.min(devicePixelRatio,1.5));ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;ren.toneMapping=THREE.NoToneMapping;document.body.insertBefore(ren.domElement,document.getElementById('menuScreen'));cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,2600);clk=new THREE.Clock();mirrorCam=new THREE.PerspectiveCamera(55,340/80,1,800);mmx=document.getElementById('mmC').getContext('2d');addEventListener('keydown',function(e){KY[e.key.toLowerCase()]=true;if(e.key==='Escape'&&missileMode==='aim'){cancelMissileAim();e.preventDefault();return}if(e.key==='Escape'&&reviewMode){exitReview();e.preventDefault();return}if(e.key==='Escape'&&racing){racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()};if(e.key.toLowerCase()==='g')toggleGhost();if(e.key.toLowerCase()==='e'&&racing)activateShield();if(e.key.toLowerCase()==='h')toggleHeadlights();if(e.key.toLowerCase()==='p'&&racing)toggleTireInfo();if(racing&&mpConn&&e.key>='1'&&e.key<='4')sendEmote(parseInt(e.key,10)-1);e.preventDefault()});addEventListener('keyup',function(e){KY[e.key.toLowerCase()]=false});addEventListener('resize',function(){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});buildScene();rLoop()}else{buildScene()}}
 
 // ── Procedural asphalt (publicly reproducible, no network needed) ───────────
 function mkAsphaltTexture(weather){
@@ -1285,7 +1288,7 @@ function mkPitLane(){
     }
     return worst;
   }
-  var side=sideRoom(1)>=sideRoom(-1)?1:-1;
+  var side=TRACKS[selTrack].pitSide||(sideRoom(1)>=sideRoom(-1)?1:-1);
   PIT={side:side,entry:entry,coreS:coreS,coreE:coreE,exit:exit,boxI:boxI,boxRad:rel(6),spm:spm,speedLimit:70};
   // lane surface ribbon with tapered ends
   var spanIdx=((exit-entry+n)%n);
@@ -1881,12 +1884,22 @@ function doHUD(){
   // Host-only buttons visibility (only during qualifying — disabled in race itself)
   var msBtn=D('missileBtn');
   if(msBtn){
-    var msShow=mpMode==='host'&&mpConn&&mpSocket&&racing&&racePhase==='race';
+    var msShow=battleMode&&mpConn&&mpSocket&&racing&&racePhase==='race';
     msBtn.style.display=msShow?'':'none';
     if(msShow){
       var _mcd=missileReadyAt-performance.now();
       msBtn.textContent=_mcd>0?('🚀 '+Math.ceil(_mcd/1000)+'s'):'🚀 MISSILE';
       msBtn.classList.toggle('off',_mcd>0);
+    }
+  }
+  var shBtn=D('shieldBtn');
+  if(shBtn){
+    var msShow2=battleMode&&mpConn&&mpSocket&&racing&&racePhase==='race';
+    shBtn.style.display=msShow2?'':'none';
+    if(msShow2){
+      var _now4=performance.now(),_scd=shieldReadyAt-_now4;
+      shBtn.textContent=_now4<shieldUntil?'\ud83d\udee1 ACTIVE':(_scd>0?('\ud83d\udee1 '+Math.ceil(_scd/1000)+'s'):'\ud83d\udee1 SHIELD (E)');
+      shBtn.classList.toggle('off',_scd>0&&_now4>=shieldUntil);
     }
   }
   var hostBtns=mpMode==='host'&&mpConn&&mpSocket&&racing&&racePhase==='quali';
@@ -2448,6 +2461,7 @@ function buildPeerCar(p){
   var tr=new THREE.Mesh(new THREE.RingGeometry(3.4,4.3,32),new THREE.MeshBasicMaterial({color:0xff2222,transparent:true,opacity:.9,side:THREE.DoubleSide,depthTest:false,depthWrite:false}));
   tr.rotation.x=-Math.PI/2;tr.position.set(0,.2,0);tr.visible=false;tr.renderOrder=5;
   c.add(tr);p.targetRing=tr;
+  p.shieldMesh=null;
   c.visible=false;scene.add(c);p.car=c;
 }
 function ensurePeer(id,name,col){
@@ -2616,7 +2630,7 @@ function handleMpMessage(raw){
   if(d.type==='peerJoined'){
     // A new player arrived — everyone re-introduces themselves so the joiner
     // learns names/colours; host also re-sends the track.
-    if(mpMode==='host')mpSend({t:'trackReq',track:selTrack});
+    if(mpMode==='host'){mpSend({t:'trackReq',track:selTrack});mpSend({t:'battle',on:battleMode?1:0})}
     mpSendHello();
     return;
   }
@@ -2658,6 +2672,7 @@ function handleMpMessage(raw){
     if(typeof d.track==='number'&&TRACKS[d.track]){selTrack=d.track;document.getElementById('trackName').textContent=TRACKS[selTrack].name;document.getElementById('trackNum').textContent=(selTrack+1)+' / '+TRACKS.length;drawTrackPreview()}
     if(typeof d.laps==='number'&&(d.laps===5||d.laps===10))END_LAPS=d.laps;
     if(typeof d.mode==='string'&&(d.mode==='tt'||d.mode==='endurance'))raceMode=d.mode;
+    if(typeof d.battle!=='undefined'){battleMode=!!d.battle;updateBattleTog()}
     pendingLightsDelay=typeof d.lightsDelay==='number'?d.lightsDelay:(1000+Math.random()*4000);
     startDrive();return;
   }
@@ -2697,7 +2712,10 @@ function handleMpMessage(raw){
     }
     return;
   }
-  if(d.t==='missile'){fireMissile(d.sx,d.sz,d.tx,d.tz,false);return}
+  if(d.t==='missile'){fireMissile(d.sx,d.sz,d.tx,d.tz,false,d.tg||null);flashMissileFired(d.from);return}
+  if(d.t==='mwarn'){setMissileWarn(d.from,!!d.on);return}
+  if(d.t==='shield'){var _sp=ensurePeer(d.from,null,null);_sp.shieldUntil=performance.now()+3000;if(_sp.car&&!_sp.shieldMesh){_sp.shieldMesh=_mkShieldMesh();_sp.shieldMesh.position.set(0,.7,0);_sp.car.add(_sp.shieldMesh)}return}
+  if(d.t==='battle'){battleMode=!!d.on;updateBattleTog();return}
   if(d.t==='nuke'&&mpMode==='join'){setNukedState(!!d.on);return}
   if(d.t==='blackout'&&mpMode==='join'){setBlackedOutState(!!d.on);return}
   if(d.t==='voiceOffer'||d.t==='voiceAnswer'||d.t==='iceCand'||d.t==='voiceState'){handleVoiceSignal(d);return}
@@ -2770,14 +2788,25 @@ function resetBlackout(){
 // marker, the missile and the blast; cars inside 10m get thrown back by the
 // shockwave, a near-direct hit blows the car apart.
 var missileMode=null,missiles=[],explosions=[],missileReadyAt=0,trackViewR=400;
+var battleMode=true;
+function toggleBattle(){
+  if(mpMode==='join'&&mpConn)return;
+  battleMode=!battleMode;updateBattleTog();
+  if(mpMode==='host'&&mpSocket)mpSend({t:'battle',on:battleMode?1:0});
+}
+function updateBattleTog(){
+  var b=document.getElementById('battleTog');
+  if(b){b.textContent=battleMode?'\ud83d\ude80 MISSILES: ON':'\ud83c\udfc1 MISSILES: OFF';b.classList.toggle('off',!battleMode)}
+}
 function startMissileAim(){
-  if(mpMode!=='host'||!mpConn||!racing||racePhase!=='race')return;
+  if(!battleMode||!mpConn||!racing||racePhase!=='race')return;
   if(performance.now()<missileReadyAt)return;
   missileMode='aim';
+  mpSend({t:'mwarn',on:1});
   var ov=document.getElementById('missileAim');if(ov)ov.classList.add('show');
 }
 function cancelMissileAim(){
-  if(missileMode==='aim')missileMode=null;
+  if(missileMode==='aim'){missileMode=null;mpSend({t:'mwarn',on:0})}
   var ov=document.getElementById('missileAim');if(ov)ov.classList.remove('show');
 }
 function missileAimClick(e){
@@ -2789,14 +2818,29 @@ function missileAimClick(e){
   var tt=(0.5-o.y)/d.y;
   if(tt<0)return;
   var tx=o.x+d.x*tt,tz=o.z+d.z*tt;
-  fireMissile(P.x,P.z,tx,tz,true);
-  mpSend({t:'missile',sx:P.x,sz:P.z,tx:tx,tz:tz});
+  // clicking on (or near) an opponent's car locks a homing missile onto them
+  var tg=null,bestD=20;
+  for(var pid in peers){
+    var pc=peers[pid];
+    if(!pc.car||!pc.car.visible)continue;
+    var ddx=pc.car.position.x-tx,ddz=pc.car.position.z-tz;
+    var dd2=Math.sqrt(ddx*ddx+ddz*ddz);
+    if(dd2<bestD){bestD=dd2;tg=pid;tx=pc.car.position.x;tz=pc.car.position.z}
+  }
+  fireMissile(P.x,P.z,tx,tz,true,tg);
+  mpSend({t:'missile',sx:P.x,sz:P.z,tx:tx,tz:tz,tg:tg});
   missileMode='wait';
   missileReadyAt=performance.now()+15000;
+  mpSend({t:'mwarn',on:0});
   var ov=document.getElementById('missileAim');if(ov)ov.classList.remove('show');
 }
-function fireMissile(sx,sz,tx,tz,mine){
+function fireMissile(sx,sz,tx,tz,mine,tg){
   if(!scene)return;
+  if(tg){
+    // homing missile — chases the locked target until it catches them
+    missiles.push({homing:true,tg:tg,x:sx,z:sz,y:1.2,tx:tx,tz:tz,t0:performance.now()+150,born:performance.now(),speed:300,mesh:null,marker:null,mine:!!mine});
+    return;
+  }
   var dist=Math.sqrt((tx-sx)*(tx-sx)+(tz-sz)*(tz-sz));
   // fast strike: roughly one second from trigger to impact
   var durMs=Math.max(550,Math.min(1100,dist/480*1000));
@@ -2832,6 +2876,23 @@ function updateMissiles(dt){
     if(m.marker){var pu=1+Math.sin(now*.012)*.18;m.marker.scale.set(pu,pu,1)}
     if(now<m.t0)continue;
     if(!m.mesh){m.mesh=_mkMissileMesh();scene.add(m.mesh)}
+    if(m.homing){
+      // refresh the lock — my own car if I'm the target, else the peer ghost
+      if(m.tg===mpMyId){m.tx=P.x;m.tz=P.z}
+      else if(peers[m.tg]&&peers[m.tg].car&&peers[m.tg].car.visible){m.tx=peers[m.tg].car.position.x;m.tz=peers[m.tg].car.position.z}
+      var hdx=m.tx-m.x,hdz=m.tz-m.z,hd=Math.sqrt(hdx*hdx+hdz*hdz);
+      if(hd<4||now-m.born>9000){
+        explodeMissile(m);missiles.splice(i,1);continue;
+      }
+      var stp=Math.min(hd,m.speed*dt);
+      m.x+=hdx/hd*stp;m.z+=hdz/hd*stp;
+      var wantY=Math.min(30,Math.max(1.1,hd*.22));
+      m.y+=(wantY-m.y)*Math.min(1,dt*4);
+      _msDir.set(hdx/hd,(wantY-m.y)*.05,hdz/hd).normalize();
+      m.mesh.position.set(m.x,m.y,m.z);
+      m.mesh.quaternion.setFromUnitVectors(_msUp,_msDir);
+      continue;
+    }
     var u=(now-m.t0)/m.durMs;
     if(u>=1){
       explodeMissile(m);
@@ -2863,6 +2924,8 @@ function updateMissiles(dt){
     ex.ring.material.opacity=.85*(1-u2*u2);
     ex.light.intensity=16*(1-u2);
   }
+  updateShield(now);
+  renderMissileWarn();
 }
 function spawnExplosion(x,z){
   if(!scene)return;
@@ -2899,6 +2962,7 @@ function explodeMissile(m){
   // shockwave on MY car (each client applies its own physics).
   // The launcher is immune to their own missile.
   if(m.mine){setTimeout(function(){if(missileMode==='wait')missileMode=null},1200);return}
+  if(performance.now()<shieldUntil)return; // shield absorbs damage and shockwave
   var dx=P.x-m.tx,dz=P.z-m.tz,d=Math.sqrt(dx*dx+dz*dz);
   var nx2=d>0.05?dx/d:1,nz2=d>0.05?dz/d:0;
   if(d<100){
@@ -2924,7 +2988,51 @@ function explodeMissile(m){
     playCrash(Math.min(1,k+.2));
   }
 }
+// ── Shield + missile warnings ────────────────────────────────────────────
+var shieldUntil=0,shieldReadyAt=0,shieldMesh=null,mwarnActive={},firedFlashUntil=0,firedFlashName='';
+function _mkShieldMesh(){
+  return new THREE.Mesh(new THREE.SphereGeometry(2.9,20,14),new THREE.MeshBasicMaterial({color:0x55ccff,transparent:true,opacity:.28,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
+}
+function activateShield(){
+  if(!battleMode||!mpConn||!racing||racePhase!=='race')return;
+  var now=performance.now();
+  if(now<shieldReadyAt||now<shieldUntil)return;
+  shieldUntil=now+3000;shieldReadyAt=now+15000;
+  if(!shieldMesh&&car){shieldMesh=_mkShieldMesh();shieldMesh.position.set(0,.7,0);car.add(shieldMesh)}
+  if(shieldMesh)shieldMesh.visible=true;
+  mpSend({t:'shield'});
+}
+function updateShield(now){
+  if(shieldMesh){
+    var on=now<shieldUntil;
+    shieldMesh.visible=on;
+    if(on)shieldMesh.material.opacity=.22+Math.sin(now*.02)*.1;
+  }
+}
+function peerName(id){return ((peers[id]&&peers[id].name)||'OPPONENT').toUpperCase().slice(0,14)}
+function setMissileWarn(id,on){
+  if(on)mwarnActive[id]=true;else delete mwarnActive[id];
+}
+function flashMissileFired(id){
+  firedFlashUntil=performance.now()+2600;firedFlashName=peerName(id);
+  delete mwarnActive[id];
+}
+function renderMissileWarn(){
+  var el=document.getElementById('missileWarn');if(!el)return;
+  var now=performance.now();
+  if(now<firedFlashUntil&&racing){
+    el.textContent='\ud83d\ude80 '+firedFlashName+' FIRED A MISSILE! \u2014 SHIELD: PRESS E';
+    el.classList.add('show');return;
+  }
+  var ids=Object.keys(mwarnActive);
+  if(ids.length&&racing){
+    el.textContent='\u26a0 '+peerName(ids[0])+' IS IN MISSILE MODE \u2014 SHIELD READY ON E';
+    el.classList.add('show');
+  }else el.classList.remove('show');
+}
 function resetMissiles(){
+  mwarnActive={};firedFlashUntil=0;shieldUntil=0;shieldReadyAt=0;
+  var _mw=document.getElementById('missileWarn');if(_mw)_mw.classList.remove('show');
   for(var i=0;i<missiles.length;i++){
     if(missiles[i].mesh)try{scene.remove(missiles[i].mesh)}catch(e){}
     if(missiles[i].marker)try{scene.remove(missiles[i].marker)}catch(e){}
@@ -3319,6 +3427,7 @@ function playOpponent(dt){
     if(p.targetRing){
       p.targetRing.visible=!!missileMode;
       if(missileMode){var _ps2=4.6+Math.sin(now*.008)*.9;p.targetRing.scale.set(_ps2,_ps2,1)}
+      if(p.shieldMesh){var _shOn=now<(p.shieldUntil||0);p.shieldMesh.visible=_shOn;if(_shOn)p.shieldMesh.material.opacity=.22+Math.sin(now*.02)*.1}
     }
     wheelFollow(p.car);
   }
