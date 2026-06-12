@@ -254,27 +254,6 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .opLiveSpdU{font-family:'Orbitron';font-size:9px;color:rgba(255,255,255,.5);letter-spacing:2px;margin-top:2px}
 .opLiveTimeLbl{font-family:'Orbitron';font-size:8px;letter-spacing:2px;color:rgba(255,255,255,.4);margin-top:7px}
 .opLiveTime{font-family:'Orbitron';font-size:15px;font-weight:600;color:rgba(255,255,255,.9);letter-spacing:1px;margin-top:1px}
-#shopOverlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:210;display:none;align-items:center;justify-content:center}
-#shopOverlay.show{display:flex}
-.shop-box{background:rgba(12,14,22,.97);border:1px solid rgba(0,200,255,.4);border-radius:16px;padding:26px 30px;width:560px;max-height:82vh;overflow-y:auto;font-family:'Orbitron'}
-.shop-title{font-size:20px;font-weight:900;letter-spacing:5px;color:#fff;text-align:center}
-.shop-earn{font-size:8px;color:rgba(255,255,255,.45);letter-spacing:1px;text-align:center;margin-top:6px}
-.shop-bal{text-align:center;color:#ffd24a;font-size:13px;letter-spacing:2px;margin:8px 0 16px;font-weight:700}
-.shop-row{display:flex;align-items:center;gap:14px;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 14px;margin-bottom:10px}
-.shop-img{width:140px;height:78px;border-radius:8px;flex-shrink:0;border:1px solid rgba(255,255,255,.15);background:#0a0c14;object-fit:cover}
-.shop-info{flex:1}
-.shop-name{font-size:13px;font-weight:700;color:#fff;letter-spacing:2px}
-.shop-desc{font-size:8px;color:rgba(255,255,255,.5);letter-spacing:1px;margin-top:3px}
-.shop-act{font-size:10px;font-weight:700;letter-spacing:1px;padding:8px 14px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:'Orbitron'}
-.shop-act.buy{background:rgba(255,210,74,.9);color:#000}
-.shop-act.cant{background:rgba(255,255,255,.12);color:rgba(255,255,255,.4);cursor:default}
-.shop-act.equip{background:rgba(0,200,255,.25);color:#9ff;border:1px solid rgba(0,200,255,.5)}
-.shop-act.equipped{background:rgba(0,255,140,.2);color:#5fb;border:1px solid rgba(0,255,140,.5);cursor:default}
-.shop-close{margin:10px auto 0;display:block;background:none;border:1px solid rgba(255,255,255,.3);color:#fff;font-family:'Orbitron';font-size:10px;letter-spacing:2px;padding:8px 22px;border-radius:7px;cursor:pointer}
-#shopBtn{bottom:auto !important;top:88px !important;left:50% !important;right:auto !important;transform:translateX(10px);font-size:11px;padding:12px 36px}
-#credToast{position:fixed;top:178px;left:50%;transform:translateX(-50%);z-index:96;font-family:'Orbitron';font-size:14px;font-weight:700;letter-spacing:2px;color:#ffd24a;background:rgba(20,16,4,.85);border:1px solid rgba(255,210,74,.5);padding:8px 22px;border-radius:8px;display:none;white-space:nowrap}
-#credToast.show{display:block}
-.gar-credits{font-family:'Orbitron';font-size:11px;letter-spacing:2px;color:#ffd24a;margin-top:10px}
 #fuelWarn{position:fixed;top:140px;left:50%;transform:translateX(-50%);z-index:96;font-family:'Orbitron';font-size:13px;font-weight:700;letter-spacing:2px;color:#000;background:rgba(255,180,0,.92);padding:7px 20px;border-radius:8px;display:none;white-space:nowrap}
 #fuelWarn.show{display:block}
 #fuelWarn.out{background:rgba(255,40,30,.95);color:#fff}
@@ -435,8 +414,8 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 </div>
 <script>if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){document.getElementById('mobileBlock').style.display='flex'}</script>
 <div id="menuScreen"><canvas id="menuCanvas"></canvas><button class="cog-btn" style="position:absolute;top:18px;right:18px;z-index:10" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="menu-fx"></div><div class="menu-vig"></div><div class="mo"><div class="title">APEX<br>GP</div><div class="sub">Formula Apex &middot; World Championship</div><button class="play-btn" onclick="onPlayClick()"><span class="play-car-ico">🏎️</span><span class="play-txt">PLAY</span></button><button class="play-btn review-btn" id="reviewBtn" style="display:none" onclick="openReviewMenu()"><span class="play-car-ico">▶</span><span class="play-txt">REVIEW BEST LAP</span></button><div class="ci"><span>W/&#8593;</span> Accelerate &middot; <span>S/&#8595;</span> Brake &middot; <span>A/&#8592;</span> <span>D/&#8594;</span> Steer<br><span>C</span> Camera &middot; <span>R</span> Restart &middot; <span>G</span> Ghost &middot; <span>H</span> Headlights &middot; <span>SPACE</span> Drift &middot; <span>B</span> Look Back &middot; <span>1-4</span> Emotes (party)</div></div></div>
-<div id="garageScreen" class="hide"><canvas id="garageCanvas"></canvas><button class="cog-btn" style="position:absolute;top:18px;right:18px;z-index:10" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="gar-left"><div class="gar-brand">APEX GP &mdash; TIME ATTACK</div><div class="gar-car-name">APEX<br>GP</div><div class="gar-divider"></div><div class="gar-rank" id="garRank">BEGINNER</div><div class="gar-laps" id="garLaps">0 LAPS</div><div class="gar-credits" id="garCredits">₵ 0</div></div><div class="track-sel"><button class="track-arr" onclick="chgTrack(-1)">&#9664;</button><div class="track-info"><canvas id="trackPreview" width="120" height="120"></canvas><div class="track-name" id="trackName">SUNSET CIRCUIT</div><div class="track-best" id="trackBest">BEST: --:--.---</div><div class="track-best" id="trackTargets" style="color:#ffd24a;margin-top:3px"></div><div class="track-num" id="trackNum">1 / 5</div><div class="tog" id="battleTog" onclick="toggleBattle()" style="margin-top:10px;font-size:10px;text-align:center">🚀 MISSILES: ON</div></div><button class="track-arr" onclick="chgTrack(1)">&#9654;</button></div><div class="hud-bottom"><div class="gar-section">HUD DISPLAY</div><div class="tog-row"><div class="tog" id="togLap" onclick="togHUD('lap')">LAP TIMES</div><div class="tog" id="togMap" onclick="togHUD('map')">MINIMAP</div><div class="tog" id="togGrip" onclick="togHUD('grip')">DELTA</div><div class="tog" id="togGhost" onclick="togHUD('ghost')">GHOST</div><div class="tog" id="togLine" onclick="togHUD('line')">RACING LINE</div><div class="tog off" id="togOpponent" onclick="togHUD('opponent')" style="display:none">OPPONENT</div><div class="tog off" id="togOpGhost" onclick="togHUD('opGhost')" style="display:none">OPP. GHOST</div></div></div><button class="gar-btn" id="customBtn" onclick="openCustom();event.stopPropagation()">CUSTOMISE</button><button class="gar-btn" id="shopBtn" onclick="openShop();event.stopPropagation()">🏎 SHOP</button><button class="gar-btn" id="startBtn" onclick="showWeatherMenu()">RACE</button><div class="orbit-hint">DRAG TO ORBIT &middot; SCROLL TO ZOOM</div><div class="mp-panel" id="mpPanel"><div class="gar-section">MULTIPLAYER</div><div id="mpButtons" class="mp-buttons"><div class="tog" onclick="createParty()">CREATE PARTY</div><div class="tog" onclick="showJoinUI()">JOIN PARTY</div></div><div id="mpHosting" class="mp-hosting hide"><div class="mp-code-label">PARTY CODE</div><div class="mp-code" id="mpCode">-----</div><div class="mp-status" id="mpHostStatus">Waiting for opponent...</div><div class="tog mp-leave" onclick="leaveParty()">CANCEL</div></div><div id="mpJoining" class="mp-joining hide"><div class="mp-row"><input class="mp-input" id="mpCodeInput" maxlength="5" placeholder="CODE"><div class="tog" onclick="joinParty()">JOIN</div></div><div class="mp-status" id="mpJoinStatus"></div><div class="tog mp-leave" onclick="cancelJoin()">CANCEL</div></div><div id="mpConnected" class="mp-connected hide"><div class="mp-status ok">CONNECTED &#10003;</div><div class="mp-opponent" id="mpOpponent"></div><div class="tog mp-leave" onclick="leaveParty()">LEAVE</div></div></div></div>
-<div id="hudScreen" class="hide"><button class="ghostBtn" id="camLbl" style="top:18px;left:25px;background:rgba(80,180,255,.4);border-color:rgba(80,180,255,.3)" onclick="cycleCam()" title="Click or press C to change camera">CHASE CAM</button><div id="camHint">DRAG TO AIM CAMERA &middot; SCROLL TO ZOOM</div><button class="ghostBtn" id="ghostBtn" onclick="toggleGhost()">GHOST: ON</button><button class="ghostBtn soundBtn" id="soundBtn" onclick="toggleRaceSound()">♪ SOUND: ON</button><button class="ghostBtn" id="missileBtn" style="top:176px;display:none;background:rgba(255,90,40,.5);border-color:rgba(255,130,70,.55)" onclick="startMissileAim()">🚀 MISSILE</button><button class="ghostBtn" id="shieldBtn" style="top:215px;display:none;background:rgba(60,160,255,.45);border-color:rgba(100,190,255,.5)" onclick="activateShield()">🛡 SHIELD (E)</button><div id="missileWarn"></div><div id="fuelWarn"></div><div id="credToast"></div><button class="cog-btn" style="position:absolute;top:110px;left:70px" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="hb lbb" id="lapBox"><div class="lt">Current Lap</div><div class="lv" id="curLap">00:00.000</div><div class="lt" style="margin-top:7px">Best Lap</div><div class="lbv" id="bestLap">--:--.---</div><div class="lt" style="margin-top:7px">Last Lap</div><div class="lc" id="lastLap">--:--.---</div><div class="lc" id="lapCnt" style="margin-top:5px">LAP 1</div></div><div class="hb sbb" id="spdBox"><svg id="spdOutlineSvg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible"><rect id="spdOutlineRect" x="0" y="0" width="10" height="10" rx="10" ry="10" fill="none" stroke="#ff3333" stroke-width="9" stroke-dasharray="0 9999" stroke-linecap="round"/></svg><div class="sv" id="spdVal">0</div><div class="su">KM/H</div><div class="sbc"><div class="sb2" id="spdBar"></div></div></div><div class="gearBox" id="gearBox"><div class="gearLbl">VS GHOST</div><div class="gearNum" id="gearD">--</div><div class="gearBar"><div class="gearFill" id="gearFill"></div></div></div><div class="hb mmb" id="mapBox"><canvas id="mmC" width="150" height="150"></canvas></div><div id="posBox"><div class="pv" id="posVal">P1</div><div class="pl">POSITION</div></div><div id="emoteToast"><div id="etEmoji">👋</div><div class="et-name" id="etName"></div></div><div class="nb" id="nB">&#9733; NEW BEST LAP &#9733;</div><div class="opDeltaBox" id="opDeltaBox"><div class="opDeltaLbl">VS OPPONENT</div><div class="opDeltaNum" id="opDeltaD">--</div></div><div class="opLiveBox" id="opLiveBox"><div class="opLiveLbl">OPPONENT</div><div class="opLiveSpd" id="opLiveSpd">0</div><div class="opLiveSpdU">KM/H</div><div class="opLiveTimeLbl">CURRENT LAP</div><div class="opLiveTime" id="opLiveTime">--:--.---</div></div><div class="emote-hint" id="emoteHint">1 👋 &nbsp; 2 😂 &nbsp; 3 🔥 &nbsp; 4 🏁</div><button class="nukeBtn" id="nukeBtn" onclick="toggleNuke()">☢ NUKE</button><button class="blackoutBtn" id="blackoutBtn" onclick="toggleBlackout()">⬛ BLACKOUT</button><div class="pitLaneInd" id="pitLaneInd">PIT LANE — 70 KM/H</div><div id="tireInfo"><div class="ti-title">TIRES</div><div class="ti-cur"><div class="ti-dot" id="tiDot"></div><div class="ti-name" id="tiName">MEDIUM</div></div><div class="ti-section">TEMPERATURE</div><div class="ti-temp-bar"><div class="ti-temp-opt-lo" id="tiTempOptLo"></div><div class="ti-temp-opt-hi" id="tiTempOptHi"></div><div class="ti-temp-marker" id="tiTempMarker"></div></div><div class="ti-temp-num" id="tiTempNum">25°C</div><div class="ti-temp-state" id="tiTempState">COLD</div><div class="ti-section">WEAR</div><div class="ti-wear-bar"><div class="ti-wear-fill" id="tiWearFill"></div></div><div class="ti-wear-num" id="tiWearNum">100%</div><div class="ti-section">STOCK</div><div class="ti-stock" id="tiStock"></div><div class="ti-section">FUEL</div><div class="ti-fuel" id="tiFuel">--</div><div class="ti-hint">PRESS P TO CLOSE</div></div><div class="nukedOverlay" id="nukedOverlay">☢ NUKED ☢<div class="nukedSub">CONTROLS DISABLED</div></div><div class="buildSpd" id="buildSpd"><div class="bt">BUILDING SPEED</div><div class="bbar"><div class="bfill" id="buildFill"></div></div></div></div>
+<div id="garageScreen" class="hide"><canvas id="garageCanvas"></canvas><button class="cog-btn" style="position:absolute;top:18px;right:18px;z-index:10" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="gar-left"><div class="gar-brand">APEX GP &mdash; TIME ATTACK</div><div class="gar-car-name">APEX<br>GP</div><div class="gar-divider"></div><div class="gar-rank" id="garRank">BEGINNER</div><div class="gar-laps" id="garLaps">0 LAPS</div></div><div class="track-sel"><button class="track-arr" onclick="chgTrack(-1)">&#9664;</button><div class="track-info"><canvas id="trackPreview" width="120" height="120"></canvas><div class="track-name" id="trackName">SUNSET CIRCUIT</div><div class="track-best" id="trackBest">BEST: --:--.---</div><div class="track-num" id="trackNum">1 / 5</div><div class="tog" id="battleTog" onclick="toggleBattle()" style="margin-top:10px;font-size:10px;text-align:center">🚀 MISSILES: ON</div></div><button class="track-arr" onclick="chgTrack(1)">&#9654;</button></div><div class="hud-bottom"><div class="gar-section">HUD DISPLAY</div><div class="tog-row"><div class="tog" id="togLap" onclick="togHUD('lap')">LAP TIMES</div><div class="tog" id="togMap" onclick="togHUD('map')">MINIMAP</div><div class="tog" id="togGrip" onclick="togHUD('grip')">DELTA</div><div class="tog" id="togGhost" onclick="togHUD('ghost')">GHOST</div><div class="tog" id="togLine" onclick="togHUD('line')">RACING LINE</div><div class="tog off" id="togOpponent" onclick="togHUD('opponent')" style="display:none">OPPONENT</div><div class="tog off" id="togOpGhost" onclick="togHUD('opGhost')" style="display:none">OPP. GHOST</div></div></div><button class="gar-btn" id="customBtn" onclick="openCustom();event.stopPropagation()">CUSTOMISE</button><button class="gar-btn" id="startBtn" onclick="showWeatherMenu()">RACE</button><div class="orbit-hint">DRAG TO ORBIT &middot; SCROLL TO ZOOM</div><div class="mp-panel" id="mpPanel"><div class="gar-section">MULTIPLAYER</div><div id="mpButtons" class="mp-buttons"><div class="tog" onclick="createParty()">CREATE PARTY</div><div class="tog" onclick="showJoinUI()">JOIN PARTY</div></div><div id="mpHosting" class="mp-hosting hide"><div class="mp-code-label">PARTY CODE</div><div class="mp-code" id="mpCode">-----</div><div class="mp-status" id="mpHostStatus">Waiting for opponent...</div><div class="tog mp-leave" onclick="leaveParty()">CANCEL</div></div><div id="mpJoining" class="mp-joining hide"><div class="mp-row"><input class="mp-input" id="mpCodeInput" maxlength="5" placeholder="CODE"><div class="tog" onclick="joinParty()">JOIN</div></div><div class="mp-status" id="mpJoinStatus"></div><div class="tog mp-leave" onclick="cancelJoin()">CANCEL</div></div><div id="mpConnected" class="mp-connected hide"><div class="mp-status ok">CONNECTED &#10003;</div><div class="mp-opponent" id="mpOpponent"></div><div class="tog mp-leave" onclick="leaveParty()">LEAVE</div></div></div></div>
+<div id="hudScreen" class="hide"><button class="ghostBtn" id="camLbl" style="top:18px;left:25px;background:rgba(80,180,255,.4);border-color:rgba(80,180,255,.3)" onclick="cycleCam()" title="Click or press C to change camera">CHASE CAM</button><div id="camHint">DRAG TO AIM CAMERA &middot; SCROLL TO ZOOM</div><button class="ghostBtn" id="ghostBtn" onclick="toggleGhost()">GHOST: ON</button><button class="ghostBtn soundBtn" id="soundBtn" onclick="toggleRaceSound()">♪ SOUND: ON</button><button class="ghostBtn" id="missileBtn" style="top:176px;display:none;background:rgba(255,90,40,.5);border-color:rgba(255,130,70,.55)" onclick="startMissileAim()">🚀 MISSILE</button><button class="ghostBtn" id="shieldBtn" style="top:215px;display:none;background:rgba(60,160,255,.45);border-color:rgba(100,190,255,.5)" onclick="activateShield()">🛡 SHIELD (E)</button><div id="missileWarn"></div><div id="fuelWarn"></div><button class="cog-btn" style="position:absolute;top:110px;left:70px" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="hb lbb" id="lapBox"><div class="lt">Current Lap</div><div class="lv" id="curLap">00:00.000</div><div class="lt" style="margin-top:7px">Best Lap</div><div class="lbv" id="bestLap">--:--.---</div><div class="lt" style="margin-top:7px">Last Lap</div><div class="lc" id="lastLap">--:--.---</div><div class="lc" id="lapCnt" style="margin-top:5px">LAP 1</div></div><div class="hb sbb" id="spdBox"><svg id="spdOutlineSvg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible"><rect id="spdOutlineRect" x="0" y="0" width="10" height="10" rx="10" ry="10" fill="none" stroke="#ff3333" stroke-width="9" stroke-dasharray="0 9999" stroke-linecap="round"/></svg><div class="sv" id="spdVal">0</div><div class="su">KM/H</div><div class="sbc"><div class="sb2" id="spdBar"></div></div></div><div class="gearBox" id="gearBox"><div class="gearLbl">VS GHOST</div><div class="gearNum" id="gearD">--</div><div class="gearBar"><div class="gearFill" id="gearFill"></div></div></div><div class="hb mmb" id="mapBox"><canvas id="mmC" width="150" height="150"></canvas></div><div id="posBox"><div class="pv" id="posVal">P1</div><div class="pl">POSITION</div></div><div id="emoteToast"><div id="etEmoji">👋</div><div class="et-name" id="etName"></div></div><div class="nb" id="nB">&#9733; NEW BEST LAP &#9733;</div><div class="opDeltaBox" id="opDeltaBox"><div class="opDeltaLbl">VS OPPONENT</div><div class="opDeltaNum" id="opDeltaD">--</div></div><div class="opLiveBox" id="opLiveBox"><div class="opLiveLbl">OPPONENT</div><div class="opLiveSpd" id="opLiveSpd">0</div><div class="opLiveSpdU">KM/H</div><div class="opLiveTimeLbl">CURRENT LAP</div><div class="opLiveTime" id="opLiveTime">--:--.---</div></div><div class="emote-hint" id="emoteHint">1 👋 &nbsp; 2 😂 &nbsp; 3 🔥 &nbsp; 4 🏁</div><button class="nukeBtn" id="nukeBtn" onclick="toggleNuke()">☢ NUKE</button><button class="blackoutBtn" id="blackoutBtn" onclick="toggleBlackout()">⬛ BLACKOUT</button><div class="pitLaneInd" id="pitLaneInd">PIT LANE — 70 KM/H</div><div id="tireInfo"><div class="ti-title">TIRES</div><div class="ti-cur"><div class="ti-dot" id="tiDot"></div><div class="ti-name" id="tiName">MEDIUM</div></div><div class="ti-section">TEMPERATURE</div><div class="ti-temp-bar"><div class="ti-temp-opt-lo" id="tiTempOptLo"></div><div class="ti-temp-opt-hi" id="tiTempOptHi"></div><div class="ti-temp-marker" id="tiTempMarker"></div></div><div class="ti-temp-num" id="tiTempNum">25°C</div><div class="ti-temp-state" id="tiTempState">COLD</div><div class="ti-section">WEAR</div><div class="ti-wear-bar"><div class="ti-wear-fill" id="tiWearFill"></div></div><div class="ti-wear-num" id="tiWearNum">100%</div><div class="ti-section">STOCK</div><div class="ti-stock" id="tiStock"></div><div class="ti-section">FUEL</div><div class="ti-fuel" id="tiFuel">--</div><div class="ti-hint">PRESS P TO CLOSE</div></div><div class="nukedOverlay" id="nukedOverlay">☢ NUKED ☢<div class="nukedSub">CONTROLS DISABLED</div></div><div class="buildSpd" id="buildSpd"><div class="bt">BUILDING SPEED</div><div class="bbar"><div class="bfill" id="buildFill"></div></div></div></div>
 <div id="missileAim" onclick="missileAimClick(event)"><div class="ma-hint">CLICK GROUND TO STRIKE — CLICK A CAR TO LOCK A HOMING MISSILE — ESC TO CANCEL</div></div>
 <div id="flipOverlay"><div class="crash-txt" id="flipTxt">FATAL CRASH</div></div>
 <div id="crashOverlay"><div class="crash-txt" id="crashTxt">FATAL CRASH</div></div>
@@ -551,7 +530,7 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
     </div>
   </div>
 </div>
-<div id="shopOverlay" onclick="if(event.target.id==='shopOverlay')closeShop()"><div class="shop-box"><div class="shop-title">CAR SHOP</div><div class="shop-earn">EARN CREDITS BY RACING — EVERY LAP +25 ₵ &nbsp;·&nbsp; PRO LAP +150 ₵ &nbsp;·&nbsp; LEGEND LAP +500 ₵</div><div class="shop-bal" id="shopBal">BALANCE: ₵ 0</div><div id="shopList"></div><button class="shop-close" onclick="closeShop()">CLOSE</button></div></div><div id="weatherOverlay"><div class="wo-title">CONDITIONS</div><div class="mode-sel"><div class="mode-lbl">RACE MODE</div><div class="mode-btns"><div class="mode-btn active" id="modeTT" onclick="setRaceMode('tt')">TIME TRIAL</div><div class="mode-btn" id="modeEnd" onclick="setRaceMode('endurance')">FULL RACE SETUP</div></div><div class="mode-lbl" id="lapsLbl" style="margin-top:12px;display:none">LAP COUNT</div><div class="mode-btns" id="lapsBtns" style="display:none"><div class="mode-btn" id="laps5" onclick="setRaceLaps(5)">5 LAPS</div><div class="mode-btn active" id="laps10" onclick="setRaceLaps(10)">10 LAPS</div></div><div class="mode-lbl" style="margin-top:14px">FUEL LOAD — <span id="fuelVal">20.0</span> LAPS</div><input type="range" class="pit-slider" id="fuelSlider" min="1.1" max="50.9" step="0.1" value="20" style="width:240px" oninput="onFuelSlider(this.value)"><div class="mode-lbl" id="fuelPerf" style="margin-top:2px;font-size:9px;opacity:.75"></div></div><div class="wo-grid" id="woGrid"></div><div class="wo-back" id="woBack" onclick="woGoBack()">BACK</div></div>
+<div id="weatherOverlay"><div class="wo-title">CONDITIONS</div><div class="mode-sel"><div class="mode-lbl">RACE MODE</div><div class="mode-btns"><div class="mode-btn active" id="modeTT" onclick="setRaceMode('tt')">TIME TRIAL</div><div class="mode-btn" id="modeEnd" onclick="setRaceMode('endurance')">FULL RACE SETUP</div></div><div class="mode-lbl" id="lapsLbl" style="margin-top:12px;display:none">LAP COUNT</div><div class="mode-btns" id="lapsBtns" style="display:none"><div class="mode-btn" id="laps5" onclick="setRaceLaps(5)">5 LAPS</div><div class="mode-btn active" id="laps10" onclick="setRaceLaps(10)">10 LAPS</div></div><div class="mode-lbl" style="margin-top:14px">FUEL LOAD — <span id="fuelVal">20.0</span> LAPS</div><input type="range" class="pit-slider" id="fuelSlider" min="1.1" max="50.9" step="0.1" value="20" style="width:240px" oninput="onFuelSlider(this.value)"><div class="mode-lbl" id="fuelPerf" style="margin-top:2px;font-size:9px;opacity:.75"></div></div><div class="wo-grid" id="woGrid"></div><div class="wo-back" id="woBack" onclick="woGoBack()">BACK</div></div>
 <div id="hlHint">PRESS H FOR HEADLIGHTS</div>
 <div id="rankUpNotify"><div class="ru-label">RANK UP</div><div class="ru-name" id="ruName"></div></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -756,7 +735,7 @@ var fl=new THREE.Mesh(new THREE.PlaneGeometry(120,120),new THREE.MeshStandardMat
 var grid=new THREE.GridHelper(120,90,0x0a4a66,0x0a2a44);grid.position.y=0;mS.add(grid);
 var ring=new THREE.Mesh(new THREE.RingGeometry(3.0,3.35,64),new THREE.MeshBasicMaterial({color:0x00d0ff,transparent:true,opacity:.32,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.015;mS.add(ring);
 var ring2=new THREE.Mesh(new THREE.RingGeometry(4.1,4.18,64),new THREE.MeshBasicMaterial({color:0xa64dff,transparent:true,opacity:.18,side:THREE.DoubleSide}));ring2.rotation.x=-Math.PI/2;ring2.position.y=.015;mS.add(ring2);
-mCar=bldCar(carStyleColor(),false);applyCarStyle(mCar,selCar);mS.add(mCar);
+mCar=bldCar(carBodyColor,false);mS.add(mCar);
 var t0=performance.now();
 (function a(){if(!mRun)return;requestAnimationFrame(a);var t=(performance.now()-t0)*.001;mCar.rotation.y=t*.32;mC.position.set(Math.sin(t*.07)*7.5,2.4+Math.sin(t*.13)*.35,7.2);mC.lookAt(0,.42,0);mR.render(mS,mC)})()}
 
@@ -784,150 +763,12 @@ var grid=new THREE.GridHelper(100,76,0x0a4a66,0x081e34);gS.add(grid);
 var plat=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.4,.05,64),new THREE.MeshStandardMaterial({color:0x0b0f1c,roughness:.22,metalness:.8}));gS.add(plat);
 var ring=new THREE.Mesh(new THREE.RingGeometry(3.15,3.5,64),new THREE.MeshBasicMaterial({color:0x00d0ff,transparent:true,opacity:.35,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.03;gS.add(ring);
 var ring2=new THREE.Mesh(new THREE.RingGeometry(.5,.55,64),new THREE.MeshBasicMaterial({color:0x7a5cff,transparent:true,opacity:.22,side:THREE.DoubleSide}));ring2.rotation.x=-Math.PI/2;ring2.position.y=.03;gS.add(ring2);
-gCar=bldCar(carStyleColor(),false);applyCarStyle(gCar,selCar);gS.add(gCar);
+gCar=bldCar(carBodyColor,false);gS.add(gCar);
 _gBindOrbit(cv);gOrb.lastInput=0;
 gRun=true;(function a(){if(!gRun)return;requestAnimationFrame(a);
 if(!gOrb.drag&&performance.now()-gOrb.lastInput>2600)gOrb.yaw+=.0035;
 _gApplyCam();gR.render(gS,gC)})()}
 
-// ── Car shop economy ────────────────────────────────────────────────────
-var CARS=[
- {name:'APEX ROOKIE',price:0,col:null,desc:'STANDARD ISSUE — USES YOUR CUSTOM PAINT'},
- {name:'VIPER GT',price:20000,col:0xd01622,desc:'CRIMSON SPEED ICON · TWIN WHITE STRIPES'},
- {name:'SHADOW R',price:75000,col:0x17181d,desc:'STEALTH CHROME · NEON GREEN UNDERGLOW'},
- {name:'AURORA X',price:200000,col:0x4433cc,desc:'IRIDESCENT LED LIGHTSHOW · CYAN GLOW KIT'},
- {name:'INFERNO V12',price:500000,col:0xff5a00,desc:'TWIN REAR WINGS · FLAME EXHAUSTS · FIRE LIVERY'},
- {name:'PHANTOM ZERO',price:1500000,col:0xf2f4ff,desc:'PEARL & GOLD CHROME · GLOWING HALO · THE ULTIMATE'}
-];
-var credits=0,ownedCars=[0],selCar=0;
-try{credits=parseInt(localStorage.getItem('apexgp_credits'))||0}catch(e){}
-try{ownedCars=JSON.parse(localStorage.getItem('apexgp_cars'))||[0]}catch(e){}
-try{selCar=parseInt(localStorage.getItem('apexgp_carsel'))||0}catch(e){}
-if(ownedCars.indexOf(0)<0)ownedCars.unshift(0);
-if(ownedCars.indexOf(selCar)<0)selCar=0;
-function saveCredits(){try{localStorage.setItem('apexgp_credits',credits);localStorage.setItem('apexgp_cars',JSON.stringify(ownedCars));localStorage.setItem('apexgp_carsel',selCar)}catch(e){}}
-function carStyleColor(){return (selCar>0&&CARS[selCar].col)?CARS[selCar].col:carBodyColor}
-function fmtC(n){return '\u20b5 '+n.toLocaleString('en-US')}
-function updateCreditsUI(){
-  var g=document.getElementById('garCredits');if(g)g.textContent=fmtC(credits);
-  var b=document.getElementById('shopBal');if(b)b.textContent='BALANCE: '+fmtC(credits);
-}
-function trackLenApprox(i){
-  var wp=TRACKS[i].wp,L=0;
-  for(var k=0;k<wp.length;k++){var a2=wp[k],b2=wp[(k+1)%wp.length];L+=Math.hypot(b2[0]-a2[0],b2[1]-a2[1])}
-  return L*1.03;
-}
-// LEGEND demands near flat-out pace (~100 m/s avg); PRO is a solid quick lap
-function lapTargetsFor(i){var L=trackLenApprox(i);return {leg:L/100*1000,pro:L/78*1000}}
-function updateTrackTargets(){
-  var el=document.getElementById('trackTargets');if(!el)return;
-  var t=lapTargetsFor(selTrack);
-  el.innerHTML='\u2605 LEGEND &lt; '+(t.leg/1000).toFixed(1)+'s \u00b7 PRO &lt; '+(t.pro/1000).toFixed(1)+'s';
-}
-function awardLapCredits(lt){
-  var t0=lapTargetsFor(selTrack),amt,msg;
-  if(lt<t0.leg){amt=500;msg='LEGEND LAP!'}
-  else if(lt<t0.pro){amt=150;msg='PRO LAP \u00b7 LEGEND < '+(t0.leg/1000).toFixed(1)+'s'}
-  else{amt=25;msg='LAP \u00b7 PRO < '+(t0.pro/1000).toFixed(1)+'s'}
-  credits+=amt;saveCredits();updateCreditsUI();
-  var t=document.getElementById('credToast');
-  if(t){t.textContent='+'+amt+' \u20b5 \u2014 '+msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show')},2200)}
-}
-var _shopImgs={},_shopR=null;
-function shopCarImg(i){
-  if(_shopImgs[i])return _shopImgs[i];
-  try{
-    if(!_shopR){_shopR=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});_shopR.setSize(260,144)}
-    var sc=new THREE.Scene();sc.background=new THREE.Color(0x0a0c14);
-    sc.add(new THREE.AmbientLight(0xffffff,.55));
-    var key=new THREE.DirectionalLight(0xffffff,1.1);key.position.set(4,6,5);sc.add(key);
-    var rl=new THREE.PointLight(0x66aaff,.8,30);rl.position.set(-5,3,-5);sc.add(rl);
-    var fl=new THREE.Mesh(new THREE.PlaneGeometry(40,40),new THREE.MeshStandardMaterial({color:0x0d1020,roughness:.3,metalness:.7}));
-    fl.rotation.x=-Math.PI/2;sc.add(fl);
-    var cc=bldCar(CARS[i].col!==null?CARS[i].col:carBodyColor,false);applyCarStyle(cc,i);cc.rotation.y=.6;sc.add(cc);
-    var cm=new THREE.PerspectiveCamera(38,260/144,.1,100);cm.position.set(4.6,2.0,5.0);cm.lookAt(0,.25,0);
-    _shopR.render(sc,cm);
-    _shopImgs[i]=_shopR.domElement.toDataURL('image/png');
-  }catch(e){_shopImgs[i]=''}
-  return _shopImgs[i];
-}
-function openShop(){delete _shopImgs[0];renderShop();document.getElementById('shopOverlay').classList.add('show')}
-function closeShop(){document.getElementById('shopOverlay').classList.remove('show')}
-function renderShop(){
-  updateCreditsUI();
-  var list=document.getElementById('shopList');if(!list)return;
-  var h='';
-  for(var i=0;i<CARS.length;i++){
-    var c=CARS[i],own=ownedCars.indexOf(i)>=0;
-    var img=shopCarImg(i);
-    var act;
-    if(i===selCar)act='<div class="shop-act equipped">EQUIPPED</div>';
-    else if(own)act='<div class="shop-act equip" onclick="buyOrEquip('+i+')">EQUIP</div>';
-    else if(credits>=c.price)act='<div class="shop-act buy" onclick="buyOrEquip('+i+')">BUY '+fmtC(c.price)+'</div>';
-    else act='<div class="shop-act cant">'+fmtC(c.price)+'</div>';
-    h+='<div class="shop-row"><img class="shop-img" src="'+img+'"><div class="shop-info"><div class="shop-name">'+c.name+'</div><div class="shop-desc">'+c.desc+'</div></div>'+act+'</div>';
-  }
-  list.innerHTML=h;
-}
-function buyOrEquip(i){
-  if(!CARS[i])return;
-  if(ownedCars.indexOf(i)>=0)selCar=i;
-  else if(credits>=CARS[i].price){credits-=CARS[i].price;ownedCars.push(i);selCar=i}
-  else return;
-  saveCredits();renderShop();updateCreditsUI();rebuildShowcaseCars();
-  if(mpSocket)mpSendHello();
-}
-function rebuildShowcaseCars(){
-  if(typeof gCar!=='undefined'&&gCar&&gCar.parent){var gp=gCar.parent;gp.remove(gCar);gCar=bldCar(carStyleColor(),false);applyCarStyle(gCar,selCar);gp.add(gCar)}
-  if(typeof mCar!=='undefined'&&mCar&&mCar.parent){var mp2=mCar.parent;mp2.remove(mCar);mCar=bldCar(carStyleColor(),false);applyCarStyle(mCar,selCar);mp2.add(mCar)}
-}
-// progressively cooler bodywork per shop car
-function applyCarStyle(g,idx){
-  if(!g||!idx||!CARS[idx])return;
-  function fx(m){m.userData.fx=1;return m}
-  function glow(color,opc,w,l){var p=new THREE.Mesh(new THREE.PlaneGeometry(w,l),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:opc,blending:THREE.AdditiveBlending,depthWrite:false}));p.rotation.x=-Math.PI/2;p.position.y=.02;g.add(p);return fx(p)}
-  function strip(color,x,y,z,w,len,ei){var m=new THREE.Mesh(new THREE.BoxGeometry(w,.02,len),new THREE.MeshStandardMaterial({color:color,roughness:.3,metalness:.4,emissive:color,emissiveIntensity:ei||.2}));m.position.set(x,y,z);g.add(m);return m}
-  if(idx===1){ // VIPER GT
-    g.bodyMat.metalness=.55;g.bodyMat.roughness=.3;g.bodyMat.emissive.setHex(0x550008);g.bodyMat.emissiveIntensity=.25;
-    if(g.accentMat)g.accentMat.color.setHex(0xffffff);
-    strip(0xffffff,-.14,.515,-.15,.12,3.6,.25);
-    strip(0xffffff,.14,.515,-.15,.12,3.6,.25);
-  } else if(idx===2){ // SHADOW R
-    g.bodyMat.metalness=.95;g.bodyMat.roughness=.12;
-    if(g.accentMat)g.accentMat.color.setHex(0x2a2d33);
-    glow(0x00ff66,.5,2.0,5.0);
-    strip(0x00ff66,-.74,.445,-.5,.06,1.9,.9);
-    strip(0x00ff66,.74,.445,-.5,.06,1.9,.9);
-  } else if(idx===3){ // AURORA X
-    g.bodyMat.metalness=.6;g.bodyMat.roughness=.22;g.bodyMat.emissive.setHex(0x2211aa);g.bodyMat.emissiveIntensity=.3;
-    if(g.accentMat){g.accentMat.color.setHex(0x33eeff);g.accentMat.emissive.setHex(0x33eeff);g.accentMat.emissiveIntensity=.7}
-    glow(0x33ccff,.55,2.1,5.2);
-    strip(0x33eeff,-.72,.12,.1,.05,4.4,1);
-    strip(0x33eeff,.72,.12,.1,.05,4.4,1);
-    strip(0xbb66ff,0,.64,-1.3,.08,1.7,.8);
-  } else if(idx===4){ // INFERNO V12
-    g.bodyMat.metalness=.45;g.bodyMat.roughness=.35;g.bodyMat.emissive.setHex(0xcc2200);g.bodyMat.emissiveIntensity=.3;
-    if(g.accentMat)g.accentMat.color.setHex(0x141414);
-    strip(0xffcc00,-.74,.445,-.2,.08,2.1,.6);
-    strip(0xffcc00,.74,.445,-.2,.08,2.1,.6);
-    var w2m=new THREE.MeshStandardMaterial({color:0xff5a00,roughness:.3,metalness:.6,emissive:0xff3300,emissiveIntensity:.25});
-    var w2=new THREE.Mesh(new THREE.BoxGeometry(1.5,.05,.34),w2m);w2.position.set(0,1.06,-2.42);g.add(w2);
-    for(var sx4=-1;sx4<=1;sx4+=2){var ep=new THREE.Mesh(new THREE.BoxGeometry(.04,.26,.4),w2m);ep.position.set(sx4*.76,.98,-2.4);g.add(ep)}
-    for(var sx5=-1;sx5<=1;sx5+=2){var fl2=new THREE.Mesh(new THREE.ConeGeometry(.07,.5,8),new THREE.MeshBasicMaterial({color:0xff9933,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false}));fl2.rotation.x=Math.PI/2;fl2.position.set(sx5*.14,.5,-2.55);g.add(fx(fl2))}
-    glow(0xff5500,.4,1.9,4.6);
-  } else if(idx===5){ // PHANTOM ZERO
-    g.bodyMat.metalness=.5;g.bodyMat.roughness=.12;g.bodyMat.emissive.setHex(0x9a9cb0);g.bodyMat.emissiveIntensity=.32;
-    if(g.accentMat){g.accentMat.color.setHex(0xd8b94a);g.accentMat.emissive.setHex(0xd8b94a);g.accentMat.emissiveIntensity=.45}
-    if(g.rimMat)g.rimMat.color.setHex(0xd8b94a);
-    var hg=new THREE.Mesh(new THREE.TorusGeometry(.38,.045,8,24),new THREE.MeshBasicMaterial({color:0xffe9a0,transparent:true,opacity:.7,blending:THREE.AdditiveBlending,depthWrite:false}));
-    hg.position.set(0,.58,-.02);hg.rotation.x=-Math.PI/2;g.add(fx(hg));
-    glow(0xfff2c0,.6,2.2,5.4);
-    strip(0xd8b94a,-.16,.515,-.1,.07,3.8,.5);
-    strip(0xd8b94a,.16,.515,-.1,.07,3.8,.5);
-    strip(0xd8b94a,0,.07,2.9,1.0,.3,.5);
-  }
-}
-setTimeout(updateCreditsUI,200);
 // ── F1-style single seater ──────────────────────────────────────────────────
 function mkNumberTexture(num){
   var cv=document.createElement('canvas');cv.width=128;cv.height=128;
@@ -1243,7 +1084,7 @@ var amI=W.ambOver!==null?W.ambOver:T.ambI,snI=W.sunOver!==null?W.sunOver:T.sunI;
 var snC=W.sunCOver!==null?W.sunCOver:T.sunC,hsC=W.hemiSkyOver!==null?W.hemiSkyOver:T.hemiSky;
 var hgC=W.hemiGndOver!==null?W.hemiGndOver:T.hemiGnd,grC=W.grassOver!==null?W.grassOver:T.grass;
 scene.background=new THREE.Color(skC);scene.fog=new THREE.Fog(fgC,300,1200);
-scene.add(new THREE.AmbientLight(0xffffff,amI));var sun=new THREE.DirectionalLight(snC,snI);var _isNight=selWeather==='night'||selWeather==='night_dark';sun.castShadow=!_isNight;if(sun.castShadow){sun.shadow.mapSize.set(2048,2048);var sc=sun.shadow.camera;sc.left=-360;sc.right=360;sc.top=360;sc.bottom=-360;sc.near=50;sc.far=1400;sun.shadow.bias=-0.0006}scene.add(sun);scene.add(new THREE.HemisphereLight(hsC,hgC,.3));skidMat=new THREE.MeshBasicMaterial({color:0x333333,transparent:true,opacity:0.6});skidMarks=[];mkTrack(grC);car=bldCar(carStyleColor(),false);applyCarStyle(car,selCar);scene.add(car);
+scene.add(new THREE.AmbientLight(0xffffff,amI));var sun=new THREE.DirectionalLight(snC,snI);var _isNight=selWeather==='night'||selWeather==='night_dark';sun.castShadow=!_isNight;if(sun.castShadow){sun.shadow.mapSize.set(2048,2048);var sc=sun.shadow.camera;sc.left=-360;sc.right=360;sc.top=360;sc.bottom=-360;sc.near=50;sc.far=1400;sun.shadow.bias=-0.0006}scene.add(sun);scene.add(new THREE.HemisphereLight(hsC,hgC,.3));skidMat=new THREE.MeshBasicMaterial({color:0x333333,transparent:true,opacity:0.6});skidMarks=[];mkTrack(grC);car=bldCar(carBodyColor,false);scene.add(car);
 // Sun follows a fixed azimuth, shadows centred on the circuit
 sun.position.set(tCX+340,430,tCZ+220);sun.target.position.set(tCX,0,tCZ);scene.add(sun.target);
 mkSky(skC,fgC,snC,_isNight);
@@ -1980,7 +1821,7 @@ function checkCP(){
   prevCpDot=dot;
 }
 var _dlN=new THREE.Vector3(),_dlC=new THREE.Vector3(),_dlF=new THREE.Vector3();
-function doLaps(){if(!racing)return;checkCP();var sfP=tPts[sfIdx],sfT=spl.getTangent(sfIdx/tPts.length).normalize(),sfN=_dlN.set(-sfT.z,0,sfT.x),toC=_dlC.subVectors(P,sfP);var _sfDot=toC.dot(sfT);if(prevSFDot!==null&&prevSFDot<0&&_sfDot>=0&&Math.abs(toC.dot(sfN))<TW){var cf=_dlF.set(Math.sin(A),0,Math.cos(A));if(cf.dot(sfT)>0.2){if(lapN>0&&cpHit>=CP_COUNT){var lt=performance.now()-lapSt;lastLT=lt;if(racePhase!=='quali')awardLapCredits(lt);if(racePhase==='quali'){if(lt<qualiMyBest){qualiMyBest=lt;if(mpSocket)mpSend({t:'qualiBest',best:lt,name:getPlayerName()});renderQualiStandings()}}else if(raceMode==='endurance'){if(lt<endFastestLap)endFastestLap=lt;if(lapN===END_LAPS){endEnduranceRace(performance.now()-endRaceStart,lt);return}}else{if(lt<bestLT){bestLT=lt;bestGhost=curGhost.slice();playBeep();var isAllTime=saveTrackBest(TRACKS[selTrack].name,lt,bestGhost);var nEl=D('nB');if(isAllTime){allTimeGhost=bestGhost.slice();allTimeGhostPlaying=true;allTimeGhostLookup=buildGhostLookupGeneric(allTimeGhost);nEl.textContent='\u2605 BEST LAP EVER \u2605';nEl.style.color='#ffd700';nEl.style.textShadow='0 0 30px rgba(255,215,0,.6),0 0 60px rgba(255,180,0,.3)'}else{nEl.textContent='\u2605 NEW BEST LAP \u2605';nEl.style.color='#00ff88';nEl.style.textShadow='0 0 30px rgba(0,255,136,.5)'}nEl.classList.add('show');setTimeout(function(){nEl.classList.remove('show')},2500);if(mpSocket){mpSend({t:'bestLap',ghost:bestGhost.length>200?[]:bestGhost})}}ghostPlaying=bestGhost.length>0;ghostFrame=0;allTimeGhostFrame=0;buildGhostLookup();opGhostFrame=0}}if(lapN===0||cpHit>=CP_COUNT){if(lapN>0){totalLaps++;localStorage.setItem('apexgp_laps',totalLaps);scheduleCloudSave()}if(raceMode==='endurance'&&lapN===0){endRaceStart=performance.now();endFastestLap=Infinity}lapN++;lapSt=performance.now();curGhost=[];lastRecordTime=0;cpHit=0;prevCpDot=null;D('lapCnt').textContent=racePhase==='quali'?'QUALI LAP '+lapN:('LAP '+lapN+(raceMode==='endurance'?'/'+END_LAPS:''))}}}prevSFDot=_sfDot;curLT=performance.now()-lapSt}
+function doLaps(){if(!racing)return;checkCP();var sfP=tPts[sfIdx],sfT=spl.getTangent(sfIdx/tPts.length).normalize(),sfN=_dlN.set(-sfT.z,0,sfT.x),toC=_dlC.subVectors(P,sfP);var _sfDot=toC.dot(sfT);if(prevSFDot!==null&&prevSFDot<0&&_sfDot>=0&&Math.abs(toC.dot(sfN))<TW){var cf=_dlF.set(Math.sin(A),0,Math.cos(A));if(cf.dot(sfT)>0.2){if(lapN>0&&cpHit>=CP_COUNT){var lt=performance.now()-lapSt;lastLT=lt;if(racePhase==='quali'){if(lt<qualiMyBest){qualiMyBest=lt;if(mpSocket)mpSend({t:'qualiBest',best:lt,name:getPlayerName()});renderQualiStandings()}}else if(raceMode==='endurance'){if(lt<endFastestLap)endFastestLap=lt;if(lapN===END_LAPS){endEnduranceRace(performance.now()-endRaceStart,lt);return}}else{if(lt<bestLT){bestLT=lt;bestGhost=curGhost.slice();playBeep();var isAllTime=saveTrackBest(TRACKS[selTrack].name,lt,bestGhost);var nEl=D('nB');if(isAllTime){allTimeGhost=bestGhost.slice();allTimeGhostPlaying=true;allTimeGhostLookup=buildGhostLookupGeneric(allTimeGhost);nEl.textContent='\u2605 BEST LAP EVER \u2605';nEl.style.color='#ffd700';nEl.style.textShadow='0 0 30px rgba(255,215,0,.6),0 0 60px rgba(255,180,0,.3)'}else{nEl.textContent='\u2605 NEW BEST LAP \u2605';nEl.style.color='#00ff88';nEl.style.textShadow='0 0 30px rgba(0,255,136,.5)'}nEl.classList.add('show');setTimeout(function(){nEl.classList.remove('show')},2500);if(mpSocket){mpSend({t:'bestLap',ghost:bestGhost.length>200?[]:bestGhost})}}ghostPlaying=bestGhost.length>0;ghostFrame=0;allTimeGhostFrame=0;buildGhostLookup();opGhostFrame=0}}if(lapN===0||cpHit>=CP_COUNT){if(lapN>0){totalLaps++;localStorage.setItem('apexgp_laps',totalLaps);scheduleCloudSave()}if(raceMode==='endurance'&&lapN===0){endRaceStart=performance.now();endFastestLap=Infinity}lapN++;lapSt=performance.now();curGhost=[];lastRecordTime=0;cpHit=0;prevCpDot=null;D('lapCnt').textContent=racePhase==='quali'?'QUALI LAP '+lapN:('LAP '+lapN+(raceMode==='endurance'?'/'+END_LAPS:''))}}}prevSFDot=_sfDot;curLT=performance.now()-lapSt}
 
 // Ghost delta - build track-index-to-time lookup from best ghost
 var ghostTimeLookup=null,allTimeGhostLookup=null;
@@ -2222,7 +2063,7 @@ function showRankUp(R){
 }
 lastRankIdx=RANKS.indexOf(calcRank());
 var previewAnim=null,previewStart=0;
-function drawTrackPreview(){updateTrackTargets();
+function drawTrackPreview(){
   if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}
   var c=document.getElementById('trackPreview');if(!c)return;var ctx=c.getContext('2d'),w=120,h=120;
   var wp=TRACKS[selTrack].wp,pts=wp.map(function(p){return{x:p[0],z:p[1]}});
@@ -2637,7 +2478,6 @@ function setSolidCar(carGrp,solid){
 function buildPeerCar(p){
   if(!scene)return;
   var c=bldCar(p.col||0x44ff88,true);
-  applyCarStyle(c,p.cs||0);
   setSolidCar(c,racePhase!=='quali');
   var lbl=mkNameSprite(p.name||'PLAYER');
   lbl.position.set(0,1.7,0);c.add(lbl);p.label=lbl;
@@ -2744,7 +2584,7 @@ function mpOpen(code,role){
 function mpSendHello(){
   var myGhost=getTrackGhost(TRACKS[selTrack].name)||[];
   var myBest=getTrackBest(TRACKS[selTrack].name);
-  mpSend({t:'hello',name:getPlayerName(),ghost:myGhost.length>200?[]:myGhost,best:myBest,col:carStyleColor(),num:carNumber,cs:selCar});
+  mpSend({t:'hello',name:getPlayerName(),ghost:myGhost.length>200?[]:myGhost,best:myBest,col:carBodyColor,num:carNumber});
 }
 function createParty(){
   ensureVoiceMic(function(){});
@@ -2834,8 +2674,6 @@ function handleMpMessage(raw){
   if(d.t==='hello'){
     mpConn={open:true};
     var hp=ensurePeer(d.from,d.name,d.col);
-    var _ncs=typeof d.cs==='number'?d.cs:0;
-    if(hp.cs!==_ncs){hp.cs=_ncs;if(hp.car&&scene){try{scene.remove(hp.car)}catch(e){}hp.car=null;hp.label=null;hp.emoteSprite=null;hp.shieldMesh=null;buildPeerCar(hp)}}
     if(!primaryPeerId)primaryPeerId=hp.id;
     voiceConnectTo(hp.id);
     if(hp.id===primaryPeerId){
