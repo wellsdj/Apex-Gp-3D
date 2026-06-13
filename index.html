@@ -1885,24 +1885,11 @@ function mkWorld(){
   }
   var n=slots.length;
   if(n===0)return;
-  // Trunks — one InstancedMesh, scaled per instance from a unit-height geometry
-  var trGeo=new THREE.CylinderGeometry(.2,.4,1,6);trGeo.translate(0,.5,0);
-  var trunks=new THREE.InstancedMesh(trGeo,new THREE.MeshLambertMaterial({color:0x5a3a20}),n);
-  trunks.castShadow=true;
-  var _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_v=new THREE.Vector3(),_s=new THREE.Vector3();
-  for(var ti=0;ti<n;ti++){
-    var s=slots[ti];
-    _v.set(s.x,s.gy,s.z);_s.set(1,s.h,1);
-    _m.compose(_v,_q,_s);
-    trunks.setMatrixAt(ti,_m);
-  }
-  trunks.instanceMatrix.needsUpdate=true;
-  scene.add(trunks);
   if(TREE_MODEL.ready&&TREE_MODEL.scene){
     for(var ti=0;ti<n;ti++){
       var treeClone=TREE_MODEL.scene.clone();
       var s=slots[ti];
-      var sc=1+(Math.random()-.5)*.3;
+      var sc=2.5+(Math.random()-.5)*.6;
       treeClone.position.set(s.x,s.gy,s.z);
       treeClone.scale.set(sc,sc,sc);
       treeClone.castShadow=true;
