@@ -1460,7 +1460,8 @@ var BARRIER={geo:null,mat:null,ready:false,len:5};
 var TREE_MODEL={geo:null,ready:false};
 (function loadPineTree(){
   if(typeof THREE.GLTFLoader==='undefined'){setTimeout(loadPineTree,200);return}
-  new THREE.GLTFLoader().load('models/pine_tree.glb',function(g){
+  var treeUrl='https://xtgnhbmwmhgk4sm2.private.blob.vercel-storage.com/pine_tree.glb?vercel-blob-delegation=eyJzdG9yZUlkIjoic3RvcmVfWFRnTmhCbXdNaGdrNFNtMiIsIm93bmVySWQiOiJ0ZWFtX1B4cEhnVkNpWTd0UDFBSjdFcWpOb1QwYiIsInBhdGhuYW1lIjoiKiIsIm9wZXJhdGlvbnMiOlsiZ2V0IiwiaGVhZCJdLCJ2YWxpZFVudGlsIjoxNzgxNDE3NDQ1OTg5LCJpYXQiOjE3ODEzNzQyNDYwODd9.m3Hj5nf54FVPodzPGfdQ8rQmVFx2acG6lULSrs7BYaA&vercel-blob-signature=pKUA8aeUfP7hbxADI9YbIiPRrfzbFUbzAYx-8ft8T58';
+  new THREE.GLTFLoader().load(treeUrl,function(g){
     var mesh=null;g.scene.updateMatrixWorld(true);g.scene.traverse(function(o){if(o.isMesh&&!mesh)mesh=o});
     if(!mesh)return;
     var geo=mesh.geometry.clone();geo.applyMatrix4(mesh.matrixWorld);
