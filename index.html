@@ -1456,6 +1456,16 @@ var BARRIER={geo:null,mat:null,ready:false,len:5};
     BARRIER.geo=geo;BARRIER.mat=mat;BARRIER.ready=true;
   },undefined,function(e){console.error('barrier load failed',e)});
 })();
+var TREE_MODEL={geo:null,ready:false};
+(function loadPineTree(){
+  if(typeof THREE.GLTFLoader==='undefined'){setTimeout(loadPineTree,200);return}
+  new THREE.GLTFLoader().load('models/pine_tree.glb',function(g){
+    var mesh=null;g.scene.updateMatrixWorld(true);g.scene.traverse(function(o){if(o.isMesh&&!mesh)mesh=o});
+    if(!mesh)return;
+    var geo=mesh.geometry.clone();geo.applyMatrix4(mesh.matrixWorld);
+    TREE_MODEL.geo=geo;TREE_MODEL.ready=true;
+  },undefined,function(e){console.error('pine tree load failed',e)});
+})();
 function mkAsphaltTexture(weather){
   var _wet0=weather&&weather.indexOf('rain')>=0,_snow0=weather&&weather.indexOf('snow')>=0;
   if(!_wet0&&!_snow0&&TARMAC.ready)return TARMAC.albedo;
@@ -1889,22 +1899,13 @@ function mkWorld(){
   }
   trunks.instanceMatrix.needsUpdate=true;
   scene.add(trunks);
-  // Canopies — InstancedMesh of unit sphere, scaled and coloured per instance
-  var cwGeo=new THREE.SphereGeometry(1,8,6);
-  var canopies=new THREE.InstancedMesh(cwGeo,new THREE.MeshLambertMaterial({color:0xffffff}),n);
-  canopies.castShadow=true;
-  var _c=new THREE.Color();
-  for(var ci=0;ci<n;ci++){
-    var ss=slots[ci];
-    _v.set(ss.x,ss.gy+ss.h+ss.cr*.4,ss.z);_s.set(ss.cr,ss.cr,ss.cr);
-    _m.compose(_v,_q,_s);
-    canopies.setMatrixAt(ci,_m);
-    _c.setHex(ss.col);
-    canopies.setColorAt(ci,_c);
+  if(TREE_MODEL.ready&&TREE_MODEL.geo){
+    var trees=new THREE.InstancedMesh(TREE_MODEL.geo,new THREE.MeshLambertMaterial({color:0xffffff}),n);
+    trees.castShadow=true;
+    for(var ti=0;ti<n;ti++){var s=slots[ti];var sc=1+(Math.random()-.5)*.3;_v.set(s.x,s.gy,s.z);_s.set(sc,sc,sc);_m.compose(_v,_q,_s);trees.setMatrixAt(ti,_m)}
+    trees.instanceMatrix.needsUpdate=true;
+    scene.add(trees);
   }
-  canopies.instanceMatrix.needsUpdate=true;
-  if(canopies.instanceColor)canopies.instanceColor.needsUpdate=true;
-  scene.add(canopies);
   mkTrackProps();
 }
 // ── Trackside props: grandstands, sponsor boards, horizon mountains ─────────
