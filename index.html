@@ -1403,7 +1403,28 @@ builtTrack=selTrack;builtWeather=selWeather;bestLT=Infinity;lastLT=0;bestGhost=[
 function initRace(){if(rInit&&builtTrack===selTrack&&builtWeather===selWeather)return;if(!rInit){rInit=true;ren=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});ren.setSize(innerWidth,innerHeight);ren.setPixelRatio(Math.min(devicePixelRatio,1.5));ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.08;ren.outputEncoding=THREE.sRGBEncoding;document.body.insertBefore(ren.domElement,document.getElementById('menuScreen'));cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,2600);clk=new THREE.Clock();mirrorCam=new THREE.PerspectiveCamera(55,340/80,1,800);mmx=document.getElementById('mmC').getContext('2d');addEventListener('keydown',function(e){KY[e.key.toLowerCase()]=true;if(e.key==='Escape'&&missileMode==='aim'){cancelMissileAim();e.preventDefault();return}if(e.key==='Escape'&&reviewMode){exitReview();e.preventDefault();return}if(e.key==='Escape'&&racing){racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()};if(e.key.toLowerCase()==='g')toggleGhost();if(e.key.toLowerCase()==='e'&&racing)activateShield();if(e.key.toLowerCase()==='h')toggleHeadlights();if(e.key.toLowerCase()==='p'&&racing)toggleTireInfo();if(racing&&mpConn&&e.key>='1'&&e.key<='4')sendEmote(parseInt(e.key,10)-1);e.preventDefault()});addEventListener('keyup',function(e){KY[e.key.toLowerCase()]=false});addEventListener('resize',function(){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});buildScene();rLoop()}else{buildScene()}}
 
 // ── Procedural asphalt (publicly reproducible, no network needed) ───────────
+// Real photographic asphalt + a normal map derived from its luminance, so the
+// road has genuine surface relief under the sun/IBL instead of looking plastic.
+var TARMAC={albedo:null,normal:null,ready:false};
+function buildNormalMap(srcCanvas,strength){
+  var w=srcCanvas.width,h=srcCanvas.height,sd2=srcCanvas.getContext('2d').getImageData(0,0,w,h).data;
+  function L(x,y){x=(x+w)%w;y=(y+h)%h;var i=(y*w+x)*4;return (sd2[i]*0.299+sd2[i+1]*0.587+sd2[i+2]*0.114)/255}
+  var out=document.createElement('canvas');out.width=w;out.height=h;var oc=out.getContext('2d'),od=oc.createImageData(w,h);
+  for(var y=0;y<h;y++)for(var x=0;x<w;x++){
+    var dx=(L(x-1,y)-L(x+1,y))*strength,dy=(L(x,y-1)-L(x,y+1))*strength,nz=1,len=Math.sqrt(dx*dx+dy*dy+1);
+    var i=(y*w+x)*4;od.data[i]=(dx/len*.5+.5)*255;od.data[i+1]=(dy/len*.5+.5)*255;od.data[i+2]=(nz/len*.5+.5)*255;od.data[i+3]=255;
+  }
+  oc.putImageData(od,0,0);var t=new THREE.CanvasTexture(out);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;return t;
+}
+(function loadTarmac(){var img=new Image();img.onload=function(){
+  var a=document.createElement('canvas');a.width=img.width;a.height=img.height;a.getContext('2d').drawImage(img,0,0);
+  var at=new THREE.CanvasTexture(a);at.wrapS=at.wrapT=THREE.RepeatWrapping;at.anisotropy=8;at.encoding=THREE.sRGBEncoding;
+  try{TARMAC.normal=buildNormalMap(a,2.2)}catch(e){}
+  TARMAC.albedo=at;TARMAC.ready=true;
+};img.src='models/tex/tarmac.jpg';})();
 function mkAsphaltTexture(weather){
+  var _wet0=weather&&weather.indexOf('rain')>=0,_snow0=weather&&weather.indexOf('snow')>=0;
+  if(!_wet0&&!_snow0&&TARMAC.ready)return TARMAC.albedo;
   var c=document.createElement('canvas');c.width=256;c.height=256;var x=c.getContext('2d');
   var wet=weather&&weather.indexOf('rain')>=0,snow=weather&&weather.indexOf('snow')>=0;
   x.fillStyle=wet?'#232529':'#2d2f33';x.fillRect(0,0,256,256);
@@ -1574,9 +1595,11 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
   _rg.setAttribute('uv',new THREE.Float32BufferAttribute(_ruv,2));
   _rg.setIndex(_ri);_rg.computeVertexNormals();
   var _isWet=selWeather.indexOf('rain')>=0;
-  var roadMesh=new THREE.Mesh(_rg,_isWet
+  var _roadMat=_isWet
     ?new THREE.MeshStandardMaterial({map:_asTex,roughness:.35,metalness:.25})
-    :new THREE.MeshLambertMaterial({map:_asTex}));
+    :new THREE.MeshStandardMaterial({map:_asTex,roughness:.92,metalness:0,envMapIntensity:.25});
+  if(!_isWet&&TARMAC.ready&&TARMAC.normal){_roadMat.normalMap=TARMAC.normal;_roadMat.normalScale=new THREE.Vector2(.7,.7)}
+  var roadMesh=new THREE.Mesh(_rg,_roadMat);
   roadMesh.receiveShadow=true;scene.add(roadMesh);
   // ── Racing line: geodesic apex-cutting line + rubbered-in groove ──
   buildRacingLine();
