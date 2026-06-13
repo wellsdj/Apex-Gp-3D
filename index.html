@@ -1635,7 +1635,7 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
     var _gMat=new THREE.MeshStandardMaterial({map:_ga,roughness:1,metalness:0,envMapIntensity:.15});
     if(GRASS.normal){var _gn=GRASS.normal.clone();_gn.needsUpdate=true;_gn.wrapS=_gn.wrapT=THREE.RepeatWrapping;_gn.repeat.set(1,1);_gMat.normalMap=_gn;_gMat.normalScale=new THREE.Vector2(.5,.5)}
     scene.add(buildGroundGrid(CX,CZ,W_SIZE,110,_gMat,0.4)); // displaced heightfield, just below the road edge
-  }else{var _gndTex=new THREE.CanvasTexture(cvs3);_gndTex.encoding=THREE.sRGBEncoding;var gndMesh=new THREE.Mesh(new THREE.PlaneGeometry(W_SIZE,W_SIZE),new THREE.MeshLambertMaterial({map:_gndTex}));gndMesh.rotation.x=-Math.PI/2;gndMesh.position.set(CX,-0.1,CZ);gndMesh.receiveShadow=true;scene.add(gndMesh)}
+  }else{var _gndTex=new THREE.CanvasTexture(cvs3);_gndTex.encoding=THREE.sRGBEncoding;scene.add(buildGroundGrid(CX,CZ,W_SIZE,110,new THREE.MeshLambertMaterial({map:_gndTex}),0.4))}
   // ── 3D asphalt ribbon (the actual road surface) ──
   var _asTex=mkAsphaltTexture(selWeather);
   var _rv=[],_ruv=[],_ri=[],_rLen=0;
