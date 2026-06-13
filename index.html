@@ -1244,6 +1244,7 @@ function onPitFuelChange(){
   fuelLaps=Math.round(parseFloat(sl.value)*10)/10;
   var pv=document.getElementById('pitFuelVal');if(pv)pv.textContent=fuelLaps.toFixed(1)+' LAPS';
   var pc=document.getElementById('pitFuelCur');if(pc)pc.textContent=fuelLaps.toFixed(1);
+  var pp=document.getElementById('pitFuelPct');if(!pp){var ps=document.querySelector('.pit-section');if(ps){pp=document.createElement('div');pp.id='pitFuelPct';pp.style.cssText='font-size:9px;color:rgba(255,255,255,.6);margin-top:4px';ps.parentNode.insertBefore(pp,ps.nextSibling)}}if(pp){var n=Math.min(1,Math.max(0,fuelLaps/50));var pct=Math.round(((1.18-n*.36)/1.036-1)*100);pp.textContent=(pct>=0?'+':'')+pct+'% POWER'}
 }
 var woStep='cats'; // 'cats' or 'variants'
 function showWeatherMenu(){document.getElementById('weatherOverlay').classList.add('show');woShowCats();var _fs=document.getElementById('fuelSlider');if(_fs)_fs.value=fuelLoad;onFuelSlider(fuelLoad)}
