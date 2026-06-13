@@ -1478,8 +1478,8 @@ function _latRibbon(lat,halfW,y,colorFn,mat){
   var n=sd.length,v=[],cl=[],ix=[];
   for(var i=0;i<=n;i++){
     var j=i%n,s=sd[j];
-    var cx2=s.c.x+s.n.x*lat[j],cz2=s.c.z+s.n.z*lat[j];
-    v.push(cx2-s.n.x*halfW,y,cz2-s.n.z*halfW,cx2+s.n.x*halfW,y,cz2+s.n.z*halfW);
+    var cx2=s.c.x+s.n.x*lat[j],cz2=s.c.z+s.n.z*lat[j],yy=(s.c.y||0)+y;
+    v.push(cx2-s.n.x*halfW,yy,cz2-s.n.z*halfW,cx2+s.n.x*halfW,yy,cz2+s.n.z*halfW);
     if(colorFn){var col=colorFn(j);cl.push(col[0],col[1],col[2],col[0],col[1],col[2])}
     if(i<n){var a=i*2;ix.push(a,a+1,a+2,a+1,a+3,a+2)}
   }
@@ -1585,9 +1585,9 @@ var _ghPts=null;
 function _buildGroundH(){_ghPts=[];for(var i=0;i<sd.length;i+=6){_ghPts.push(sd[i].c.x,sd[i].c.z,sd[i].c.y||0)}}
 function groundHeightAt(x,z){if(!_ghPts||!_ghPts.length)return 0;var bd=Infinity,by=0;for(var i=0;i<_ghPts.length;i+=3){var dx=_ghPts[i]-x,dz=_ghPts[i+1]-z,d=dx*dx+dz*dz;if(d<bd){bd=d;by=_ghPts[i+2]}}return by}
 // Displaced ground heightfield grid (UV carries the tiling; texture repeat=1)
-function buildGroundGrid(cx,cz,size,seg,mat){
-  var hs=size/2,step=size/seg,til=size/16,pos=[],uv=[],idx=[];
-  for(var j=0;j<=seg;j++)for(var i=0;i<=seg;i++){var x=cx-hs+i*step,z=cz-hs+j*step;pos.push(x,groundHeightAt(x,z)-0.05,z);uv.push(i/seg*til,j/seg*til)}
+function buildGroundGrid(cx,cz,size,seg,mat,yoff){
+  var hs=size/2,step=size/seg,til=size/16,pos=[],uv=[],idx=[],yo=(yoff||0)-0.05;
+  for(var j=0;j<=seg;j++)for(var i=0;i<=seg;i++){var x=cx-hs+i*step,z=cz-hs+j*step;pos.push(x,groundHeightAt(x,z)+yo,z);uv.push(i/seg*til,j/seg*til)}
   for(var j2=0;j2<seg;j2++)for(var i2=0;i2<seg;i2++){var a=j2*(seg+1)+i2,b=a+1,c=a+(seg+1),dd=c+1;idx.push(a,c,b,b,c,dd)}
   var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
   var m=new THREE.Mesh(g,mat);m.receiveShadow=true;return m;
@@ -1599,9 +1599,10 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
   trackLenM=0;for(var _tl=1;_tl<=tPts.length;_tl++){var _pa3=tPts[_tl-1],_pb3=tPts[_tl%tPts.length];trackLenM+=Math.sqrt((_pb3.x-_pa3.x)*(_pb3.x-_pa3.x)+(_pb3.z-_pa3.z)*(_pb3.z-_pa3.z))}trackLenM=Math.max(500,trackLenM);var sfRef=TRACKS[selTrack].sf;var bd=Infinity;for(var i2=0;i2<tPts.length;i2++){var d2=Math.pow(tPts[i2].x-sfRef[0],2)+Math.pow(tPts[i2].z-sfRef[1],2);if(d2<bd){bd=d2;sfIdx=i2}}
   var tx1=Infinity,tx2=-Infinity,tz1=Infinity,tz2=-Infinity;for(var ib=0;ib<tPts.length;ib++){tx1=Math.min(tx1,tPts[ib].x);tx2=Math.max(tx2,tPts[ib].x);tz1=Math.min(tz1,tPts[ib].z);tz2=Math.max(tz2,tPts[ib].z)}var PAD=60,CX=(tx1+tx2)/2,CZ=(tz1+tz2)/2,W_SIZE=Math.max(tx2-tx1,tz2-tz1)+PAD*2;tCX=CX;tCZ=CZ;trackViewR=Math.max(tx2-tx1,tz2-tz1)/2+40;
   var grassC=grassCOverride||TRACKS[selTrack].grass,grassHex='#'+grassC.toString(16).padStart(6,'0');
-  var _goMat;
-  if(GRASS.ready&&selWeather.indexOf('snow')<0){var _ogt=GRASS.albedo.clone();_ogt.needsUpdate=true;_ogt.wrapS=_ogt.wrapT=THREE.RepeatWrapping;_ogt.repeat.set(156,156);_goMat=new THREE.MeshLambertMaterial({map:_ogt})}else{_goMat=new THREE.MeshLambertMaterial({color:grassC})}
-  var gndOuter=new THREE.Mesh(new THREE.PlaneGeometry(2500,2500),_goMat);gndOuter.rotation.x=-Math.PI/2;gndOuter.position.y=-0.5;scene.add(gndOuter);
+  if(GRASS.ready&&selWeather.indexOf('snow')<0){
+    var _ogt=GRASS.albedo.clone();_ogt.needsUpdate=true;_ogt.wrapS=_ogt.wrapT=THREE.RepeatWrapping;_ogt.repeat.set(1,1);
+    scene.add(buildGroundGrid(CX,CZ,2600,90,new THREE.MeshLambertMaterial({map:_ogt}),-0.5)); // far ground rolls with the track, sits just under the play surface
+  }else{var gndOuter=new THREE.Mesh(new THREE.PlaneGeometry(2600,2600),new THREE.MeshLambertMaterial({color:grassC}));gndOuter.rotation.x=-Math.PI/2;gndOuter.position.y=-0.5;scene.add(gndOuter)}
   var cvs3=document.createElement('canvas');cvs3.width=2048;cvs3.height=2048;var cx3=cvs3.getContext('2d');cx3.fillStyle=grassHex;cx3.fillRect(0,0,2048,2048);
   // Mowed-stripe bands + grass noise for a groomed circuit look
   cx3.save();cx3.translate(1024,1024);cx3.rotate(.42);
