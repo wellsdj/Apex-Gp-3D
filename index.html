@@ -537,7 +537,7 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://unpkg.com/three@r128/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 // One-time reset of old best times (remove this block after first load)
 if(!localStorage.getItem('apexgp_v2')){localStorage.removeItem('apexgp_bests');['SUNSET CIRCUIT','T-BONE','THE BOOT'].forEach(function(n){localStorage.removeItem('apexgp_ghost_'+n)});localStorage.setItem('apexgp_v2','1')}
@@ -784,8 +784,11 @@ var F1_WHEELS={
 // front brake ducts → ride on the steering pivot (steer, don't spin)
 var F1_DUCTS={'Plane.019_Plane.022':'Cylinder.007_Cylinder.012','Cylinder.015_Cylinder.002':'Cylinder.007_Cylinder.012','Plane.048_Plane.049':'Cylinder.018_Cylinder.008','Cylinder.021_Cylinder.014':'Cylinder.018_Cylinder.008'};
 // ── 3D Track Models ──────────────────────────────────────────────────────────
-var trackLoader=new THREE.GLTFLoader(),trackModels={};
+var trackLoader=null,trackModels={};
+function initTrackLoader(){if(!trackLoader&&typeof THREE.GLTFLoader!=='undefined'){trackLoader=new THREE.GLTFLoader()}}
 function loadTrackModel(filename){
+  initTrackLoader();
+  if(!trackLoader)return Promise.reject(new Error('GLTFLoader not available'));
   if(trackModels[filename])return Promise.resolve(trackModels[filename]);
   return new Promise(function(res,rej){
     trackLoader.load('models/'+filename,function(gltf){
