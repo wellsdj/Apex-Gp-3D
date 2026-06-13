@@ -1457,15 +1457,12 @@ var BARRIER={geo:null,mat:null,ready:false,len:5};
     BARRIER.geo=geo;BARRIER.mat=mat;BARRIER.ready=true;
   },undefined,function(e){console.error('barrier load failed',e)});
 })();
-var TREE_MODEL={geo:null,ready:false};
+var TREE_MODEL={scene:null,ready:false};
 (function loadPineTree(){
   if(typeof THREE.GLTFLoader==='undefined'){setTimeout(loadPineTree,200);return}
   var treeUrl='https://xtgnhbmwmhgk4sm2.private.blob.vercel-storage.com/pine_tree.glb?vercel-blob-delegation=eyJzdG9yZUlkIjoic3RvcmVfWFRnTmhCbXdNaGdrNFNtMiIsIm93bmVySWQiOiJ0ZWFtX1B4cEhnVkNpWTd0UDFBSjdFcWpOb1QwYiIsInBhdGhuYW1lIjoiKiIsIm9wZXJhdGlvbnMiOlsiZ2V0IiwiaGVhZCJdLCJ2YWxpZFVudGlsIjoxNzgxNDE3NDQ1OTg5LCJpYXQiOjE3ODEzNzQyNDYwODd9.m3Hj5nf54FVPodzPGfdQ8rQmVFx2acG6lULSrs7BYaA&vercel-blob-signature=pKUA8aeUfP7hbxADI9YbIiPRrfzbFUbzAYx-8ft8T58';
   new THREE.GLTFLoader().load(treeUrl,function(g){
-    var mesh=null;g.scene.updateMatrixWorld(true);g.scene.traverse(function(o){if(o.isMesh&&!mesh)mesh=o});
-    if(!mesh)return;
-    var geo=mesh.geometry.clone();geo.applyMatrix4(mesh.matrixWorld);
-    TREE_MODEL.geo=geo;TREE_MODEL.ready=true;
+    TREE_MODEL.scene=g.scene;TREE_MODEL.ready=true;
   },undefined,function(e){console.error('pine tree load failed',e)});
 })();
 function mkAsphaltTexture(weather){
@@ -1901,12 +1898,17 @@ function mkWorld(){
   }
   trunks.instanceMatrix.needsUpdate=true;
   scene.add(trunks);
-  if(TREE_MODEL.ready&&TREE_MODEL.geo){
-    var trees=new THREE.InstancedMesh(TREE_MODEL.geo,new THREE.MeshLambertMaterial({color:0xffffff}),n);
-    trees.castShadow=true;
-    for(var ti=0;ti<n;ti++){var s=slots[ti];var sc=1+(Math.random()-.5)*.3;_v.set(s.x,s.gy,s.z);_s.set(sc,sc,sc);_m.compose(_v,_q,_s);trees.setMatrixAt(ti,_m)}
-    trees.instanceMatrix.needsUpdate=true;
-    scene.add(trees);
+  if(TREE_MODEL.ready&&TREE_MODEL.scene){
+    for(var ti=0;ti<n;ti++){
+      var treeClone=TREE_MODEL.scene.clone();
+      var s=slots[ti];
+      var sc=1+(Math.random()-.5)*.3;
+      treeClone.position.set(s.x,s.gy,s.z);
+      treeClone.scale.set(sc,sc,sc);
+      treeClone.castShadow=true;
+      treeClone.traverse(function(o){if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+      scene.add(treeClone);
+    }
   }
   mkTrackProps();
 }
