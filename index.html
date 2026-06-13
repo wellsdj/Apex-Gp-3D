@@ -1583,7 +1583,7 @@ function mkStartLine(){
 // and all props roll with the track. Built once per track from sd.
 var _ghPts=null;
 function _buildGroundH(){_ghPts=[];for(var i=0;i<sd.length;i+=6){_ghPts.push(sd[i].c.x,sd[i].c.z,sd[i].c.y||0)}}
-function groundHeightAt(x,z){if(!_ghPts||!_ghPts.length)return 0;var bd=Infinity,by=0;for(var i=0;i<_ghPts.length;i+=3){var dx=_ghPts[i]-x,dz=_ghPts[i+1]-z,d=dx*dx+dz*dz;if(d<bd){bd=d;by=_ghPts[i+2]}}return by}
+function groundHeightAt(x,z){if(!_ghPts||!_ghPts.length)return 0;var sw=0,sy=0;for(var i=0;i<_ghPts.length;i+=3){var dx=_ghPts[i]-x,dz=_ghPts[i+1]-z,d2=dx*dx+dz*dz;var w=1/(d2+60);sw+=w;sy+=w*_ghPts[i+2]}return sw>0?sy/sw:0}
 // Displaced ground heightfield grid (UV carries the tiling; texture repeat=1)
 function buildGroundGrid(cx,cz,size,seg,mat,yoff){
   var hs=size/2,step=size/seg,til=size/16,pos=[],uv=[],idx=[],yo=(yoff||0)-0.05;
@@ -1601,7 +1601,7 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
   var grassC=grassCOverride||TRACKS[selTrack].grass,grassHex='#'+grassC.toString(16).padStart(6,'0');
   if(GRASS.ready&&selWeather.indexOf('snow')<0){
     var _ogt=GRASS.albedo.clone();_ogt.needsUpdate=true;_ogt.wrapS=_ogt.wrapT=THREE.RepeatWrapping;_ogt.repeat.set(1,1);
-    scene.add(buildGroundGrid(CX,CZ,2600,90,new THREE.MeshLambertMaterial({map:_ogt}),0.45)); // far ground rolls with the track, just under the play surface
+    scene.add(buildGroundGrid(CX,CZ,2600,90,new THREE.MeshLambertMaterial({map:_ogt}),0.34)); // far ground rolls with the track, just under the play surface
   }else{var gndOuter=new THREE.Mesh(new THREE.PlaneGeometry(2600,2600),new THREE.MeshLambertMaterial({color:grassC}));gndOuter.rotation.x=-Math.PI/2;gndOuter.position.y=-0.5;scene.add(gndOuter)}
   var cvs3=document.createElement('canvas');cvs3.width=2048;cvs3.height=2048;var cx3=cvs3.getContext('2d');cx3.fillStyle=grassHex;cx3.fillRect(0,0,2048,2048);
   // Mowed-stripe bands + grass noise for a groomed circuit look
@@ -1616,7 +1616,7 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
     var _ga=GRASS.albedo.clone();_ga.needsUpdate=true;_ga.wrapS=_ga.wrapT=THREE.RepeatWrapping;_ga.repeat.set(1,1);
     var _gMat=new THREE.MeshStandardMaterial({map:_ga,roughness:1,metalness:0,envMapIntensity:.15});
     if(GRASS.normal){var _gn=GRASS.normal.clone();_gn.needsUpdate=true;_gn.wrapS=_gn.wrapT=THREE.RepeatWrapping;_gn.repeat.set(1,1);_gMat.normalMap=_gn;_gMat.normalScale=new THREE.Vector2(.5,.5)}
-    scene.add(buildGroundGrid(CX,CZ,W_SIZE,110,_gMat,0.5)); // displaced heightfield, flush with the road edge
+    scene.add(buildGroundGrid(CX,CZ,W_SIZE,110,_gMat,0.4)); // displaced heightfield, just below the road edge
   }else{var _gndTex=new THREE.CanvasTexture(cvs3);_gndTex.encoding=THREE.sRGBEncoding;var gndMesh=new THREE.Mesh(new THREE.PlaneGeometry(W_SIZE,W_SIZE),new THREE.MeshLambertMaterial({map:_gndTex}));gndMesh.rotation.x=-Math.PI/2;gndMesh.position.set(CX,0,CZ);gndMesh.receiveShadow=true;scene.add(gndMesh)}
   // ── 3D asphalt ribbon (the actual road surface) ──
   var _asTex=mkAsphaltTexture(selWeather);
