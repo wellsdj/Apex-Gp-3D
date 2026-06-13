@@ -1694,7 +1694,7 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
   for(var side3=-1;side3<=1;side3+=2){var offB=side3*(TW/2+CWW+3.5);
     if(BARRIER.ready){
       // tile the 3D guardrail end-to-end along the edge, following elevation
-      var step=BARRIER.len*0.99,acc=step,mats=[];
+      var step=BARRIER.len,acc=step,mats=[];
       var _up=new THREE.Vector3(0,1,0),_xa=new THREE.Vector3(),_za=new THREE.Vector3(),_m4=new THREE.Matrix4();
       for(var i9=0;i9<sd.length;i9++){var a=sd[i9].c,b=sd[(i9+1)%sd.length].c;acc+=Math.hypot(b.x-a.x,b.z-a.z);
         if(acc>=step){acc=0;var s4=sd[i9];var px=s4.c.x+s4.n.x*offB,pz=s4.c.z+s4.n.z*offB,py=groundHeightAt(px,pz)+0.05;
