@@ -727,7 +727,28 @@ function _calcMMBounds(){if(_mmTrackIdx===selTrack&&_mmBounds)return;var x1=Infi
 var _colGrid=null,_colGridSize=40,_colGridCols=0,_colGridRows=0,_colGridOX=0,_colGridOZ=0;
 function _buildColGrid(){if(!tPts||tPts.length<2)return;var x1=Infinity,x2=-Infinity,z1=Infinity,z2=-Infinity;for(var i=0;i<tPts.length;i++){var p=tPts[i];if(p.x<x1)x1=p.x;if(p.x>x2)x2=p.x;if(p.z<z1)z1=p.z;if(p.z>z2)z2=p.z}x1-=50;z1-=50;x2+=50;z2+=50;_colGridOX=x1;_colGridOZ=z1;_colGridCols=Math.ceil((x2-x1)/_colGridSize);_colGridRows=Math.ceil((z2-z1)/_colGridSize);_colGrid=new Array(_colGridCols*_colGridRows);for(var j=0;j<_colGrid.length;j++)_colGrid[j]=[];for(var k=0;k<tPts.length;k++){var c=Math.floor((tPts[k].x-x1)/_colGridSize),r=Math.floor((tPts[k].z-z1)/_colGridSize);if(c>=0&&c<_colGridCols&&r>=0&&r<_colGridRows)_colGrid[r*_colGridCols+c].push(k)}}
 
-function initMenu(){var cv=document.getElementById('menuCanvas');mS=new THREE.Scene();mS.background=new THREE.Color(0x04060e);mS.fog=new THREE.Fog(0x04060e,12,42);mC=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,100);mR=new THREE.WebGLRenderer({canvas:cv,antialias:true});mR.setSize(innerWidth,innerHeight);mR.setPixelRatio(Math.min(devicePixelRatio,2));mR.toneMapping=THREE.NoToneMapping;
+// ── Image-based lighting: build a soft sky/horizon/ground environment map
+// procedurally (no external HDRI files) and PMREM-filter it so the glossy car
+// picks up realistic reflections + ambient light. Cached per colour triple.
+function _hx(h){return '#'+(((h>>>0)&0xffffff).toString(16).padStart(6,'0'))}
+function trackEnv(renderer,topHex,horHex,botHex){
+  // PMREM render targets belong to one GL context, so cache per renderer
+  if(!renderer._envCache)renderer._envCache={};
+  if(!renderer._pmrem)renderer._pmrem=new THREE.PMREMGenerator(renderer);
+  var key=topHex+'_'+horHex+'_'+botHex;
+  if(renderer._envCache[key])return renderer._envCache[key];
+  var cv=document.createElement('canvas');cv.width=256;cv.height=128;var cx=cv.getContext('2d');
+  var g=cx.createLinearGradient(0,0,0,128);
+  g.addColorStop(0,_hx(topHex));g.addColorStop(.47,_hx(horHex));g.addColorStop(.53,_hx(horHex));g.addColorStop(1,_hx(botHex));
+  cx.fillStyle=g;cx.fillRect(0,0,256,128);
+  // a soft warm sun blob for a highlight on the bodywork
+  var sun=cx.createRadialGradient(70,40,2,70,40,34);sun.addColorStop(0,'rgba(255,250,235,.95)');sun.addColorStop(1,'rgba(255,250,235,0)');
+  cx.fillStyle=sun;cx.fillRect(36,6,68,68);
+  var tex=new THREE.CanvasTexture(cv);tex.mapping=THREE.EquirectangularReflectionMapping;
+  var rt=renderer._pmrem.fromEquirectangular(tex);tex.dispose();
+  renderer._envCache[key]=rt.texture;return rt.texture;
+}
+function initMenu(){var cv=document.getElementById('menuCanvas');mS=new THREE.Scene();mS.background=new THREE.Color(0x04060e);mS.fog=new THREE.Fog(0x04060e,12,42);mC=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,100);mR=new THREE.WebGLRenderer({canvas:cv,antialias:true});mR.setSize(innerWidth,innerHeight);mR.setPixelRatio(Math.min(devicePixelRatio,2));mR.toneMapping=THREE.ACESFilmicToneMapping;mR.toneMappingExposure=1.05;mR.outputEncoding=THREE.sRGBEncoding;mS.environment=trackEnv(mR,0x2a3e5a,0x10202e,0x05070e);
 mS.add(new THREE.AmbientLight(0x6688bb,.35));
 var kl=new THREE.SpotLight(0xeaf6ff,2.6);kl.position.set(5,9,4);kl.angle=.5;kl.penumbra=.6;mS.add(kl);
 var cy=new THREE.SpotLight(0x00c8ff,1.6);cy.position.set(-7,4,5);cy.angle=.6;cy.penumbra=.7;mS.add(cy);
@@ -754,7 +775,7 @@ function _gBindOrbit(cv){
   cv.addEventListener('pointerup',function(){gOrb.drag=false;gOrb.lastInput=performance.now()});
   cv.addEventListener('wheel',function(e){gOrb.dist=Math.max(4.2,Math.min(16,gOrb.dist+e.deltaY*.008));gOrb.lastInput=performance.now();e.preventDefault()},{passive:false});
 }
-function initGarage(){var cv=document.getElementById('garageCanvas');gS=new THREE.Scene();gS.background=new THREE.Color(0x04060e);gS.fog=new THREE.Fog(0x04060e,16,55);gC=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,200);gR=new THREE.WebGLRenderer({canvas:cv,antialias:true});gR.setSize(innerWidth,innerHeight);gR.setPixelRatio(Math.min(devicePixelRatio,2));gR.toneMapping=THREE.NoToneMapping;
+function initGarage(){var cv=document.getElementById('garageCanvas');gS=new THREE.Scene();gS.background=new THREE.Color(0x04060e);gS.fog=new THREE.Fog(0x04060e,16,55);gC=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,200);gR=new THREE.WebGLRenderer({canvas:cv,antialias:true});gR.setSize(innerWidth,innerHeight);gR.setPixelRatio(Math.min(devicePixelRatio,2));gR.toneMapping=THREE.ACESFilmicToneMapping;gR.toneMappingExposure=1.05;gR.outputEncoding=THREE.sRGBEncoding;gS.environment=trackEnv(gR,0x2a3e5a,0x10202e,0x05070e);
 gS.add(new THREE.AmbientLight(0x99aacc,.3));
 var kl=new THREE.SpotLight(0xffffff,2.8);kl.position.set(6,9,4);kl.angle=.4;kl.penumbra=.55;gS.add(kl);
 var cy=new THREE.SpotLight(0x00c8ff,1.5);cy.position.set(-7,4.5,4);cy.angle=.6;cy.penumbra=.7;gS.add(cy);
@@ -1329,8 +1350,8 @@ var skC=W.skyOver!==null?W.skyOver:T.sky,fgC=W.fogOver!==null?W.fogOver:T.fog;
 var amI=W.ambOver!==null?W.ambOver:T.ambI,snI=W.sunOver!==null?W.sunOver:T.sunI;
 var snC=W.sunCOver!==null?W.sunCOver:T.sunC,hsC=W.hemiSkyOver!==null?W.hemiSkyOver:T.hemiSky;
 var hgC=W.hemiGndOver!==null?W.hemiGndOver:T.hemiGnd,grC=W.grassOver!==null?W.grassOver:T.grass;
-scene.background=new THREE.Color(skC);scene.fog=new THREE.Fog(fgC,300,1200);
-scene.add(new THREE.AmbientLight(0xffffff,amI));var sun=new THREE.DirectionalLight(snC,snI);var _isNight=selWeather==='night'||selWeather==='night_dark';sun.castShadow=!_isNight;if(sun.castShadow){sun.shadow.mapSize.set(2048,2048);var sc=sun.shadow.camera;sc.left=-360;sc.right=360;sc.top=360;sc.bottom=-360;sc.near=50;sc.far=1400;sun.shadow.bias=-0.0006}scene.add(sun);scene.add(new THREE.HemisphereLight(hsC,hgC,.3));skidMat=new THREE.MeshBasicMaterial({color:0x333333,transparent:true,opacity:0.6});skidMarks=[];mkTrack(grC);car=bldCar(carBodyColor,false);scene.add(car);
+scene.background=new THREE.Color(skC);scene.fog=new THREE.Fog(fgC,300,1200);if(ren)scene.environment=trackEnv(ren,skC,fgC,grC);
+scene.add(new THREE.AmbientLight(0xffffff,amI*1.15));var sun=new THREE.DirectionalLight(snC,snI*1.25);var _isNight=selWeather==='night'||selWeather==='night_dark';sun.castShadow=!_isNight;if(sun.castShadow){sun.shadow.mapSize.set(2048,2048);var sc=sun.shadow.camera;sc.left=-360;sc.right=360;sc.top=360;sc.bottom=-360;sc.near=50;sc.far=1400;sun.shadow.bias=-0.0006}scene.add(sun);scene.add(new THREE.HemisphereLight(hsC,hgC,.45));skidMat=new THREE.MeshBasicMaterial({color:0x333333,transparent:true,opacity:0.6});skidMarks=[];mkTrack(grC);car=bldCar(carBodyColor,false);scene.add(car);
 // Sun follows a fixed azimuth, shadows centred on the circuit
 sun.position.set(tCX+340,430,tCZ+220);sun.target.position.set(tCX,0,tCZ);scene.add(sun.target);
 mkSky(skC,fgC,snC,_isNight);
@@ -1379,7 +1400,7 @@ if(selWeather==='night'||selWeather==='night_dark'){
   }
 }
 builtTrack=selTrack;builtWeather=selWeather;bestLT=Infinity;lastLT=0;bestGhost=[];ghostPlaying=false;_buildColGrid();_mmBounds=null;_mmTrackIdx=-1}
-function initRace(){if(rInit&&builtTrack===selTrack&&builtWeather===selWeather)return;if(!rInit){rInit=true;ren=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});ren.setSize(innerWidth,innerHeight);ren.setPixelRatio(Math.min(devicePixelRatio,1.5));ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;ren.toneMapping=THREE.NoToneMapping;document.body.insertBefore(ren.domElement,document.getElementById('menuScreen'));cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,2600);clk=new THREE.Clock();mirrorCam=new THREE.PerspectiveCamera(55,340/80,1,800);mmx=document.getElementById('mmC').getContext('2d');addEventListener('keydown',function(e){KY[e.key.toLowerCase()]=true;if(e.key==='Escape'&&missileMode==='aim'){cancelMissileAim();e.preventDefault();return}if(e.key==='Escape'&&reviewMode){exitReview();e.preventDefault();return}if(e.key==='Escape'&&racing){racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()};if(e.key.toLowerCase()==='g')toggleGhost();if(e.key.toLowerCase()==='e'&&racing)activateShield();if(e.key.toLowerCase()==='h')toggleHeadlights();if(e.key.toLowerCase()==='p'&&racing)toggleTireInfo();if(racing&&mpConn&&e.key>='1'&&e.key<='4')sendEmote(parseInt(e.key,10)-1);e.preventDefault()});addEventListener('keyup',function(e){KY[e.key.toLowerCase()]=false});addEventListener('resize',function(){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});buildScene();rLoop()}else{buildScene()}}
+function initRace(){if(rInit&&builtTrack===selTrack&&builtWeather===selWeather)return;if(!rInit){rInit=true;ren=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});ren.setSize(innerWidth,innerHeight);ren.setPixelRatio(Math.min(devicePixelRatio,1.5));ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.08;ren.outputEncoding=THREE.sRGBEncoding;document.body.insertBefore(ren.domElement,document.getElementById('menuScreen'));cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,2600);clk=new THREE.Clock();mirrorCam=new THREE.PerspectiveCamera(55,340/80,1,800);mmx=document.getElementById('mmC').getContext('2d');addEventListener('keydown',function(e){KY[e.key.toLowerCase()]=true;if(e.key==='Escape'&&missileMode==='aim'){cancelMissileAim();e.preventDefault();return}if(e.key==='Escape'&&reviewMode){exitReview();e.preventDefault();return}if(e.key==='Escape'&&racing){racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()};if(e.key.toLowerCase()==='g')toggleGhost();if(e.key.toLowerCase()==='e'&&racing)activateShield();if(e.key.toLowerCase()==='h')toggleHeadlights();if(e.key.toLowerCase()==='p'&&racing)toggleTireInfo();if(racing&&mpConn&&e.key>='1'&&e.key<='4')sendEmote(parseInt(e.key,10)-1);e.preventDefault()});addEventListener('keyup',function(e){KY[e.key.toLowerCase()]=false});addEventListener('resize',function(){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});buildScene();rLoop()}else{buildScene()}}
 
 // ── Procedural asphalt (publicly reproducible, no network needed) ───────────
 function mkAsphaltTexture(weather){
@@ -1399,7 +1420,7 @@ function mkAsphaltTexture(weather){
     x.stroke();
   }
   if(snow){x.globalAlpha=.5;x.fillStyle='#dde6ee';for(var sn=0;sn<26;sn++){x.beginPath();x.arc(Math.random()*256,Math.random()*256,4+Math.random()*16,0,Math.PI*2);x.fill()}x.globalAlpha=1}
-  var t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;return t;
+  var t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;t.encoding=THREE.sRGBEncoding;return t;
 }
 // ── Racing line (geodesic apex-cutting path across the track width) ─────────
 var racingLineMesh=null,racingLat=null;
@@ -1535,7 +1556,7 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
   // Dark run-off band under the asphalt ribbon (soft edges)
   cx3.strokeStyle='#3b3b40';cx3.lineWidth=(TW+CWW*2+2)*(2048/W_SIZE);cx3.lineCap='round';cx3.lineJoin='round';cx3.beginPath();for(var gi=0;gi<tPts.length;gi++){var gpx=((tPts[gi].x-(CX-W_SIZE/2))/W_SIZE)*2048,gpy=((tPts[gi].z-(CZ-W_SIZE/2))/W_SIZE)*2048;if(gi===0)cx3.moveTo(gpx,gpy);else cx3.lineTo(gpx,gpy)}cx3.closePath();cx3.stroke();
   if(selWeather==='snow'||selWeather==='snow_heavy'){var snCnt=selWeather==='snow_heavy'?120:80;cx3.globalAlpha=selWeather==='snow_heavy'?.7:.55;cx3.fillStyle='#e8eef2';for(var sni=0;sni<snCnt;sni++){var snx=Math.random()*2048,sny=Math.random()*2048,snr=30+Math.random()*80;cx3.beginPath();cx3.arc(snx,sny,snr,0,Math.PI*2);cx3.fill()}cx3.globalAlpha=1}
-  var gndMesh=new THREE.Mesh(new THREE.PlaneGeometry(W_SIZE,W_SIZE),new THREE.MeshLambertMaterial({map:new THREE.CanvasTexture(cvs3)}));gndMesh.rotation.x=-Math.PI/2;gndMesh.position.set(CX,0,CZ);gndMesh.receiveShadow=true;scene.add(gndMesh);
+  var _gndTex=new THREE.CanvasTexture(cvs3);_gndTex.encoding=THREE.sRGBEncoding;var gndMesh=new THREE.Mesh(new THREE.PlaneGeometry(W_SIZE,W_SIZE),new THREE.MeshLambertMaterial({map:_gndTex}));gndMesh.rotation.x=-Math.PI/2;gndMesh.position.set(CX,0,CZ);gndMesh.receiveShadow=true;scene.add(gndMesh);
   // ── 3D asphalt ribbon (the actual road surface) ──
   var _asTex=mkAsphaltTexture(selWeather);
   var _rv=[],_ruv=[],_ri=[],_rLen=0;
