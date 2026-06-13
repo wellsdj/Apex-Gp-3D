@@ -792,23 +792,46 @@ var F1_DUCTS={'Plane.019_Plane.022':'Cylinder.007_Cylinder.012','Cylinder.015_Cy
 // ── 3D Track Models ──────────────────────────────────────────────────────────
 var trackModels={};
 function parseTrackOBJ(txt){
-  var pos=[],nrm=[],indices=[];
+  // Raw vertex/normal pools, then expand faces (fan-triangulated) into a
+  // flat non-indexed buffer so quads and n-gons render correctly.
+  var vx=[],vn=[],P=[],N=[];
   var lines=txt.split('\n');
+  function vi(s){var n=parseInt(s,10);return n<0?(vx.length/3+n):(n-1)}
+  function ni(s){var n=parseInt(s,10);return n<0?(vn.length/3+n):(n-1)}
   for(var i=0;i<lines.length;i++){
-    var L=lines[i],c0=L.charCodeAt(0);
-    if(c0===118&&L.charCodeAt(1)===32){var t=L.split(' ');pos.push(parseFloat(t[1]),parseFloat(t[2]),parseFloat(t[3]))}
-    else if(c0===118&&L.charCodeAt(1)===110){var t2=L.split(' ');nrm.push(parseFloat(t2[1]),parseFloat(t2[2]),parseFloat(t2[3]))}
-    else if(c0===102&&L.charCodeAt(1)===32){
-      var tk=L.split(' ');
-      for(var k=1;k<tk.length;k++){var pr=tk[k].split('/');indices.push((parseInt(pr[0])-1)*3)}
+    var L=lines[i],c0=L.charCodeAt(0),c1=L.charCodeAt(1);
+    if(c0===118&&c1===32){var t=L.split(/\s+/);vx.push(+t[1],+t[2],+t[3])}
+    else if(c0===118&&c1===110){var t2=L.split(/\s+/);vn.push(+t2[1],+t2[2],+t2[3])}
+    else if(c0===102&&c1===32){
+      var tk=L.trim().split(/\s+/),m=tk.length-1;
+      if(m<3)continue;
+      var pv=[],pn=[];
+      for(var k=1;k<=m;k++){var pr=tk[k].split('/');pv.push(vi(pr[0]));pn.push(pr[2]!==undefined&&pr[2]!==''?ni(pr[2]):-1)}
+      // fan triangulation: (0,j-1,j)
+      for(var j=2;j<m;j++){
+        var tri=[0,j-1,j];
+        for(var q=0;q<3;q++){
+          var a=pv[tri[q]]*3;P.push(vx[a],vx[a+1],vx[a+2]);
+          var b=pn[tri[q]];if(b>=0){b*=3;N.push(vn[b],vn[b+1],vn[b+2])}
+        }
+      }
     }
   }
   var geo=new THREE.BufferGeometry();
-  geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-  if(nrm.length===pos.length)geo.setAttribute('normal',new THREE.Float32BufferAttribute(nrm,3));
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(P,3));
+  if(N.length===P.length)geo.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));
   else geo.computeVertexNormals();
-  if(indices.length>0)geo.setIndex(new THREE.BufferAttribute(new Uint32Array(indices),1));
   return geo;
+}
+// Scale + center a loaded track model so its footprint matches the waypoint
+// area and its lowest point rests on the ground plane (y=0).
+function fitTrackModel(obj,cx,cz,targetSpan){
+  var box=new THREE.Box3().setFromObject(obj),size=box.getSize(new THREE.Vector3());
+  var maxH=Math.max(size.x,size.z)||1,s=targetSpan/maxH;
+  obj.scale.setScalar(s);obj.updateMatrixWorld(true);
+  var box2=new THREE.Box3().setFromObject(obj),c2=box2.getCenter(new THREE.Vector3());
+  obj.position.x+=cx-c2.x;obj.position.z+=cz-c2.z;obj.position.y+=-box2.min.y;
+  return s;
 }
 function loadTrackOBJ(filename){
   if(trackModels[filename])return Promise.resolve(trackModels[filename]);
@@ -1403,19 +1426,42 @@ function buildRacingLine(){
   scene.add(racingLineMesh);
 }
 function mkTrack(grassCOverride){
-  // Check if this track has a 3D model
+  // Tracks with a 3D model: build the drivable path + ground synchronously
+  // (physics/resetCar need tPts & sd immediately) and stream in the visual
+  // model in the background, auto-fitted to the track footprint.
   if(TRACKS[selTrack].model){
+    // ── synchronous: waypoint geometry (path, collision grid, bounds) ──
+    var pts=WP.map(function(p){return new THREE.Vector3(p[0],0,p[1])});spl=new THREE.CatmullRomCurve3(pts,true,'catmullrom',.5);tPts=spl.getPoints(2400);sd=[];for(var i=0;i<tPts.length;i++){var t=i/tPts.length,tn=spl.getTangent(t).normalize();sd.push({c:spl.getPoint(t),t:tn,n:new THREE.Vector3(-tn.z,0,tn.x)})}trackLenM=0;for(var _tl=1;_tl<=tPts.length;_tl++){var _pa3=tPts[_tl-1],_pb3=tPts[_tl%tPts.length];trackLenM+=Math.sqrt((_pb3.x-_pa3.x)*(_pb3.x-_pa3.x)+(_pb3.z-_pa3.z)*(_pb3.z-_pa3.z))}trackLenM=Math.max(500,trackLenM);var sfRef=TRACKS[selTrack].sf;var bd=Infinity;for(var i2=0;i2<tPts.length;i2++){var d2=Math.pow(tPts[i2].x-sfRef[0],2)+Math.pow(tPts[i2].z-sfRef[1],2);if(d2<bd){bd=d2;sfIdx=i2}}var tx1=Infinity,tx2=-Infinity,tz1=Infinity,tz2=-Infinity;for(var ib=0;ib<tPts.length;ib++){tx1=Math.min(tx1,tPts[ib].x);tx2=Math.max(tx2,tPts[ib].x);tz1=Math.min(tz1,tPts[ib].z);tz2=Math.max(tz2,tPts[ib].z)}var trackSpan=Math.max(tx2-tx1,tz2-tz1),CX=(tx1+tx2)/2,CZ=(tz1+tz2)/2;tCX=CX;tCZ=CZ;trackViewR=trackSpan/2+40;_buildColGrid();builtTrack=selTrack;builtWeather=selWeather;
+    // ground + asphalt ribbon so there's always a drivable, visible road
+    var grassC=grassCOverride||TRACKS[selTrack].grass;
+    var gndOuter=new THREE.Mesh(new THREE.PlaneGeometry(2500,2500),new THREE.MeshLambertMaterial({color:grassC}));gndOuter.rotation.x=-Math.PI/2;gndOuter.position.y=-0.5;gndOuter.receiveShadow=true;scene.add(gndOuter);
+    mkRoadRibbon();
+    mkTrackProps();mkWorld();
+    // ── async: stream the scenery model, fitted to the track footprint ──
     loadTrackOBJ(TRACKS[selTrack].model).then(function(mesh){
-      var trackModel=mesh.clone();scene.add(trackModel);
-      // Add ground plane for visual reference
-      var grassC=grassCOverride||TRACKS[selTrack].grass;
-      var gndOuter=new THREE.Mesh(new THREE.PlaneGeometry(2500,2500),new THREE.MeshLambertMaterial({color:grassC}));gndOuter.rotation.x=-Math.PI/2;gndOuter.position.y=-0.5;scene.add(gndOuter);
-      // Compute basic track parameters from waypoints for lap timing and collision
-      var pts=WP.map(function(p){return new THREE.Vector3(p[0],0,p[1])});spl=new THREE.CatmullRomCurve3(pts,true,'catmullrom',.5);tPts=spl.getPoints(2400);sd=[];for(var i=0;i<tPts.length;i++){var t=i/tPts.length,tn=spl.getTangent(t).normalize();sd.push({c:spl.getPoint(t),t:tn,n:new THREE.Vector3(-tn.z,0,tn.x)})}trackLenM=0;for(var _tl=1;_tl<=tPts.length;_tl++){var _pa3=tPts[_tl-1],_pb3=tPts[_tl%tPts.length];trackLenM+=Math.sqrt((_pb3.x-_pa3.x)*(_pb3.x-_pa3.x)+(_pb3.z-_pa3.z)*(_pb3.z-_pa3.z))}trackLenM=Math.max(500,trackLenM);var sfRef=TRACKS[selTrack].sf;var bd=Infinity;for(var i2=0;i2<tPts.length;i2++){var d2=Math.pow(tPts[i2].x-sfRef[0],2)+Math.pow(tPts[i2].z-sfRef[1],2);if(d2<bd){bd=d2;sfIdx=i2}}var tx1=Infinity,tx2=-Infinity,tz1=Infinity,tz2=-Infinity;for(var ib=0;ib<tPts.length;ib++){tx1=Math.min(tx1,tPts[ib].x);tx2=Math.max(tx2,tPts[ib].x);tz1=Math.min(tz1,tPts[ib].z);tz2=Math.max(tz2,tPts[ib].z)}var PAD=60,CX=(tx1+tx2)/2,CZ=(tz1+tz2)/2,W_SIZE=Math.max(tx2-tx1,tz2-tz1)+PAD*2;tCX=CX;tCZ=CZ;trackViewR=Math.max(tx2-tx1,tz2-tz1)/2+40;_buildColGrid();builtTrack=selTrack;builtWeather=selWeather;mkTrackProps();mkWorld();
-    }).catch(function(e){console.error('Failed to load track OBJ:',e);mkTrackProcedural(grassCOverride)});
+      var trackModel=mesh.clone();fitTrackModel(trackModel,CX,CZ,trackSpan);trackModel.renderOrder=-1;scene.add(trackModel);
+    }).catch(function(e){console.error('Failed to load track OBJ:',e)});
     return;
   }
   mkTrackProcedural(grassCOverride);mkWorld();
+}
+// Minimal asphalt ribbon along the waypoint spline (shared by model tracks)
+function mkRoadRibbon(){
+  var _asTex=mkAsphaltTexture(selWeather);
+  var _rv=[],_ruv=[],_ri=[],_rHalf=TW/2+.35,_rLen=0;
+  for(var _ai2=0;_ai2<=sd.length;_ai2++){
+    var _s=sd[_ai2%sd.length];
+    if(_ai2>0){var _pp=sd[(_ai2-1)%sd.length];var _ddx=_s.c.x-_pp.c.x,_ddz=_s.c.z-_pp.c.z;_rLen+=Math.sqrt(_ddx*_ddx+_ddz*_ddz)}
+    _rv.push(_s.c.x-_s.n.x*_rHalf,.5,_s.c.z-_s.n.z*_rHalf,_s.c.x+_s.n.x*_rHalf,.5,_s.c.z+_s.n.z*_rHalf);
+    _ruv.push(0,_rLen/14,1,_rLen/14);
+    if(_ai2<sd.length){var _rj=_ai2*2;_ri.push(_rj,_rj+1,_rj+2,_rj+1,_rj+3,_rj+2)}
+  }
+  var _rg=new THREE.BufferGeometry();
+  _rg.setAttribute('position',new THREE.Float32BufferAttribute(_rv,3));
+  _rg.setAttribute('uv',new THREE.Float32BufferAttribute(_ruv,2));
+  _rg.setIndex(_ri);_rg.computeVertexNormals();
+  var roadMesh=new THREE.Mesh(_rg,new THREE.MeshStandardMaterial({map:_asTex,roughness:.95,metalness:.05}));
+  roadMesh.receiveShadow=true;scene.add(roadMesh);
 }
 function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new THREE.Vector3(p[0],0,p[1])});spl=new THREE.CatmullRomCurve3(pts,true,'catmullrom',.5);tPts=spl.getPoints(2400);sd=[];for(var i=0;i<tPts.length;i++){var t=i/tPts.length,tn=spl.getTangent(t).normalize();sd.push({c:spl.getPoint(t),t:tn,n:new THREE.Vector3(-tn.z,0,tn.x)})}trackLenM=0;for(var _tl=1;_tl<=tPts.length;_tl++){var _pa3=tPts[_tl-1],_pb3=tPts[_tl%tPts.length];trackLenM+=Math.sqrt((_pb3.x-_pa3.x)*(_pb3.x-_pa3.x)+(_pb3.z-_pa3.z)*(_pb3.z-_pa3.z))}trackLenM=Math.max(500,trackLenM);var sfRef=TRACKS[selTrack].sf;var bd=Infinity;for(var i2=0;i2<tPts.length;i2++){var d2=Math.pow(tPts[i2].x-sfRef[0],2)+Math.pow(tPts[i2].z-sfRef[1],2);if(d2<bd){bd=d2;sfIdx=i2}}
   var tx1=Infinity,tx2=-Infinity,tz1=Infinity,tz2=-Infinity;for(var ib=0;ib<tPts.length;ib++){tx1=Math.min(tx1,tPts[ib].x);tx2=Math.max(tx2,tPts[ib].x);tz1=Math.min(tz1,tPts[ib].z);tz2=Math.max(tz2,tPts[ib].z)}var PAD=60,CX=(tx1+tx2)/2,CZ=(tz1+tz2)/2,W_SIZE=Math.max(tx2-tx1,tz2-tz1)+PAD*2;tCX=CX;tCZ=CZ;trackViewR=Math.max(tx2-tx1,tz2-tz1)/2+40;
