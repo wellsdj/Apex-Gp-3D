@@ -851,7 +851,22 @@ function loadTrackGLB(filename){
         o.castShadow=false;o.receiveShadow=true;
         var mats=Array.isArray(o.material)?o.material:[o.material];
         var hide=false;
-        mats.forEach(function(m){if(!m)return;var nm=(m.name||'')+'';if(/collid|fog/i.test(nm))hide=true;m.side=THREE.DoubleSide;});
+        mats.forEach(function(m){if(!m)return;var nm=(m.name||'')+'';
+          if(/collid|fog/i.test(nm)){hide=true;return}
+          m.side=THREE.DoubleSide;
+          if(m.map){
+            // foliage / fence grille: cut out the texture's alpha so it isn't a slab
+            m.alphaTest=0.4;m.transparent=true;m.depthWrite=true;m.needsUpdate=true;
+          }else if(m.color){
+            // this GLB ships road/terrain/kerbs as flat white — give them colour
+            if(/road/i.test(nm))m.color.setHex(0x33363b);
+            else if(/kerb/i.test(nm))m.color.setHex(0x2f8a72);
+            else if(/terrain/i.test(nm))m.color.setHex(0x4f7a39);
+            else if(/metal|trim|rail/i.test(nm)){m.color.setHex(0x8b9098);m.metalness=0.6;m.roughness=0.5;}
+            else if(/banner/i.test(nm))m.color.setHex(0xb22222);
+            if(m.roughness!==undefined&&m.roughness<0.4)m.roughness=0.85;
+          }
+        });
         if(/collid|fog|volume/i.test(o.name||''))hide=true;
         if(hide)o.visible=false;
       });
@@ -1993,16 +2008,24 @@ if(_drifting&&SPD>120&&performance.now()-_lastSkidT>30&&skidMat){
   _lastSkidT=performance.now();
   if(!_skidGeo){_skidGeo=new THREE.PlaneGeometry(.34,1.5);_skidGeo.rotateX(-Math.PI/2)}
   var _bfx=Math.sin(A),_bfz=Math.cos(A),_brx=_bfz,_brz=-_bfx;
+  var _sky=((sd[carNearIdx]&&sd[carNearIdx].c.y)||0)+.066;
   for(var _sw=-1;_sw<=1;_sw+=2){
     var _skm=new THREE.Mesh(_skidGeo,skidMat);
-    _skm.position.set(P.x-_bfx*1.8+_brx*_sw*1.02,.516,P.z-_bfz*1.8+_brz*_sw*1.02);
+    _skm.position.set(P.x-_bfx*1.8+_brx*_sw*1.02,_sky,P.z-_bfz*1.8+_brz*_sw*1.02);
     _skm.rotation.y=A;_skm.life=7;scene.add(_skm);skidMarks.push(_skm);
   }
 }
 if(car.wheels){var _ws=(V.x*Math.sin(A)+V.z*Math.cos(A))*dt/WHEEL_RAD;for(var _wi=0;_wi<car.wheels.length;_wi++)car.wheels[_wi].rotation.x+=_ws;if(car.steerL){var _stt=ST*0.22;car.steerL.rotation.y+=(_stt-car.steerL.rotation.y)*Math.min(1,dt*18);car.steerR.rotation.y=car.steerL.rotation.y}}
 recordGhostFrame()}
 
-function doCol(){var minD=Infinity,ci=0;if(_colGrid){var gc=Math.floor((P.x-_colGridOX)/_colGridSize),gr=Math.floor((P.z-_colGridOZ)/_colGridSize);for(var gri=gr-1;gri<=gr+1;gri++)for(var gci=gc-1;gci<=gc+1;gci++){if(gri<0||gri>=_colGridRows||gci<0||gci>=_colGridCols)continue;var cell=_colGrid[gri*_colGridCols+gci];for(var gi=0;gi<cell.length;gi++){var idx=cell[gi],dx=tPts[idx].x-P.x,dz=tPts[idx].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=idx}}}}else{for(var i=0;i<tPts.length;i+=8){var dx=tPts[i].x-P.x,dz=tPts[i].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=i}}for(var i2=Math.max(0,ci-15);i2<Math.min(tPts.length,ci+15);i2++){var dx2=tPts[i2].x-P.x,dz2=tPts[i2].z-P.z,d2=dx2*dx2+dz2*dz2;if(d2<minD){minD=d2;ci=i2}}}var t=ci/tPts.length,tp=spl.getPoint(t),tn=spl.getTangent(t).normalize(),nm=_tv1.set(-tn.z,0,tn.x);var lat=_tv2.subVectors(P,tp).dot(nm),aL=Math.abs(lat),ss=Math.sign(lat);var fwd=_tv3.set(Math.sin(A),0,Math.cos(A));_tv4.copy(P).addScaledVector(fwd,3);var nL=Math.abs(_tv5.subVectors(_tv4,tp).dot(nm));carNearIdx=ci;onCurb=aL>(TW/2-1.5)&&aL<(TW/2+CWW)&&trackCurv[ci]>curbCurvThresh*.5;var effWL=WL-CAR_HW;if(nL>=effWL||aL>=effWL){if(aL>=effWL){_tv6.copy(tp).addScaledVector(nm,ss*(effWL-.05));P.copy(_tv6)}var vN=V.dot(nm)*ss,spd=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;if(vN>.5){var tV=V.dot(tn),iA=Math.atan2(Math.abs(vN),Math.abs(tV));
+function doCol(){var minD=Infinity,ci=0;
+  // Temporal coherence: prefer the nearest sample within a window around the
+  // car's previous index, so where the loop passes near itself (hairpins) the
+  // search can't jump to the wrong pass — which caused phantom walls, speed
+  // loss and the up/down elevation snap. Global fallback only on a big jump.
+  var _coh=(typeof carNearIdx==='number')?carNearIdx:-1;
+  if(_coh>=0&&tPts&&tPts.length>1){var _n=tPts.length,_W=160;for(var _k=-_W;_k<=_W;_k++){var _idx=(_coh+_k+_n)%_n,_dx=tPts[_idx].x-P.x,_dz=tPts[_idx].z-P.z,_d=_dx*_dx+_dz*_dz;if(_d<minD){minD=_d;ci=_idx}}}
+  if(minD>3600){minD=Infinity;if(_colGrid){var gc=Math.floor((P.x-_colGridOX)/_colGridSize),gr=Math.floor((P.z-_colGridOZ)/_colGridSize);for(var gri=gr-1;gri<=gr+1;gri++)for(var gci=gc-1;gci<=gc+1;gci++){if(gri<0||gri>=_colGridRows||gci<0||gci>=_colGridCols)continue;var cell=_colGrid[gri*_colGridCols+gci];for(var gi=0;gi<cell.length;gi++){var idx=cell[gi],dx=tPts[idx].x-P.x,dz=tPts[idx].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=idx}}}}else{for(var i=0;i<tPts.length;i+=8){var dx=tPts[i].x-P.x,dz=tPts[i].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=i}}for(var i2=Math.max(0,ci-15);i2<Math.min(tPts.length,ci+15);i2++){var dx2=tPts[i2].x-P.x,dz2=tPts[i2].z-P.z,d2=dx2*dx2+dz2*dz2;if(d2<minD){minD=d2;ci=i2}}}}var t=ci/tPts.length,tp=spl.getPoint(t),tn=spl.getTangent(t).normalize(),nm=_tv1.set(-tn.z,0,tn.x);var lat=_tv2.subVectors(P,tp).dot(nm),aL=Math.abs(lat),ss=Math.sign(lat);var fwd=_tv3.set(Math.sin(A),0,Math.cos(A));_tv4.copy(P).addScaledVector(fwd,3);var nL=Math.abs(_tv5.subVectors(_tv4,tp).dot(nm));carNearIdx=ci;onCurb=aL>(TW/2-1.5)&&aL<(TW/2+CWW)&&trackCurv[ci]>curbCurvThresh*.5;var effWL=WL-CAR_HW;if(nL>=effWL||aL>=effWL){if(aL>=effWL){_tv6.copy(tp).addScaledVector(nm,ss*(effWL-.05));P.copy(_tv6)}var vN=V.dot(nm)*ss,spd=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;if(vN>.5){var tV=V.dot(tn),iA=Math.atan2(Math.abs(vN),Math.abs(tV));
       var displaySpd=spd*(130/400);
       if(displaySpd<80){
         var tVs=V.dot(tn),iAs=Math.atan2(Math.abs(vN),Math.abs(tVs)+0.001);
@@ -2262,6 +2285,7 @@ function respawnInPlace(){
 function resetCar(){
   // Place well before SF line so you build up speed (~100m back)
   var pi=(sfIdx-400+tPts.length)%tPts.length;
+  carNearIdx=pi;
   P.set(sd[pi].c.x,(sd[pi].c.y||0)+.8,sd[pi].c.z);V.set(0,0,0);
   A=Math.atan2(sd[pi].t.x,sd[pi].t.z);AV=0;ST=0;spinV=0;pitchA=0;pitchV=0;rollA=0;rollV=0;ab=false;
   flipCrashActive=false;flipUpsideTime=0;raceFadeTimer=0;wallCrashActive=false;wallCrashTimer=0;cpHit=0;resetDamage();
