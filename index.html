@@ -1429,6 +1429,14 @@ var CURB={tex:null,ready:false};
   var t=new THREE.CanvasTexture(cv);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;t.encoding=THREE.sRGBEncoding;
   CURB.tex=t;CURB.ready=true;
 };img.src='models/tex/curb.png';})();
+// Photographic grass + derived normal map for the infield/run-off
+var GRASS={albedo:null,normal:null,ready:false};
+(function loadGrass(){var img=new Image();img.onload=function(){
+  var a=document.createElement('canvas');a.width=img.width;a.height=img.height;a.getContext('2d').drawImage(img,0,0);
+  var at=new THREE.CanvasTexture(a);at.wrapS=at.wrapT=THREE.RepeatWrapping;at.anisotropy=8;at.encoding=THREE.sRGBEncoding;
+  try{GRASS.normal=buildNormalMap(a,1.3)}catch(e){}
+  GRASS.albedo=at;GRASS.ready=true;
+};img.src='models/tex/grass.jpg';})();
 function mkAsphaltTexture(weather){
   var _wet0=weather&&weather.indexOf('rain')>=0,_snow0=weather&&weather.indexOf('snow')>=0;
   if(!_wet0&&!_snow0&&TARMAC.ready)return TARMAC.albedo;
@@ -1571,10 +1579,15 @@ function mkStartLine(){
   ln.rotation.x=-Math.PI/2;ln.rotation.z=Math.atan2(s.n.x,s.n.z);
   ln.position.set(s.c.x,(s.c.y||0)+.62,s.c.z);scene.add(ln);
 }
-function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new THREE.Vector3(p[0],0,p[1])});spl=new THREE.CatmullRomCurve3(pts,true,'catmullrom',.5);tPts=spl.getPoints(2400);sd=[];for(var i=0;i<tPts.length;i++){var t=i/tPts.length,tn=spl.getTangent(t).normalize();sd.push({c:spl.getPoint(t),t:tn,n:new THREE.Vector3(-tn.z,0,tn.x)})}trackLenM=0;for(var _tl=1;_tl<=tPts.length;_tl++){var _pa3=tPts[_tl-1],_pb3=tPts[_tl%tPts.length];trackLenM+=Math.sqrt((_pb3.x-_pa3.x)*(_pb3.x-_pa3.x)+(_pb3.z-_pa3.z)*(_pb3.z-_pa3.z))}trackLenM=Math.max(500,trackLenM);var sfRef=TRACKS[selTrack].sf;var bd=Infinity;for(var i2=0;i2<tPts.length;i2++){var d2=Math.pow(tPts[i2].x-sfRef[0],2)+Math.pow(tPts[i2].z-sfRef[1],2);if(d2<bd){bd=d2;sfIdx=i2}}
+function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new THREE.Vector3(p[0],0,p[1])});spl=new THREE.CatmullRomCurve3(pts,true,'catmullrom',.5);tPts=spl.getPoints(2400);sd=[];for(var i=0;i<tPts.length;i++){var t=i/tPts.length,tn=spl.getTangent(t).normalize();sd.push({c:spl.getPoint(t),t:tn,n:new THREE.Vector3(-tn.z,0,tn.x)})}
+  // Gentle rolling elevation (periodic so the loop closes); per-track phase
+  (function(){var n=sd.length,se=selTrack*1.7+1;for(var ie=0;ie<n;ie++){var th=ie/n*Math.PI*2;var y=1.6*Math.sin(th*2+se)+0.9*Math.sin(th*3-se*1.3)+0.5*Math.sin(th*5+se*0.7);sd[ie].c.y=y;tPts[ie].y=y}})();
+  trackLenM=0;for(var _tl=1;_tl<=tPts.length;_tl++){var _pa3=tPts[_tl-1],_pb3=tPts[_tl%tPts.length];trackLenM+=Math.sqrt((_pb3.x-_pa3.x)*(_pb3.x-_pa3.x)+(_pb3.z-_pa3.z)*(_pb3.z-_pa3.z))}trackLenM=Math.max(500,trackLenM);var sfRef=TRACKS[selTrack].sf;var bd=Infinity;for(var i2=0;i2<tPts.length;i2++){var d2=Math.pow(tPts[i2].x-sfRef[0],2)+Math.pow(tPts[i2].z-sfRef[1],2);if(d2<bd){bd=d2;sfIdx=i2}}
   var tx1=Infinity,tx2=-Infinity,tz1=Infinity,tz2=-Infinity;for(var ib=0;ib<tPts.length;ib++){tx1=Math.min(tx1,tPts[ib].x);tx2=Math.max(tx2,tPts[ib].x);tz1=Math.min(tz1,tPts[ib].z);tz2=Math.max(tz2,tPts[ib].z)}var PAD=60,CX=(tx1+tx2)/2,CZ=(tz1+tz2)/2,W_SIZE=Math.max(tx2-tx1,tz2-tz1)+PAD*2;tCX=CX;tCZ=CZ;trackViewR=Math.max(tx2-tx1,tz2-tz1)/2+40;
   var grassC=grassCOverride||TRACKS[selTrack].grass,grassHex='#'+grassC.toString(16).padStart(6,'0');
-  var gndOuter=new THREE.Mesh(new THREE.PlaneGeometry(2500,2500),new THREE.MeshLambertMaterial({color:grassC}));gndOuter.rotation.x=-Math.PI/2;gndOuter.position.y=-0.5;scene.add(gndOuter);
+  var _goMat;
+  if(GRASS.ready&&selWeather.indexOf('snow')<0){var _ogt=GRASS.albedo.clone();_ogt.needsUpdate=true;_ogt.wrapS=_ogt.wrapT=THREE.RepeatWrapping;_ogt.repeat.set(156,156);_goMat=new THREE.MeshLambertMaterial({map:_ogt})}else{_goMat=new THREE.MeshLambertMaterial({color:grassC})}
+  var gndOuter=new THREE.Mesh(new THREE.PlaneGeometry(2500,2500),_goMat);gndOuter.rotation.x=-Math.PI/2;gndOuter.position.y=-0.5;scene.add(gndOuter);
   var cvs3=document.createElement('canvas');cvs3.width=2048;cvs3.height=2048;var cx3=cvs3.getContext('2d');cx3.fillStyle=grassHex;cx3.fillRect(0,0,2048,2048);
   // Mowed-stripe bands + grass noise for a groomed circuit look
   cx3.save();cx3.translate(1024,1024);cx3.rotate(.42);
@@ -1584,7 +1597,14 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
   // Dark run-off band under the asphalt ribbon (soft edges)
   cx3.strokeStyle='#3b3b40';cx3.lineWidth=(TW+CWW*2+2)*(2048/W_SIZE);cx3.lineCap='round';cx3.lineJoin='round';cx3.beginPath();for(var gi=0;gi<tPts.length;gi++){var gpx=((tPts[gi].x-(CX-W_SIZE/2))/W_SIZE)*2048,gpy=((tPts[gi].z-(CZ-W_SIZE/2))/W_SIZE)*2048;if(gi===0)cx3.moveTo(gpx,gpy);else cx3.lineTo(gpx,gpy)}cx3.closePath();cx3.stroke();
   if(selWeather==='snow'||selWeather==='snow_heavy'){var snCnt=selWeather==='snow_heavy'?120:80;cx3.globalAlpha=selWeather==='snow_heavy'?.7:.55;cx3.fillStyle='#e8eef2';for(var sni=0;sni<snCnt;sni++){var snx=Math.random()*2048,sny=Math.random()*2048,snr=30+Math.random()*80;cx3.beginPath();cx3.arc(snx,sny,snr,0,Math.PI*2);cx3.fill()}cx3.globalAlpha=1}
-  var _gndTex=new THREE.CanvasTexture(cvs3);_gndTex.encoding=THREE.sRGBEncoding;var gndMesh=new THREE.Mesh(new THREE.PlaneGeometry(W_SIZE,W_SIZE),new THREE.MeshLambertMaterial({map:_gndTex}));gndMesh.rotation.x=-Math.PI/2;gndMesh.position.set(CX,0,CZ);gndMesh.receiveShadow=true;scene.add(gndMesh);
+  var _gndMat;
+  if(GRASS.ready&&selWeather.indexOf('snow')<0){
+    var _rep=Math.max(6,Math.round(W_SIZE/16));
+    var _ga=GRASS.albedo.clone();_ga.needsUpdate=true;_ga.wrapS=_ga.wrapT=THREE.RepeatWrapping;_ga.repeat.set(_rep,_rep);
+    _gndMat=new THREE.MeshStandardMaterial({map:_ga,roughness:1,metalness:0,envMapIntensity:.15});
+    if(GRASS.normal){var _gn=GRASS.normal.clone();_gn.needsUpdate=true;_gn.wrapS=_gn.wrapT=THREE.RepeatWrapping;_gn.repeat.set(_rep,_rep);_gndMat.normalMap=_gn;_gndMat.normalScale=new THREE.Vector2(.5,.5)}
+  }else{var _gndTex=new THREE.CanvasTexture(cvs3);_gndTex.encoding=THREE.sRGBEncoding;_gndMat=new THREE.MeshLambertMaterial({map:_gndTex})}
+  var gndMesh=new THREE.Mesh(new THREE.PlaneGeometry(W_SIZE,W_SIZE),_gndMat);gndMesh.rotation.x=-Math.PI/2;gndMesh.position.set(CX,0,CZ);gndMesh.receiveShadow=true;scene.add(gndMesh);
   // ── 3D asphalt ribbon (the actual road surface) ──
   var _asTex=mkAsphaltTexture(selWeather);
   var _rv=[],_ruv=[],_ri=[],_rLen=0;
@@ -1610,16 +1630,38 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
   roadMesh.receiveShadow=true;scene.add(roadMesh);
   // ── Racing line: geodesic apex-cutting line + rubbered-in groove ──
   buildRacingLine();
-  for(var side=-1;side<=1;side+=2){var lv=[],li=[];for(var i4=0;i4<sd.length;i4++){var s2=sd[i4];lv.push(s2.c.x+s2.n.x*side*(TW/2-.3),.53,s2.c.z+s2.n.z*side*(TW/2-.3),s2.c.x+s2.n.x*side*(TW/2+.3),.53,s2.c.z+s2.n.z*side*(TW/2+.3));if(i4<sd.length-1){var j2=i4*2;li.push(j2,j2+1,j2+2,j2+1,j2+3,j2+2)}}var e=(sd.length-1)*2;li.push(e,e+1,0,e+1,1,0);var lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.Float32BufferAttribute(lv,3));lg.setIndex(li);lg.computeVertexNormals();scene.add(new THREE.Mesh(lg,new THREE.MeshBasicMaterial({color:0xffffff})))}
+  for(var side=-1;side<=1;side+=2){var lv=[],li=[];for(var i4=0;i4<sd.length;i4++){var s2=sd[i4],_ly=(s2.c.y||0)+.04;lv.push(s2.c.x+s2.n.x*side*(TW/2-.3),_ly,s2.c.z+s2.n.z*side*(TW/2-.3),s2.c.x+s2.n.x*side*(TW/2+.3),_ly,s2.c.z+s2.n.z*side*(TW/2+.3));if(i4<sd.length-1){var j2=i4*2;li.push(j2,j2+1,j2+2,j2+1,j2+3,j2+2)}}var e=(sd.length-1)*2;li.push(e,e+1,0,e+1,1,0);var lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.Float32BufferAttribute(lv,3));lg.setIndex(li);lg.computeVertexNormals();scene.add(new THREE.Mesh(lg,new THREE.MeshBasicMaterial({color:0xffffff})))}
   var cv2=[];for(var i5=0;i5<sd.length;i5++){var p=sd[(i5-5+sd.length)%sd.length],nx=sd[(i5+5)%sd.length];cv2.push(new THREE.Vector3().subVectors(nx.t,p.t).length())}trackCurv=[];for(var i6=0;i6<cv2.length;i6++){var ss=0,cc=0;for(var j3=-15;j3<=15;j3++){ss+=cv2[(i6+j3+cv2.length)%cv2.length];cc++}trackCurv.push(ss/cc)}var sK2=trackCurv;
   // thresholds relative to this track's own curvature distribution, so the
   // big circuits (longer per-sample spacing) behave like the small ones
   var _csort=trackCurv.slice().sort(function(a,b){return a-b});
   curbCurvThresh=Math.max(.03,_csort[Math.floor(_csort.length*.72)]);
   flatCurvThresh=Math.max(.012,_csort[Math.floor(_csort.length*.5)]);
-  if(!TRACKS[selTrack].noCurbs)for(var side2=-1;side2<=1;side2+=2){var isC=[];for(var i7=0;i7<sd.length;i7++){var k=sK2[i7],pp=sd[(i7-3+sd.length)%sd.length],nx2=sd[(i7+3)%sd.length];var cr=pp.t.x*nx2.t.z-pp.t.z*nx2.t.x;isC.push(k>curbCurvThresh&&side2===(cr>0?1:-1))}var inR=false,rS=0;for(var i8=0;i8<=sd.length;i8++){var ic=i8<sd.length?isC[i8]:false;if(ic&&!inR){inR=true;rS=i8}else if(!ic&&inR){inR=false;var vt=[],cl=[],uv=[],ix=[];for(var r=rS;r<i8;r++){var s3=sd[r],off=side2*TW/2;var inn=s3.c.clone().add(s3.n.clone().multiplyScalar(off)),out=s3.c.clone().add(s3.n.clone().multiplyScalar(off+side2*CWW));var sg2=Math.floor(r/5)%2===0;var c2=sg2?[.92,.05,.05]:[.98,.98,.98];vt.push(inn.x,.54,inn.z,out.x,.54,out.z);cl.push(c2[0],c2[1],c2[2],c2[0],c2[1],c2[2]);var _cu=r/10;uv.push(_cu,0,_cu,1)}for(var r2=0;r2<i8-rS-1;r2++){var j4=r2*2;ix.push(j4,j4+1,j4+2,j4+1,j4+3,j4+2)}if(vt.length>0){var gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(vt,3));gg.setAttribute('color',new THREE.Float32BufferAttribute(cl,3));gg.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));gg.setIndex(ix);gg.computeVertexNormals();var _curbMat=(CURB.ready&&CURB.tex)?new THREE.MeshStandardMaterial({map:CURB.tex,roughness:.7,metalness:0,envMapIntensity:.3}):new THREE.MeshBasicMaterial({vertexColors:true});scene.add(new THREE.Mesh(gg,_curbMat))}}}}
-  for(var side3=-1;side3<=1;side3+=2){var offB=side3*(TW/2+CWW+3.5),bv=[],bc=[],bi=[],step=4;for(var i9=0;i9<sd.length;i9+=step){var s4=sd[i9],pb=s4.c.clone().add(s4.n.clone().multiplyScalar(offB));bv.push(pb.x,0,pb.z,pb.x,1.1,pb.z);var c3=Math.floor(i9/20)%2===0?[.85,.1,.1]:[.9,.9,.9];bc.push(c3[0],c3[1],c3[2],c3[0],c3[1],c3[2])}var cnt=bv.length/6;for(var i10=0;i10<cnt-1;i10++){var j5=i10*2;bi.push(j5,j5+2,j5+1,j5+1,j5+2,j5+3)}var e3=(cnt-1)*2;bi.push(e3,0,e3+1,e3+1,0,1);var bg2=new THREE.BufferGeometry();bg2.setAttribute('position',new THREE.Float32BufferAttribute(bv,3));bg2.setAttribute('color',new THREE.Float32BufferAttribute(bc,3));bg2.setIndex(bi);bg2.computeVertexNormals();scene.add(new THREE.Mesh(bg2,new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide})))}
-  var sfS=sd[sfIdx];var cvs2=document.createElement('canvas');cvs2.width=256;cvs2.height=32;var cx2=cvs2.getContext('2d');for(var ii=0;ii<256;ii+=16)for(var jj=0;jj<32;jj+=16){cx2.fillStyle=((ii/16+jj/16)%2===0)?'#fff':'#111';cx2.fillRect(ii,jj,16,16)}var sfM=new THREE.Mesh(new THREE.PlaneGeometry(TW+1,3),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cvs2)}));sfM.rotation.x=-Math.PI/2;sfM.position.set(sfS.c.x,.55,sfS.c.z);sfM.rotation.z=-Math.atan2(sfS.t.x,sfS.t.z);scene.add(sfM);var gM=new THREE.MeshLambertMaterial({color:0x555566});for(var side4=-1;side4<=1;side4+=2){var pl=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,8,8),gM);var pp2=sfS.c.clone().add(sfS.n.clone().multiplyScalar(side4*(TW/2+CWW+2)));pl.position.set(pp2.x,4,pp2.z);scene.add(pl)}var bar2=new THREE.Mesh(new THREE.BoxGeometry(.4,.4,TW+CWW*2+4),gM);bar2.position.set(sfS.c.x,8,sfS.c.z);bar2.rotation.y=Math.atan2(sfS.n.x,sfS.n.z);scene.add(bar2);
+  if(!TRACKS[selTrack].noCurbs){
+    var _n=sd.length;
+    // corner cores (high curvature) with the inside-side sign
+    var _core=new Int8Array(_n);
+    for(var i7=0;i7<_n;i7++){var k=sK2[i7],pp=sd[(i7-3+_n)%_n],nx2=sd[(i7+3)%_n];var cr=pp.t.x*nx2.t.z-pp.t.z*nx2.t.x;_core[i7]=(k>curbCurvThresh)?(cr>0?1:-1):0}
+    // inside (apex) kerb: long sweep through the corner (dilate the core a lot);
+    // outside kerb: only on the entry tail and the exit tail of each corner
+    var _ins=new Int8Array(_n),_out=new Int8Array(_n),DA=60,TAIL=34;
+    for(var ic2=0;ic2<_n;ic2++){if(!_core[ic2])continue;var s=_core[ic2];
+      for(var dd=-DA;dd<=DA;dd++){_ins[(ic2+dd+_n)%_n]=s}
+      for(var d2=-DA-TAIL;d2<-DA;d2++){var j2=(ic2+d2+_n)%_n;if(!_core[j2])_out[j2]=-s}
+      for(var d3=DA+1;d3<=DA+TAIL;d3++){var j3=(ic2+d3+_n)%_n;if(!_core[j3])_out[j3]=-s}
+    }
+    for(var side2=-1;side2<=1;side2+=2){var inR=false,rS=0;
+      for(var i8=0;i8<=_n;i8++){var ic=i8<_n?((_ins[i8]===side2)||(_out[i8]===side2)):false;
+        if(ic&&!inR){inR=true;rS=i8}else if(!ic&&inR){inR=false;var vt=[],cl=[],uv=[],ix=[];
+          for(var r=rS;r<i8;r++){var s3=sd[r],off=side2*TW/2;var inn=s3.c.clone().add(s3.n.clone().multiplyScalar(off)),out=s3.c.clone().add(s3.n.clone().multiplyScalar(off+side2*CWW));var sg2=Math.floor(r/5)%2===0;var c2=sg2?[.92,.05,.05]:[.98,.98,.98];var _ky=(s3.c.y||0)+.05;vt.push(inn.x,_ky,inn.z,out.x,_ky,out.z);cl.push(c2[0],c2[1],c2[2],c2[0],c2[1],c2[2]);var _cu=r/10;uv.push(_cu,0,_cu,1)}
+          for(var r2=0;r2<i8-rS-1;r2++){var j4=r2*2;ix.push(j4,j4+1,j4+2,j4+1,j4+3,j4+2)}
+          if(vt.length>0){var gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(vt,3));gg.setAttribute('color',new THREE.Float32BufferAttribute(cl,3));gg.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));gg.setIndex(ix);gg.computeVertexNormals();var _curbMat=(CURB.ready&&CURB.tex)?new THREE.MeshStandardMaterial({map:CURB.tex,roughness:.7,metalness:0,envMapIntensity:.3}):new THREE.MeshBasicMaterial({vertexColors:true});scene.add(new THREE.Mesh(gg,_curbMat))}
+        }
+      }
+    }
+  }
+  for(var side3=-1;side3<=1;side3+=2){var offB=side3*(TW/2+CWW+3.5),bv=[],bc=[],bi=[],step=4;for(var i9=0;i9<sd.length;i9+=step){var s4=sd[i9],pb=s4.c.clone().add(s4.n.clone().multiplyScalar(offB)),_by=(s4.c.y||0);bv.push(pb.x,_by,pb.z,pb.x,_by+1.1,pb.z);var c3=Math.floor(i9/20)%2===0?[.85,.1,.1]:[.9,.9,.9];bc.push(c3[0],c3[1],c3[2],c3[0],c3[1],c3[2])}var cnt=bv.length/6;for(var i10=0;i10<cnt-1;i10++){var j5=i10*2;bi.push(j5,j5+2,j5+1,j5+1,j5+2,j5+3)}var e3=(cnt-1)*2;bi.push(e3,0,e3+1,e3+1,0,1);var bg2=new THREE.BufferGeometry();bg2.setAttribute('position',new THREE.Float32BufferAttribute(bv,3));bg2.setAttribute('color',new THREE.Float32BufferAttribute(bc,3));bg2.setIndex(bi);bg2.computeVertexNormals();scene.add(new THREE.Mesh(bg2,new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide})))}
+  var sfS=sd[sfIdx];var cvs2=document.createElement('canvas');cvs2.width=256;cvs2.height=32;var cx2=cvs2.getContext('2d');for(var ii=0;ii<256;ii+=16)for(var jj=0;jj<32;jj+=16){cx2.fillStyle=((ii/16+jj/16)%2===0)?'#fff':'#111';cx2.fillRect(ii,jj,16,16)}var sfM=new THREE.Mesh(new THREE.PlaneGeometry(TW+1,3),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cvs2)}));sfM.rotation.x=-Math.PI/2;var _sfy=(sfS.c.y||0);sfM.position.set(sfS.c.x,_sfy+.06,sfS.c.z);sfM.rotation.z=-Math.atan2(sfS.t.x,sfS.t.z);scene.add(sfM);var gM=new THREE.MeshLambertMaterial({color:0x555566});for(var side4=-1;side4<=1;side4+=2){var pl=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,8,8),gM);var pp2=sfS.c.clone().add(sfS.n.clone().multiplyScalar(side4*(TW/2+CWW+2)));pl.position.set(pp2.x,_sfy+4,pp2.z);scene.add(pl)}var bar2=new THREE.Mesh(new THREE.BoxGeometry(.4,.4,TW+CWW*2+4),gM);bar2.position.set(sfS.c.x,_sfy+8,sfS.c.z);bar2.rotation.y=Math.atan2(sfS.n.x,sfS.n.z);scene.add(bar2);
   // Gantry banner — APEX GP over the start line
   var bcv=document.createElement('canvas');bcv.width=1024;bcv.height=160;var bcx=bcv.getContext('2d');
   bcx.fillStyle='#070b16';bcx.fillRect(0,0,1024,160);
@@ -2234,8 +2276,8 @@ function doCam(dt){if(missileMode&&racing){
     return;
   }
   var fwd=_camFwd.set(Math.sin(A),0,Math.cos(A)),cpx=car.position.x,cpy=car.position.y,cpz=car.position.z;lookBack=!!(KY['b']||KY['enter']);if(lookBack){var d=7+SPD*.01,h=3.5+SPD*.006;_camTp.set(cpx+fwd.x*d,cpy+h,cpz+fwd.z*d);_camTl.set(cpx-fwd.x*30,cpy,cpz-fwd.z*30)}else if(camM===0){var d=9+SPD*.016,h=4.5+SPD*.009;_camTp.set(cpx-fwd.x*d,cpy+h,cpz-fwd.z*d);_camTl.set(cpx+fwd.x*12,cpy,cpz+fwd.z*12)}else if(camM===1){_camTp.set(cpx+fwd.x*1.5,cpy+1.5,cpz+fwd.z*1.5);_camTl.set(cpx+fwd.x*60,cpy,cpz+fwd.z*60)}else if(camM===2){_camTp.set(cpx-fwd.x*30,cpy+55,cpz-fwd.z*30);_camTl.set(cpx,cpy,cpz)}else{var ccy=Math.cos(camCustom.pitch),cca=A+Math.PI+camCustom.yaw;_camTp.set(cpx+Math.sin(cca)*camCustom.dist*ccy,cpy+1.1+Math.sin(camCustom.pitch)*camCustom.dist,cpz+Math.cos(cca)*camCustom.dist*ccy);_camTl.set(cpx+fwd.x*5,cpy+.8,cpz+fwd.z*5)}if(lookBack){cS.p.copy(_camTp);cS.l.copy(_camTl)}else{var lf=1-Math.exp(-(camM===1?18:5.5)*dt);cS.p.lerp(_camTp,lf);cS.l.lerp(_camTl,lf)}cam.position.copy(cS.p);
-  // Curb shake — gentle high-frequency rumble while a wheel is on the kerb
-  if(onCurb&&SPD>8){curbShakeT+=dt*120;var shk=Math.min(1,(SPD-8)/70)*0.045;var _cv=Math.sin(curbShakeT*26)*shk+Math.sin(curbShakeT*41)*shk*0.5;cam.position.y+=_cv;cam.position.x+=Math.sin(curbShakeT*33)*shk*0.45;cam.position.z+=Math.cos(curbShakeT*29)*shk*0.3}else{curbShakeT*=0.85}
+  // Curb shake — very subtle, fast buzz while a wheel is on the kerb
+  if(onCurb&&SPD>8){curbShakeT+=dt*240;var shk=Math.min(1,(SPD-8)/70)*0.011;var _cv=Math.sin(curbShakeT*60)*shk+Math.sin(curbShakeT*97)*shk*0.5;cam.position.y+=_cv;cam.position.x+=Math.sin(curbShakeT*73)*shk*0.35}else{curbShakeT*=0.8}
   cam.lookAt(cS.l)}
 function initSpdOutline(){var box=document.getElementById('spdBox');var w=box.offsetWidth,h=box.offsetHeight;if(w<10||h<10)return;var rect=document.getElementById('spdOutlineRect');var pad=7;rect.setAttribute('x',-pad);rect.setAttribute('y',-pad);rect.setAttribute('width',w+pad*2);rect.setAttribute('height',h+pad*2);rect.setAttribute('rx',14+pad);rect.setAttribute('ry',14+pad);spdOutlinePerim=2*(w+h+pad*4);rect.setAttribute('stroke-dasharray','0 '+(spdOutlinePerim*2+100));spdOutlineInited=true}
 function doHUD(){
