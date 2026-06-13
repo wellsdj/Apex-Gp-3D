@@ -1437,6 +1437,24 @@ var GRASS={albedo:null,normal:null,ready:false};
   try{GRASS.normal=buildNormalMap(a,1.3)}catch(e){}
   GRASS.albedo=at;GRASS.ready=true;
 };img.src='models/tex/grass.jpg';})();
+// 3D guardrail barrier (single mesh/material) — baked to game scale, tiled
+// end-to-end along the track edges via InstancedMesh
+var BARRIER={geo:null,mat:null,ready:false,len:5};
+(function loadBarrier(){
+  if(typeof THREE.GLTFLoader==='undefined'){setTimeout(loadBarrier,200);return}
+  new THREE.GLTFLoader().load('models/barrier.glb',function(g){
+    var mesh=null;g.scene.updateMatrixWorld(true);g.scene.traverse(function(o){if(o.isMesh&&!mesh)mesh=o});
+    if(!mesh)return;
+    var geo=mesh.geometry.clone();geo.applyMatrix4(mesh.matrixWorld);
+    geo.computeBoundingBox();var bb=geo.boundingBox,sy=bb.max.y-bb.min.y||1,s=1.6/sy;
+    geo.scale(s,s,s);geo.computeBoundingBox();var b1=geo.boundingBox;
+    if((b1.max.z-b1.min.z)>(b1.max.x-b1.min.x)){geo.rotateY(Math.PI/2);geo.computeBoundingBox()} // longest horizontal axis -> X
+    var b2=geo.boundingBox;geo.translate(-b2.min.x,-b2.min.y,-(b2.min.z+b2.max.z)/2);geo.computeBoundingBox();
+    BARRIER.len=geo.boundingBox.max.x;
+    var mat=Array.isArray(mesh.material)?mesh.material[0]:mesh.material;if(mat)mat.side=THREE.DoubleSide;
+    BARRIER.geo=geo;BARRIER.mat=mat;BARRIER.ready=true;
+  },undefined,function(e){console.error('barrier load failed',e)});
+})();
 function mkAsphaltTexture(weather){
   var _wet0=weather&&weather.indexOf('rain')>=0,_snow0=weather&&weather.indexOf('snow')>=0;
   if(!_wet0&&!_snow0&&TARMAC.ready)return TARMAC.albedo;
@@ -1673,7 +1691,23 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
       }
     }
   }
-  for(var side3=-1;side3<=1;side3+=2){var offB=side3*(TW/2+CWW+3.5),bv=[],bc=[],bi=[],step=4;for(var i9=0;i9<sd.length;i9+=step){var s4=sd[i9],pb=s4.c.clone().add(s4.n.clone().multiplyScalar(offB)),_by=(s4.c.y||0);bv.push(pb.x,_by,pb.z,pb.x,_by+1.1,pb.z);var c3=Math.floor(i9/20)%2===0?[.85,.1,.1]:[.9,.9,.9];bc.push(c3[0],c3[1],c3[2],c3[0],c3[1],c3[2])}var cnt=bv.length/6;for(var i10=0;i10<cnt-1;i10++){var j5=i10*2;bi.push(j5,j5+2,j5+1,j5+1,j5+2,j5+3)}var e3=(cnt-1)*2;bi.push(e3,0,e3+1,e3+1,0,1);var bg2=new THREE.BufferGeometry();bg2.setAttribute('position',new THREE.Float32BufferAttribute(bv,3));bg2.setAttribute('color',new THREE.Float32BufferAttribute(bc,3));bg2.setIndex(bi);bg2.computeVertexNormals();scene.add(new THREE.Mesh(bg2,new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide})))}
+  for(var side3=-1;side3<=1;side3+=2){var offB=side3*(TW/2+CWW+3.5);
+    if(BARRIER.ready){
+      // tile the 3D guardrail end-to-end along the edge, following elevation
+      var step=BARRIER.len*0.99,acc=step,mats=[];
+      var _up=new THREE.Vector3(0,1,0),_xa=new THREE.Vector3(),_za=new THREE.Vector3(),_m4=new THREE.Matrix4();
+      for(var i9=0;i9<sd.length;i9++){var a=sd[i9].c,b=sd[(i9+1)%sd.length].c;acc+=Math.hypot(b.x-a.x,b.z-a.z);
+        if(acc>=step){acc=0;var s4=sd[i9];var px=s4.c.x+s4.n.x*offB,pz=s4.c.z+s4.n.z*offB,py=groundHeightAt(px,pz)+0.05;
+          _xa.set(s4.t.x,0,s4.t.z).normalize();_za.crossVectors(_xa,_up).normalize();
+          if(_za.x*(-s4.n.x*side3)+_za.z*(-s4.n.z*side3)<0){_xa.negate();_za.negate()}
+          _m4.makeBasis(_xa,_up,_za);_m4.setPosition(px,py,pz);mats.push(_m4.clone());
+        }
+      }
+      if(mats.length){var inst=new THREE.InstancedMesh(BARRIER.geo,BARRIER.mat,mats.length);for(var mi=0;mi<mats.length;mi++)inst.setMatrixAt(mi,mats[mi]);inst.instanceMatrix.needsUpdate=true;inst.castShadow=true;inst.receiveShadow=true;scene.add(inst)}
+    }else{
+      var bv=[],bc=[],bi=[],step2=4;for(var i9b=0;i9b<sd.length;i9b+=step2){var s4b=sd[i9b],pb=s4b.c.clone().add(s4b.n.clone().multiplyScalar(offB)),_by=(s4b.c.y||0);bv.push(pb.x,_by,pb.z,pb.x,_by+1.1,pb.z);var c3=Math.floor(i9b/20)%2===0?[.85,.1,.1]:[.9,.9,.9];bc.push(c3[0],c3[1],c3[2],c3[0],c3[1],c3[2])}var cnt=bv.length/6;for(var i10=0;i10<cnt-1;i10++){var j5=i10*2;bi.push(j5,j5+2,j5+1,j5+1,j5+2,j5+3)}var e3=(cnt-1)*2;bi.push(e3,0,e3+1,e3+1,0,1);var bg2=new THREE.BufferGeometry();bg2.setAttribute('position',new THREE.Float32BufferAttribute(bv,3));bg2.setAttribute('color',new THREE.Float32BufferAttribute(bc,3));bg2.setIndex(bi);bg2.computeVertexNormals();scene.add(new THREE.Mesh(bg2,new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide})))
+    }
+  }
   var sfS=sd[sfIdx];var cvs2=document.createElement('canvas');cvs2.width=256;cvs2.height=32;var cx2=cvs2.getContext('2d');for(var ii=0;ii<256;ii+=16)for(var jj=0;jj<32;jj+=16){cx2.fillStyle=((ii/16+jj/16)%2===0)?'#fff':'#111';cx2.fillRect(ii,jj,16,16)}var sfM=new THREE.Mesh(new THREE.PlaneGeometry(TW+1,3),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cvs2)}));sfM.rotation.x=-Math.PI/2;var _sfy=(sfS.c.y||0);sfM.position.set(sfS.c.x,_sfy+.55,sfS.c.z);sfM.rotation.z=-Math.atan2(sfS.t.x,sfS.t.z);scene.add(sfM);var gM=new THREE.MeshLambertMaterial({color:0x555566});for(var side4=-1;side4<=1;side4+=2){var pl=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,8,8),gM);var pp2=sfS.c.clone().add(sfS.n.clone().multiplyScalar(side4*(TW/2+CWW+2)));pl.position.set(pp2.x,_sfy+4,pp2.z);scene.add(pl)}var bar2=new THREE.Mesh(new THREE.BoxGeometry(.4,.4,TW+CWW*2+4),gM);bar2.position.set(sfS.c.x,_sfy+8,sfS.c.z);bar2.rotation.y=Math.atan2(sfS.n.x,sfS.n.z);scene.add(bar2);
   // Gantry banner — APEX GP over the start line
   var bcv=document.createElement('canvas');bcv.width=1024;bcv.height=160;var bcx=bcv.getContext('2d');
