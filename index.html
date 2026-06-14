@@ -541,12 +541,16 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 <script>
 // One-time reset of old best times (remove this block after first load)
 if(!localStorage.getItem('apexgp_v2')){localStorage.removeItem('apexgp_bests');['SUNSET CIRCUIT','T-BONE','THE BOOT'].forEach(function(n){localStorage.removeItem('apexgp_ghost_'+n)});localStorage.setItem('apexgp_v2','1')}
+// One-time reset of SUNSET CIRCUIT & T-BONE best times/ghosts for everyone.
+// Clears local copies and flags the cloud layer to purge them so they can't merge back.
+if(!localStorage.getItem('apexgp_reset_st1')){['SUNSET CIRCUIT','T-BONE'].forEach(function(n){try{var b=JSON.parse(localStorage.getItem('apexgp_bests'))||{};delete b[n];localStorage.setItem('apexgp_bests',JSON.stringify(b))}catch(e){}localStorage.removeItem('apexgp_ghost_'+n)});localStorage.setItem('apexgp_reset_pending_st1','1');localStorage.setItem('apexgp_reset_st1','1')}
 var TRACKS=[
 {name:"SUNSET CIRCUIT",flat:true,sky:0xf08030,fog:0xd0703a,ambI:.45,sunI:.8,sunC:0xffaa55,hemiSky:0xffaa66,hemiGnd:0x443322,grass:0x3a6a2a,sf:[200,0],wp:[[10,0],[60,0],[100,0],[200,0],[300,0],[400,0],[440,10],[465,35],[475,65],[475,130],[475,190],[468,218],[445,240],[420,248],[360,250],[300,250],[272,255],[255,272],[250,295],[250,330],[255,358],[272,375],[295,382],[360,385],[420,385],[448,390],[468,410],[475,435],[475,480],[468,510],[445,535],[418,545],[340,545],[240,545],[140,545],[10,545],[-18,538],[-38,515],[-45,488],[-45,400],[-45,300],[-45,200],[-45,55],[-41,34],[-29,16],[-11,4]],pit:{roadX1:90,roadX2:310,roadZ1:14,roadZ2:17,dividerX1:110,dividerX2:290,dividerZ:13.5,laneAABB:{x1:80,x2:320,z1:13.4,z2:17.5},boxAABB:{x1:195,x2:208,z1:14.4,z2:16.6},speedLimit:70}},
 {name:"T-BONE",sky:0x87ceeb,fog:0x87ceeb,ambI:.55,sunI:.9,sunC:0xffffff,hemiSky:0x88aadd,hemiGnd:0x446633,grass:0x3a7a3a,sf:[250,0],wp:[[30,55],[35,25],[55,5],[90,0],[170,0],[250,0],[330,0],[410,0],[445,5],[465,25],[470,55],[470,80],[465,100],[445,115],[410,120],[365,120],[338,125],[322,145],[320,200],[320,280],[320,360],[318,410],[305,445],[280,465],[250,470],[220,465],[195,445],[182,410],[180,360],[180,280],[180,200],[178,145],[162,125],[135,120],[90,120],[55,115],[35,100],[30,80]],pit:{roadX1:130,roadX2:370,roadZ1:14,roadZ2:17,dividerX1:150,dividerX2:350,dividerZ:13.5,laneAABB:{x1:120,x2:380,z1:13.4,z2:17.5},boxAABB:{x1:243,x2:256,z1:14.4,z2:16.6},speedLimit:70}},
 {name:"THE BOOT",sky:0x6a7a8a,fog:0x5a6a78,ambI:.35,sunI:.5,sunC:0xcccccc,hemiSky:0x667788,hemiGnd:0x334433,grass:0x2d5a2d,sf:[125,0],wp:[[0,0],[125,0],[210,0],[210,310],[455,310],[455,510],[0,510]],pit:{roadX1:180,roadX2:360,roadZ1:537,roadZ2:540,dividerX1:200,dividerX2:340,dividerZ:541,laneAABB:{x1:170,x2:370,z1:535,z2:541.5},boxAABB:{x1:265,x2:278,z1:537.4,z2:539.6},speedLimit:70}},
 {name:"DRAGON'S TAIL",noCurbs:true,sky:0x4a3a6a,fog:0x3a2e54,ambI:.4,sunI:.7,sunC:0xff88cc,hemiSky:0x6a5a9a,hemiGnd:0x2a2238,grass:0x2d5a3a,sf:[148,82],wp:[[86,82],[107,82],[127,82],[148,82],[168,82],[189,82],[209,82],[230,82],[246,80],[261,72],[275,64],[292,61],[322,61],[338,58],[352,51],[367,43],[383,40],[405,40],[426,40],[448,40],[470,40],[491,40],[513,40],[534,40],[556,40],[578,40],[599,40],[618,42],[636,47],[652,56],[667,71],[675,91],[675,111],[667,131],[652,146],[636,155],[618,160],[599,162],[577,162],[555,162],[533,162],[511,165],[490,174],[473,188],[455,202],[435,210],[412,213],[390,216],[369,225],[352,239],[334,253],[314,262],[291,265],[271,265],[251,265],[231,265],[209,260],[191,246],[173,234],[152,229],[130,229],[108,229],[86,229],[63,223],[46,206],[40,183],[40,156],[40,128],[46,105],[63,89]],pit:{roadX1:100,roadX2:215,roadZ1:96,roadZ2:99,dividerX1:115,dividerX2:200,dividerZ:95.5,laneAABB:{x1:90,x2:220,z1:95.4,z2:99.5},boxAABB:{x1:142,x2:155,z1:96.4,z2:98.6},speedLimit:70}},
-{name:"GRANDE APEX",sky:0x6db4e8,fog:0x86b8d8,ambI:.55,sunI:.95,sunC:0xfff4e0,hemiSky:0x88bbee,hemiGnd:0x4a6644,grass:0x3a7a35,sf:[578,0],wp:[[920,0],[792,0],[663,0],[535,0],[407,0],[289,0],[187,6],[112,34],[66,91],[45,161],[51,230],[86,287],[144,321],[187,369],[209,428],[225,487],[268,535],[337,556],[417,565],[460,503],[476,428],[514,380],[578,369],[626,412],[631,482],[663,540],[738,569],[813,578],[888,572],[942,540],[960,482],[958,417],[931,358],[936,294],[968,241],[970,177],[952,102],[933,43]]}
+{name:"GRANDE APEX",sky:0x6db4e8,fog:0x86b8d8,ambI:.55,sunI:.95,sunC:0xfff4e0,hemiSky:0x88bbee,hemiGnd:0x4a6644,grass:0x3a7a35,sf:[578,0],wp:[[920,0],[792,0],[663,0],[535,0],[407,0],[289,0],[187,6],[112,34],[66,91],[45,161],[51,230],[86,287],[144,321],[187,369],[209,428],[225,487],[268,535],[337,556],[417,565],[460,503],[476,428],[514,380],[578,369],[626,412],[631,482],[663,540],[738,569],[813,578],[888,572],[942,540],[960,482],[958,417],[931,358],[936,294],[968,241],[970,177],[952,102],[933,43]]},
+{name:"SERPENTE",sky:0x7ec8e8,fog:0x9fd0e0,ambI:.52,sunI:.92,sunC:0xfff0d8,hemiSky:0x8ec8ee,hemiGnd:0x4a7040,grass:0x3a7530,sf:[777.4,40.7],wp:[[121.1,599.4],[50.7,587.7],[31.3,523.5],[86.5,486.6],[158.2,483.7],[228.2,470.9],[258.2,408.8],[230.2,345.9],[161.6,328.4],[89.7,328.6],[30.7,299.9],[2.1,235.3],[0,163.6],[13.8,94.9],[52.6,36.1],[121,24.3],[166.2,74.3],[174.4,145.7],[214.7,200.9],[284.9,198.7],[318.8,139.1],[324.3,67.4],[367.1,20.9],[439,19.6],[510.9,18.5],[582,18.5],[648.5,0],[720.4,0.2],[777.4,40.7],[828.3,91.6],[879.2,142.4],[930,193.3],[980.8,244.2],[1000,310.5],[1000,382.4],[978,447.7],[982.8,519.3],[953.1,580.7],[884.1,597.7],[818.1,622.6],[746.3,625.4],[682.7,597],[631.1,558.5],[627.8,486.8],[627.8,414.9],[619.9,343.6],[573,291.2],[502.9,281.8],[442.4,317.4],[419.4,384],[417.4,455.8],[417.2,527.7],[394,591.1],[322.6,596.8],[256.8,621.3],[185.4,622]]}
 ];
 var WEATHER={
   dry:{name:'CLOUDY',gripMul:1,brkMul:1,accMul:1,steerMul:1,slideFactor:0,topSpdMul:1,skyOver:0x8899aa,fogOver:0x8899aa,ambOver:.5,sunOver:.7,sunCOver:0xdddddd,hemiSkyOver:0x99aabb,hemiGndOver:0x556655,grassOver:0x3a7a3a,rain:false},
@@ -589,6 +593,7 @@ function updateTireDynamics(dt){
   var brkIn=(KY['s']||KY['arrowdown'])?1:0;
   var gasIn=(KY['w']||KY['arrowup'])?1:0;
   var steerMag=Math.abs(ST);
+  var coasting=(gasIn===0&&brkIn===0); // off throttle and off brake
   var optMid=(t.optTemp.lo+t.optTemp.hi)/2;
   var optRange=(t.optTemp.hi-t.optTemp.lo)/2;
   // Racing baseline: just moving keeps tires near the lower-to-mid edge of optimum
@@ -596,8 +601,8 @@ function updateTireDynamics(dt){
   var baseTarget=AMBIENT_TEMP+driving*(optMid-AMBIENT_TEMP)*0.72;
   // Driving heat — cornering, braking, sliding push toward upper edge of optimum
   var driveHeat=brkIn*26+slip*44+steerMag*Math.min(spdMS,55)*0.65+gasIn*7;
-  // Cooling above cruise speed
-  var coolFromSpd=Math.max(0,spdMS-25)*0.55;
+  // Cooling above cruise speed — coasting (off throttle/brake) actively cools
+  var coolFromSpd=Math.max(0,spdMS-25)*0.55+(coasting?16+spdMS*0.3:0);
   var targetTemp=baseTarget+driveHeat-coolFromSpd;
   if(targetTemp<AMBIENT_TEMP)targetTemp=AMBIENT_TEMP;
   if(targetTemp>165)targetTemp=165;
@@ -607,7 +612,7 @@ function updateTireDynamics(dt){
   // Wear
   var tempOff=Math.max(0,Math.abs(tireTemp-optMid)-optRange);
   var tempStress=1+tempOff/35;
-  var stress=1+slip*1.8+brkIn*0.4+steerMag*0.4;
+  var stress=(coasting?0:1)+slip*1.8+brkIn*0.4+steerMag*0.4;
   var moving=Math.min(1,spdMS/4);
   tireWear-=t.wearRate*stress*tempStress*moving*dt;
   if(tireWear<0)tireWear=0;
@@ -2157,7 +2162,7 @@ var onCurb=false,curbShakeT=0,_drifting=false,_lastSkidT=0,_skidGeo=null;
 // ── Rear view mirror ──
 var mirrorCam=null;
 var _mirFwd=new THREE.Vector3(),_mirPos=new THREE.Vector3(),_mirLook=new THREE.Vector3();
-function updateCar(dt){var steps=Math.max(1,Math.min(8,Math.ceil(dt*100))),sdt=dt/steps;var W=WEATHER[selWeather];var _tf=tireFactor();var _fAcc=fuelAccMul();var _fBrk=fuelBrkMul();if(inPitLane&&racing&&PIT){var _plim=PIT.speedLimit*400/468,_hv2=Math.sqrt(V.x*V.x+V.z*V.z);if(_hv2>_plim){var _sc3=_plim/_hv2;V.x*=_sc3;V.z*=_sc3}}if(racePhase!=='quali'&&!pitOpen){var _hsp0=Math.sqrt(V.x*V.x+V.z*V.z);fuelLaps=Math.max(0,fuelLaps-_hsp0*dt/trackLenM)}var _tT=TIRES[currentTire];var effTOPMS=TOPMS*(1-getDmgPenalty())*(W.topSpdMul||1)*((_tT&&_tT.topSpdMul)||1)*fuelTopMul();for(var i=0;i<steps;i++){var gas=(KY[keyBindings.accel]||KY['arrowup'])?1:0,brk=(KY[keyBindings.brake]||KY['arrowdown'])?1:0;var str=((KY[keyBindings.left]||KY['arrowleft'])?1:0)-((KY[keyBindings.right]||KY['arrowright'])?1:0);if(fuelLaps<=0)gas=0;if(nuked){gas=1;brk=0;str=0}if(pitOpen||missileMode||(raceLightsActive&&raceLightsStep<6)){gas=0;brk=0;str=0;V.x=0;V.z=0;V.y=0;AV=0;spinV=0;ST=0}var wSteer=W.steerMul;ST+=(str-ST)*Math.min(1,sdt*25);var fwd=_ucFwd.set(Math.sin(A),0,Math.cos(A)),rgt=_ucRgt.set(fwd.z,0,-fwd.x);var fs=V.dot(fwd),ls=V.dot(rgt);if(!ab){var acc=0,r=Math.abs(fs)/effTOPMS;var aM=stat0to100/5;var wAcc=W.accMul*_tf,wBrk=W.brkMul*_tf;if(gas>0){acc=50*aM*wAcc*_fAcc*(1-r*r*.45);if(fs<-.5)acc=30*aM*wAcc*_fAcc}if(brk>0){acc=fs>1?-60*(statBraking/5)*wBrk*_fBrk:-25*(statBraking/5)*wBrk*_fBrk;var bbRot=(setupBb-5)/5*0.4*Math.min(Math.abs(fs)/8,1);if(Math.abs(ST)>.1)AV+=ST*bbRot*sdt*4}acc-=fs*.18+Math.sign(fs)*.6;V.addScaledVector(fwd,acc*sdt);var wGrip=W.gripMul*_tf;
+function updateCar(dt){var steps=Math.max(1,Math.min(8,Math.ceil(dt*100))),sdt=dt/steps;var W=WEATHER[selWeather];var _tf=tireFactor();var _fAcc=fuelAccMul();var _fBrk=fuelBrkMul();if(inPitLane&&racing&&PIT){var _plim=PIT.speedLimit*400/468,_hv2=Math.sqrt(V.x*V.x+V.z*V.z);if(_hv2>_plim){var _sc3=_plim/_hv2;V.x*=_sc3;V.z*=_sc3}}var _gasOn=((KY[keyBindings.accel]||KY['arrowup'])&&fuelLaps>0)?1:0;if(racePhase!=='quali'&&!pitOpen&&_gasOn){var _hsp0=Math.sqrt(V.x*V.x+V.z*V.z);fuelLaps=Math.max(0,fuelLaps-_hsp0*dt/trackLenM)}var _tT=TIRES[currentTire];var effTOPMS=TOPMS*(1-getDmgPenalty())*(W.topSpdMul||1)*((_tT&&_tT.topSpdMul)||1)*fuelTopMul();for(var i=0;i<steps;i++){var gas=(KY[keyBindings.accel]||KY['arrowup'])?1:0,brk=(KY[keyBindings.brake]||KY['arrowdown'])?1:0;var str=((KY[keyBindings.left]||KY['arrowleft'])?1:0)-((KY[keyBindings.right]||KY['arrowright'])?1:0);if(fuelLaps<=0)gas=0;if(nuked){gas=1;brk=0;str=0}if(pitOpen||missileMode||(raceLightsActive&&raceLightsStep<6)){gas=0;brk=0;str=0;V.x=0;V.z=0;V.y=0;AV=0;spinV=0;ST=0}var wSteer=W.steerMul;ST+=(str-ST)*Math.min(1,sdt*25);var fwd=_ucFwd.set(Math.sin(A),0,Math.cos(A)),rgt=_ucRgt.set(fwd.z,0,-fwd.x);var fs=V.dot(fwd),ls=V.dot(rgt);if(!ab){var acc=0,r=Math.abs(fs)/effTOPMS;var aM=stat0to100/5;var wAcc=W.accMul*_tf,wBrk=W.brkMul*_tf;if(gas>0){acc=50*aM*wAcc*_fAcc*(1-r*r*.45);if(fs<-.5)acc=30*aM*wAcc*_fAcc}if(brk>0){acc=fs>1?-60*(statBraking/5)*wBrk*_fBrk:-25*(statBraking/5)*wBrk*_fBrk;var bbRot=(setupBb-5)/5*0.4*Math.min(Math.abs(fs)/8,1);if(Math.abs(ST)>.1)AV+=ST*bbRot*sdt*4}acc-=fs*.18+Math.sign(fs)*.6;V.addScaledVector(fwd,acc*sdt);var wGrip=W.gripMul*_tf;
       var drift=(KY[' ']&&Math.abs(fs)>6&&!pitOpen&&!(raceLightsActive&&raceLightsStep<6))?1:0;
       _drifting=drift>0;
       // handbrake drift: rear grip drops away, the car rotates into the steer,
@@ -4439,7 +4444,15 @@ function cloudMergeLoad(){
       snap.forEach(function(g){try{cloudGhosts[g.id]=JSON.parse(g.data().data)}catch(e){}});
       var localBests=getTrackBests();
       var mergedBests={};
+      var _resetPending=localStorage.getItem('apexgp_reset_pending_st1');
+      var _resetTracks=['SUNSET CIRCUIT','T-BONE'];
       TRACKS.forEach(function(t){
+        if(_resetPending&&_resetTracks.indexOf(t.name)>=0){
+          // purge the reset tracks from the cloud too so they can't merge back
+          try{ref.collection('ghosts').doc(t.name).delete()}catch(e){}
+          delete cloudGhosts[t.name];localStorage.removeItem('apexgp_ghost_'+t.name);
+          return; // omit from mergedBests
+        }
         var lb=localBests[t.name],cb=cloud.bests&&cloud.bests[t.name];
         if(lb&&(!cb||lb<=cb)){
           mergedBests[t.name]=lb; // local ghost already in localStorage
@@ -4448,6 +4461,7 @@ function cloudMergeLoad(){
           if(cloudGhosts[t.name]){try{localStorage.setItem('apexgp_ghost_'+t.name,JSON.stringify(cloudGhosts[t.name]))}catch(e){}}
         }
       });
+      if(_resetPending)localStorage.removeItem('apexgp_reset_pending_st1');
       localStorage.setItem('apexgp_bests',JSON.stringify(mergedBests));
       totalLaps=Math.max(totalLaps,cloud.laps||0);
       localStorage.setItem('apexgp_laps',totalLaps);
