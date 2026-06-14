@@ -544,6 +544,8 @@ if(!localStorage.getItem('apexgp_v2')){localStorage.removeItem('apexgp_bests');[
 // One-time reset of SUNSET CIRCUIT & T-BONE best times/ghosts for everyone.
 // Clears local copies and flags the cloud layer to purge them so they can't merge back.
 if(!localStorage.getItem('apexgp_reset_st1')){['SUNSET CIRCUIT','T-BONE'].forEach(function(n){try{var b=JSON.parse(localStorage.getItem('apexgp_bests'))||{};delete b[n];localStorage.setItem('apexgp_bests',JSON.stringify(b))}catch(e){}localStorage.removeItem('apexgp_ghost_'+n)});localStorage.setItem('apexgp_reset_pending_st1','1');localStorage.setItem('apexgp_reset_st1','1')}
+// One-time reset of SERPENTE best times/ghosts for everyone (local clear + cloud purge).
+if(!localStorage.getItem('apexgp_reset_serp1')){try{var b=JSON.parse(localStorage.getItem('apexgp_bests'))||{};delete b['SERPENTE'];localStorage.setItem('apexgp_bests',JSON.stringify(b))}catch(e){}localStorage.removeItem('apexgp_ghost_SERPENTE');localStorage.setItem('apexgp_reset_pending_serp1','1');localStorage.setItem('apexgp_reset_serp1','1')}
 var TRACKS=[
 {name:"SUNSET CIRCUIT",flat:true,sky:0xf08030,fog:0xd0703a,ambI:.45,sunI:.8,sunC:0xffaa55,hemiSky:0xffaa66,hemiGnd:0x443322,grass:0x3a6a2a,sf:[200,0],wp:[[10,0],[60,0],[100,0],[200,0],[300,0],[400,0],[440,10],[465,35],[475,65],[475,130],[475,190],[468,218],[445,240],[420,248],[360,250],[300,250],[272,255],[255,272],[250,295],[250,330],[255,358],[272,375],[295,382],[360,385],[420,385],[448,390],[468,410],[475,435],[475,480],[468,510],[445,535],[418,545],[340,545],[240,545],[140,545],[10,545],[-18,538],[-38,515],[-45,488],[-45,400],[-45,300],[-45,200],[-45,55],[-41,34],[-29,16],[-11,4]],pit:{roadX1:90,roadX2:310,roadZ1:14,roadZ2:17,dividerX1:110,dividerX2:290,dividerZ:13.5,laneAABB:{x1:80,x2:320,z1:13.4,z2:17.5},boxAABB:{x1:195,x2:208,z1:14.4,z2:16.6},speedLimit:70}},
 {name:"T-BONE",sky:0x87ceeb,fog:0x87ceeb,ambI:.55,sunI:.9,sunC:0xffffff,hemiSky:0x88aadd,hemiGnd:0x446633,grass:0x3a7a3a,sf:[250,0],wp:[[30,55],[35,25],[55,5],[90,0],[170,0],[250,0],[330,0],[410,0],[445,5],[465,25],[470,55],[470,80],[465,100],[445,115],[410,120],[365,120],[338,125],[322,145],[320,200],[320,280],[320,360],[318,410],[305,445],[280,465],[250,470],[220,465],[195,445],[182,410],[180,360],[180,280],[180,200],[178,145],[162,125],[135,120],[90,120],[55,115],[35,100],[30,80]],pit:{roadX1:130,roadX2:370,roadZ1:14,roadZ2:17,dividerX1:150,dividerX2:350,dividerZ:13.5,laneAABB:{x1:120,x2:380,z1:13.4,z2:17.5},boxAABB:{x1:243,x2:256,z1:14.4,z2:16.6},speedLimit:70}},
@@ -4444,8 +4446,12 @@ function cloudMergeLoad(){
       snap.forEach(function(g){try{cloudGhosts[g.id]=JSON.parse(g.data().data)}catch(e){}});
       var localBests=getTrackBests();
       var mergedBests={};
-      var _resetPending=localStorage.getItem('apexgp_reset_pending_st1');
-      var _resetTracks=['SUNSET CIRCUIT','T-BONE'];
+      var _pendST1=localStorage.getItem('apexgp_reset_pending_st1');
+      var _pendSerp=localStorage.getItem('apexgp_reset_pending_serp1');
+      var _resetPending=_pendST1||_pendSerp;
+      var _resetTracks=[];
+      if(_pendST1){_resetTracks.push('SUNSET CIRCUIT','T-BONE');}
+      if(_pendSerp){_resetTracks.push('SERPENTE');}
       TRACKS.forEach(function(t){
         if(_resetPending&&_resetTracks.indexOf(t.name)>=0){
           // purge the reset tracks from the cloud too so they can't merge back
@@ -4461,7 +4467,8 @@ function cloudMergeLoad(){
           if(cloudGhosts[t.name]){try{localStorage.setItem('apexgp_ghost_'+t.name,JSON.stringify(cloudGhosts[t.name]))}catch(e){}}
         }
       });
-      if(_resetPending)localStorage.removeItem('apexgp_reset_pending_st1');
+      if(_pendST1)localStorage.removeItem('apexgp_reset_pending_st1');
+      if(_pendSerp)localStorage.removeItem('apexgp_reset_pending_serp1');
       localStorage.setItem('apexgp_bests',JSON.stringify(mergedBests));
       totalLaps=Math.max(totalLaps,cloud.laps||0);
       localStorage.setItem('apexgp_laps',totalLaps);
