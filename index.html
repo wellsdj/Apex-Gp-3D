@@ -1629,8 +1629,8 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
   var grassC=grassCOverride||TRACKS[selTrack].grass,grassHex='#'+grassC.toString(16).padStart(6,'0');
   if(GRASS.ready&&selWeather.indexOf('snow')<0){
     var _ogt=GRASS.albedo.clone();_ogt.needsUpdate=true;_ogt.wrapS=_ogt.wrapT=THREE.RepeatWrapping;_ogt.repeat.set(1,1);
-    scene.add(buildGroundGrid(CX,CZ,2600,90,new THREE.MeshLambertMaterial({map:_ogt}),0.05)); // far ground rolls with the track, just under the play surface
-  }else{var gndOuter=new THREE.Mesh(new THREE.PlaneGeometry(2600,2600),new THREE.MeshLambertMaterial({color:grassC}));gndOuter.rotation.x=-Math.PI/2;gndOuter.position.y=-0.5;scene.add(gndOuter)}
+    var ggm1=buildGroundGrid(CX,CZ,2600,90,new THREE.MeshLambertMaterial({map:_ogt}),-0.15);ggm1.renderOrder=0;scene.add(ggm1); // far ground rolls with the track, well below play surface
+  }else{var gndOuter=new THREE.Mesh(new THREE.PlaneGeometry(2600,2600),new THREE.MeshLambertMaterial({color:grassC}));gndOuter.rotation.x=-Math.PI/2;gndOuter.position.y=-0.5;gndOuter.renderOrder=0;scene.add(gndOuter)}
   var cvs3=document.createElement('canvas');cvs3.width=2048;cvs3.height=2048;var cx3=cvs3.getContext('2d');cx3.fillStyle=grassHex;cx3.fillRect(0,0,2048,2048);
   // Mowed-stripe bands + grass noise for a groomed circuit look
   cx3.save();cx3.translate(1024,1024);cx3.rotate(.42);
@@ -1644,8 +1644,8 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
     var _ga=GRASS.albedo.clone();_ga.needsUpdate=true;_ga.wrapS=_ga.wrapT=THREE.RepeatWrapping;_ga.repeat.set(1,1);
     var _gMat=new THREE.MeshStandardMaterial({map:_ga,roughness:1,metalness:0,envMapIntensity:.15});
     if(GRASS.normal){var _gn=GRASS.normal.clone();_gn.needsUpdate=true;_gn.wrapS=_gn.wrapT=THREE.RepeatWrapping;_gn.repeat.set(1,1);_gMat.normalMap=_gn;_gMat.normalScale=new THREE.Vector2(.5,.5)}
-    scene.add(buildGroundGrid(CX,CZ,W_SIZE,110,_gMat,0.0)); // displaced heightfield, just below the road edge
-  }else{var _gndTex=new THREE.CanvasTexture(cvs3);_gndTex.encoding=THREE.sRGBEncoding;scene.add(buildGroundGrid(CX,CZ,W_SIZE,110,new THREE.MeshLambertMaterial({map:_gndTex}),0.0))}
+    var ggm2=buildGroundGrid(CX,CZ,W_SIZE,110,_gMat,-0.15);ggm2.renderOrder=0;scene.add(ggm2); // displaced heightfield, well below the road edge
+  }else{var _gndTex=new THREE.CanvasTexture(cvs3);_gndTex.encoding=THREE.sRGBEncoding;var ggm3=buildGroundGrid(CX,CZ,W_SIZE,110,new THREE.MeshLambertMaterial({map:_gndTex}),-0.15);ggm3.renderOrder=0;scene.add(ggm3)}
   // ── 3D asphalt ribbon (the actual road surface) ──
   var _asTex=mkAsphaltTexture(selWeather);
   var _rv=[],_ruv=[],_ri=[],_rLen=0;
@@ -1668,7 +1668,7 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
     :new THREE.MeshStandardMaterial({map:_asTex,roughness:.92,metalness:0,envMapIntensity:.25});
   if(!_isWet&&TARMAC.ready&&TARMAC.normal){_roadMat.normalMap=TARMAC.normal;_roadMat.normalScale=new THREE.Vector2(.7,.7)}
   var roadMesh=new THREE.Mesh(_rg,_roadMat);
-  roadMesh.receiveShadow=true;scene.add(roadMesh);
+  roadMesh.receiveShadow=true;roadMesh.renderOrder=1;scene.add(roadMesh);
   // ── Racing line: geodesic apex-cutting line + rubbered-in groove ──
   buildRacingLine();
   for(var side=-1;side<=1;side+=2){var lv=[],li=[];for(var i4=0;i4<sd.length;i4++){var s2=sd[i4],_ly=(s2.c.y||0)+.51;lv.push(s2.c.x+s2.n.x*side*(TW/2-.3),_ly,s2.c.z+s2.n.z*side*(TW/2-.3),s2.c.x+s2.n.x*side*(TW/2+.3),_ly,s2.c.z+s2.n.z*side*(TW/2+.3));if(i4<sd.length-1){var j2=i4*2;li.push(j2,j2+1,j2+2,j2+1,j2+3,j2+2)}}var e=(sd.length-1)*2;li.push(e,e+1,0,e+1,1,0);var lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.Float32BufferAttribute(lv,3));lg.setIndex(li);lg.computeVertexNormals();scene.add(new THREE.Mesh(lg,new THREE.MeshBasicMaterial({color:0xffffff})))}
@@ -2432,8 +2432,8 @@ function respawnInPlace(){
   var ct=document.getElementById('crashTxt');if(ct)ct.style.opacity=0;
 }
 function resetCar(){
-  // Place well before SF line so you build up speed (~100m back)
-  var pi=(sfIdx-400+tPts.length)%tPts.length;
+  // Place well before SF line so you build up speed (~150m back), far from barriers
+  var pi=(sfIdx-600+tPts.length)%tPts.length;
   carNearIdx=pi;
   P.set(sd[pi].c.x,(sd[pi].c.y||0)+.8,sd[pi].c.z);V.set(0,0,0);
   A=Math.atan2(sd[pi].t.x,sd[pi].t.z);AV=0;ST=0;spinV=0;pitchA=0;pitchV=0;rollA=0;rollV=0;ab=false;
