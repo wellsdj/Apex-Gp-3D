@@ -2012,7 +2012,7 @@ function placeStand(idx,side,sLen){
   for(var pi2=0;pi2<probes.length;pi2++){
     var px=s.c.x+s.n.x*side*probes[pi2][0]+s.t.x*probes[pi2][1];
     var pz=s.c.z+s.n.z*side*probes[pi2][0]+s.t.z*probes[pi2][1];
-    if(trackClearance(px,pz,idx,Math.round(n/16))<15)return false;
+    if(trackClearance(px,pz,idx,excl)<30)return false;
   }
   var stand=buildStand(sLen);
   var _stx=s.c.x+s.n.x*side*sOff,_stz=s.c.z+s.n.z*side*sOff;
