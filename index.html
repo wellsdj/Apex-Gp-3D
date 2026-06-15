@@ -548,12 +548,12 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 // Detects the device once, picks a tier (low/med/high), and exposes knobs the
 // renderer + scene builders read. A runtime watchdog also scales render
 // resolution down on weak GPUs so small laptops stay smooth.
-var PERF={tier:'high',pixelRatio:1.5,antialias:true,shadows:true,shadowSize:2048,shadowSoft:true,treeShadows:true,treeCount:350,particleMul:1};
+var PERF={tier:'high',pixelRatio:1.25,antialias:true,shadows:true,shadowSize:1024,shadowSoft:false,treeShadows:false,treeCount:300,particleMul:0.7};
 function applyPerfTier(tier){
   PERF.tier=tier;
-  if(tier==='low'){PERF.pixelRatio=Math.min(devicePixelRatio,1);PERF.antialias=false;PERF.shadows=false;PERF.shadowSize=1024;PERF.shadowSoft=false;PERF.treeShadows=false;PERF.treeCount=130;PERF.particleMul=.35}
-  else if(tier==='med'){PERF.pixelRatio=Math.min(devicePixelRatio,1.25);PERF.antialias=true;PERF.shadows=true;PERF.shadowSize=1024;PERF.shadowSoft=false;PERF.treeShadows=false;PERF.treeCount=230;PERF.particleMul=.6}
-  else{PERF.pixelRatio=Math.min(devicePixelRatio,1.5);PERF.antialias=true;PERF.shadows=true;PERF.shadowSize=2048;PERF.shadowSoft=true;PERF.treeShadows=true;PERF.treeCount=350;PERF.particleMul=1}
+  if(tier==='low'){PERF.pixelRatio=Math.min(devicePixelRatio,0.75);PERF.antialias=false;PERF.shadows=false;PERF.shadowSize=512;PERF.shadowSoft=false;PERF.treeShadows=false;PERF.treeCount=100;PERF.particleMul=.2}
+  else if(tier==='med'){PERF.pixelRatio=Math.min(devicePixelRatio,0.9);PERF.antialias=false;PERF.shadows=true;PERF.shadowSize=512;PERF.shadowSoft=false;PERF.treeShadows=false;PERF.treeCount=180;PERF.particleMul=.4}
+  else{PERF.pixelRatio=Math.min(devicePixelRatio,1.25);PERF.antialias=true;PERF.shadows=true;PERF.shadowSize=1024;PERF.shadowSoft=false;PERF.treeShadows=false;PERF.treeCount=300;PERF.particleMul=0.7}
 }
 function detectPerfTier(){
   var saved=null;try{saved=localStorage.getItem('apexgp_quality')}catch(e){}
@@ -715,7 +715,7 @@ var opBestGhost=[],opBestCar=null,opGhostFrame=0,opGhostPlaying=false;
 var opGhostTimeLookup=null,opGhostDelta=0;
 var opVisible=true,opGhostVisible=false;
 var lastMpSend=0;
-var skidMarks=[],skidMat=null;
+var skidMarks=[],skidMat=null,sceneSun=null;
 var mS,mC,mR,mCar,mRun=true,gS,gC,gR,gCar,gRun=false;
 // Gear system
 var curGear=0,gearRPM=0,GEAR_RATIOS=[0,35,55,75,95,110,125,135,145];// speed thresholds per gear (displayed kph)
@@ -1414,16 +1414,16 @@ var amI=W.ambOver!==null?W.ambOver:T.ambI,snI=W.sunOver!==null?W.sunOver:T.sunI;
 var snC=W.sunCOver!==null?W.sunCOver:T.sunC,hsC=W.hemiSkyOver!==null?W.hemiSkyOver:T.hemiSky;
 var hgC=W.hemiGndOver!==null?W.hemiGndOver:T.hemiGnd,grC=W.grassOver!==null?W.grassOver:T.grass;
 scene.background=new THREE.Color(skC);scene.fog=new THREE.Fog(fgC,300,1200);if(ren)scene.environment=trackEnv(ren,skC,fgC,grC);
-scene.add(new THREE.AmbientLight(0xffffff,amI*1.15));var sun=new THREE.DirectionalLight(snC,snI*1.25);var _isNight=selWeather==='night'||selWeather==='night_dark';sun.castShadow=!_isNight&&PERF.shadows;if(sun.castShadow){sun.shadow.mapSize.set(PERF.shadowSize,PERF.shadowSize);var sc=sun.shadow.camera;sc.left=-360;sc.right=360;sc.top=360;sc.bottom=-360;sc.near=50;sc.far=1400;sun.shadow.bias=-0.0006}scene.add(sun);scene.add(new THREE.HemisphereLight(hsC,hgC,.45));skidMat=new THREE.MeshBasicMaterial({color:0x333333,transparent:true,opacity:0.6});skidMarks=[];mkTrack(grC);car=bldCar(carBodyColor,false);scene.add(car);
+scene.add(new THREE.AmbientLight(0xffffff,amI*1.15));var sun=new THREE.DirectionalLight(snC,snI*1.25);var _isNight=selWeather==='night'||selWeather==='night_dark';sun.castShadow=!_isNight&&PERF.shadows;if(sun.castShadow){sun.shadow.mapSize.set(PERF.shadowSize,PERF.shadowSize);var sc=sun.shadow.camera;sc.left=-130;sc.right=130;sc.top=130;sc.bottom=-130;sc.near=50;sc.far=800;sun.shadow.bias=-0.0006}scene.add(sun);sceneSun=sun;scene.add(new THREE.HemisphereLight(hsC,hgC,.45));skidMat=new THREE.MeshBasicMaterial({color:0x333333,transparent:true,opacity:0.6});skidMarks=[];mkTrack(grC);car=bldCar(carBodyColor,false);scene.add(car);
 // Sun follows a fixed azimuth, shadows centred on the circuit
-sun.position.set(tCX+340,430,tCZ+220);sun.target.position.set(tCX,0,tCZ);scene.add(sun.target);
+sun.position.set(tCX+200,320,tCZ+140);sun.target.position.set(tCX,0,tCZ);scene.add(sun.target);
 mkSky(skC,fgC,snC,_isNight);
 // Auto-enable headlights at night
 if(selWeather==='night'||selWeather==='night_dark'){car.hlOn=true;if(car.headlights)car.headlights.forEach(function(l){l.visible=true});if(car.hlMeshes)car.hlMeshes.forEach(function(m){m.material.emissiveIntensity=1});if(car.carGlow)car.carGlow.visible=true}
 ghostCar=bldCar(0x4488ff,true);ghostCar.visible=false;scene.add(ghostCar);allTimeCar=bldCar(0xddaa00,true);allTimeCar.visible=false;scene.add(allTimeCar);opCar=bldCar(0x44ff88,true);opCar.visible=false;scene.add(opCar);opBestCar=bldCar(0xff8844,true);opBestCar.visible=false;scene.add(opBestCar);rebuildPeerCars();
 // Rain particles
 if(W.rain){var rType=W.rain,isSnow=rType==='snow'||rType==='snow_heavy',isHeavy=rType==='rain_heavy'||rType==='snow_heavy';
-  var pCount=Math.round((isHeavy?(isSnow?1750:2500):(isSnow?1000:1500))*PERF.particleMul);
+  var pCount=Math.min(Math.round((isHeavy?(isSnow?800:1000):(isSnow?500:700))*PERF.particleMul),900);
   rainGeo=new THREE.BufferGeometry();var rp=new Float32Array(pCount*3),rv=new Float32Array(pCount);var spawnC=sd[sfIdx]?sd[sfIdx].c:{x:tCX,z:tCZ};
   for(var ri=0;ri<pCount;ri++){rp[ri*3]=(Math.random()-.5)*160;rp[ri*3+1]=Math.random()*80;rp[ri*3+2]=(Math.random()-.5)*160;rv[ri]=isSnow?(isHeavy?5+Math.random()*8:3+Math.random()*5):(isHeavy?30+Math.random()*45:20+Math.random()*30)}
   rainGeo.setAttribute('position',new THREE.Float32BufferAttribute(rp,3));rainGeo.rv=rv;rainGeo.pCount=pCount;
@@ -1503,7 +1503,7 @@ var GRASS={albedo:null,normal:null,ready:false};
 };img.src='models/tex/grass.jpg';})();
 // 3D guardrail barrier (single mesh/material) — baked to game scale, tiled
 // end-to-end along the track edges via InstancedMesh
-var BARRIER={geo:null,mat:null,ready:false,len:5};
+var BARRIER={geo:null,mat:null,ready:false,len:5,zHalf:0};
 (function loadBarrier(){
   if(typeof THREE.GLTFLoader==='undefined'){setTimeout(loadBarrier,200);return}
   new THREE.GLTFLoader().load('models/barrier.glb',function(g){
@@ -1514,7 +1514,7 @@ var BARRIER={geo:null,mat:null,ready:false,len:5};
     geo.scale(s,s,s);geo.computeBoundingBox();var b1=geo.boundingBox;
     if((b1.max.z-b1.min.z)>(b1.max.x-b1.min.x)){geo.rotateY(Math.PI/2);geo.computeBoundingBox()} // longest horizontal axis -> X
     var b2=geo.boundingBox;geo.translate(-b2.min.x,-b2.min.y,-(b2.min.z+b2.max.z)/2);geo.computeBoundingBox();
-    BARRIER.len=geo.boundingBox.max.x;
+    BARRIER.len=geo.boundingBox.max.x;BARRIER.zHalf=geo.boundingBox.max.z;
     var mat=Array.isArray(mesh.material)?mesh.material[0]:mesh.material;if(mat)mat.side=THREE.DoubleSide;
     BARRIER.geo=geo;BARRIER.mat=mat;BARRIER.ready=true;
   },undefined,function(e){console.error('barrier load failed',e)});
@@ -1788,7 +1788,7 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
         if(_za.x*inx+_za.z*inz<0){_xa.set(-dirx,0,-dirz);_za.crossVectors(_xa,_up).normalize();ox=nx;oz=nz}
         var py=groundHeightAt(ox,oz)+0.05;_m4.makeBasis(_xa,_up,_za);_m4.setPosition(ox,py,oz);mats.push(_m4.clone());
         bTrav+=bSeg;Cx=nx;Cz=nz}
-      if(mats.length){var inst=new THREE.InstancedMesh(BARRIER.geo,BARRIER.mat,mats.length);for(var mi=0;mi<mats.length;mi++)inst.setMatrixAt(mi,mats[mi]);inst.instanceMatrix.needsUpdate=true;inst.castShadow=true;inst.receiveShadow=true;scene.add(inst)}
+      if(mats.length){var inst=new THREE.InstancedMesh(BARRIER.geo,BARRIER.mat,mats.length);for(var mi=0;mi<mats.length;mi++)inst.setMatrixAt(mi,mats[mi]);inst.instanceMatrix.needsUpdate=true;inst.castShadow=false;inst.receiveShadow=true;scene.add(inst)}
     }else{
       var bv=[],bc=[],bi=[],step2=4;for(var i9b=0;i9b<sd.length;i9b+=step2){var s4b=sd[i9b],pb=s4b.c.clone().add(s4b.n.clone().multiplyScalar(offB)),_by=(s4b.c.y||0);bv.push(pb.x,_by,pb.z,pb.x,_by+1.1,pb.z);var c3=Math.floor(i9b/20)%2===0?[.85,.1,.1]:[.9,.9,.9];bc.push(c3[0],c3[1],c3[2],c3[0],c3[1],c3[2])}var cnt=bv.length/6;for(var i10=0;i10<cnt-1;i10++){var j5=i10*2;bi.push(j5,j5+2,j5+1,j5+1,j5+2,j5+3)}var e3=(cnt-1)*2;bi.push(e3,0,e3+1,e3+1,0,1);var bg2=new THREE.BufferGeometry();bg2.setAttribute('position',new THREE.Float32BufferAttribute(bv,3));bg2.setAttribute('color',new THREE.Float32BufferAttribute(bc,3));bg2.setIndex(bi);bg2.computeVertexNormals();scene.add(new THREE.Mesh(bg2,new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide})))
     }
@@ -2208,7 +2208,7 @@ function mkTrackProps(){
     if(nearSF2<60)continue;
     var hSide=(hCount%2===0)?1:-1;
     var s6=sd[hi2];
-    var hOff=TW/2+CWW+3.5-.45;
+    var hOff=TW/2+CWW+3.5+(BARRIER.zHalf||0.3)+0.1;
     var hp2=new THREE.Mesh(hoardGeo,hoardMats[hCount%hoardMats.length]);
     hp2.position.set(s6.c.x+s6.n.x*hSide*hOff,.62,s6.c.z+s6.n.z*hSide*hOff);
     hp2.rotation.y=Math.atan2(-hSide*s6.n.x,-hSide*s6.n.z);
@@ -2263,7 +2263,7 @@ function doCol(){var minD=Infinity,ci=0;
   // loss and the up/down elevation snap. Global fallback only on a big jump.
   var _coh=(typeof carNearIdx==='number')?carNearIdx:-1;
   if(_coh>=0&&tPts&&tPts.length>1){var _n=tPts.length,_W=160;for(var _k=-_W;_k<=_W;_k++){var _idx=(_coh+_k+_n)%_n,_dx=tPts[_idx].x-P.x,_dz=tPts[_idx].z-P.z,_d=_dx*_dx+_dz*_dz;if(_d<minD){minD=_d;ci=_idx}}}
-  if(minD>3600){minD=Infinity;if(_colGrid){var gc=Math.floor((P.x-_colGridOX)/_colGridSize),gr=Math.floor((P.z-_colGridOZ)/_colGridSize);for(var gri=gr-1;gri<=gr+1;gri++)for(var gci=gc-1;gci<=gc+1;gci++){if(gri<0||gri>=_colGridRows||gci<0||gci>=_colGridCols)continue;var cell=_colGrid[gri*_colGridCols+gci];for(var gi=0;gi<cell.length;gi++){var idx=cell[gi],dx=tPts[idx].x-P.x,dz=tPts[idx].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=idx}}}}else{for(var i=0;i<tPts.length;i+=8){var dx=tPts[i].x-P.x,dz=tPts[i].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=i}}for(var i2=Math.max(0,ci-15);i2<Math.min(tPts.length,ci+15);i2++){var dx2=tPts[i2].x-P.x,dz2=tPts[i2].z-P.z,d2=dx2*dx2+dz2*dz2;if(d2<minD){minD=d2;ci=i2}}}}var t=ci/tPts.length,tp=spl.getPoint(t),tn=spl.getTangent(t).normalize(),nm=_tv1.set(-tn.z,0,tn.x);var lat=_tv2.subVectors(P,tp).dot(nm),aL=Math.abs(lat),ss=Math.sign(lat);var fwd=_tv3.set(Math.sin(A),0,Math.cos(A));_tv4.copy(P).addScaledVector(fwd,3);var nL=Math.abs(_tv5.subVectors(_tv4,tp).dot(nm));carNearIdx=ci;onCurb=aL>(TW/2-1.5)&&aL<(TW/2+CWW)&&trackCurv[ci]>curbCurvThresh*.5;var _half=(sd[ci]&&sd[ci].hw)||WL;var effWL=_half-CAR_HW;if(nL>=effWL||aL>=effWL){if(aL>=effWL){_tv6.copy(tp).addScaledVector(nm,ss*(effWL-.05));P.copy(_tv6)}var vN=V.dot(nm)*ss,spd=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;if(vN>.5){var tV=V.dot(tn),iA=Math.atan2(Math.abs(vN),Math.abs(tV));
+  if(minD>3600){minD=Infinity;if(_colGrid){var gc=Math.floor((P.x-_colGridOX)/_colGridSize),gr=Math.floor((P.z-_colGridOZ)/_colGridSize);for(var gri=gr-1;gri<=gr+1;gri++)for(var gci=gc-1;gci<=gc+1;gci++){if(gri<0||gri>=_colGridRows||gci<0||gci>=_colGridCols)continue;var cell=_colGrid[gri*_colGridCols+gci];for(var gi=0;gi<cell.length;gi++){var idx=cell[gi],dx=tPts[idx].x-P.x,dz=tPts[idx].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=idx}}}}else{for(var i=0;i<tPts.length;i+=8){var dx=tPts[i].x-P.x,dz=tPts[i].z-P.z,d=dx*dx+dz*dz;if(d<minD){minD=d;ci=i}}for(var i2=Math.max(0,ci-15);i2<Math.min(tPts.length,ci+15);i2++){var dx2=tPts[i2].x-P.x,dz2=tPts[i2].z-P.z,d2=dx2*dx2+dz2*dz2;if(d2<minD){minD=d2;ci=i2}}}}var t=ci/tPts.length,tp=spl.getPoint(t),tn=spl.getTangent(t).normalize(),nm=_tv1.set(-tn.z,0,tn.x);var lat=_tv2.subVectors(P,tp).dot(nm),aL=Math.abs(lat),ss=Math.sign(lat);var fwd=_tv3.set(Math.sin(A),0,Math.cos(A));_tv4.copy(P).addScaledVector(fwd,3);var nL=Math.abs(_tv5.subVectors(_tv4,tp).dot(nm));carNearIdx=ci;onCurb=aL>(TW/2-1.5)&&aL<(TW/2+CWW)&&trackCurv[ci]>curbCurvThresh*.5;var _half=(sd[ci]&&sd[ci].hw)||WL;var effWL=_half-(BARRIER.zHalf||0)-CAR_HW;if(nL>=effWL||aL>=effWL){if(aL>=effWL){_tv6.copy(tp).addScaledVector(nm,ss*(effWL-.05));P.copy(_tv6)}var vN=V.dot(nm)*ss,spd=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;if(vN>.5){var tV=V.dot(tn),iA=Math.atan2(Math.abs(vN),Math.abs(tV));
       var displaySpd=spd*(130/400);
       if(displaySpd<80){
         var tVs=V.dot(tn),iAs=Math.atan2(Math.abs(vN),Math.abs(tVs)+0.001);
@@ -4181,16 +4181,15 @@ function doMirror(){
   ren.setScissorTest(false);
   ren.setViewport(0,0,cw,ch);
 }
-var _perfBasePR=1.5,_perfCurPR=1.5,_perfFrames=0,_perfAccum=0;
+var _perfBasePR=1.25,_perfCurPR=1.25,_perfFrames=0,_perfAccum=0;
 function perfWatchdog(dt){
-  // Adaptive resolution: if the GPU can't keep up, quietly drop render scale
-  // (no shader recompile, instant relief); recover gently when there's headroom.
   if(!ren)return;
   _perfFrames++;_perfAccum+=dt;
-  if(_perfAccum<2)return;
+  if(_perfAccum<1)return;
   var fps=_perfFrames/_perfAccum;_perfFrames=0;_perfAccum=0;
-  if(fps<40&&_perfCurPR>0.62){_perfCurPR=Math.max(0.6,_perfCurPR*0.85);ren.setPixelRatio(_perfCurPR)}
-  else if(fps>57&&_perfCurPR<_perfBasePR){_perfCurPR=Math.min(_perfBasePR,_perfCurPR*1.08);ren.setPixelRatio(_perfCurPR)}
+  if(fps<30&&_perfCurPR>0.45){_perfCurPR=Math.max(0.45,_perfCurPR*0.75);ren.setPixelRatio(_perfCurPR)}
+  else if(fps<45&&_perfCurPR>0.55){_perfCurPR=Math.max(0.55,_perfCurPR*0.88);ren.setPixelRatio(_perfCurPR)}
+  else if(fps>57&&_perfCurPR<_perfBasePR){_perfCurPR=Math.min(_perfBasePR,_perfCurPR*1.05);ren.setPixelRatio(_perfCurPR)}
 }
 function rLoop(){requestAnimationFrame(rLoop);var dt=Math.min(clk.getDelta(),.05);perfWatchdog(dt);if(reviewMode){if(KY['c']&&!KY._cp)cycleCam();KY._cp=KY['c'];reviewTick();doCam(dt);if(ren)ren.render(scene,cam);return}if(racing){if(KY['c']&&!KY._cp)cycleCam();KY._cp=KY['c'];if(KY['r']&&!KY._rp)resetCar();KY._rp=KY['r'];updateRaceLights();updateQualifying();tickRaceLeaderboard(dt);updatePitState();updateTireDynamics(dt);updateCar(dt);updateAI(dt);updateMissiles(dt);if(tireInfoOpen)renderTireInfo();
     if(!flipCrashActive){var upY=Math.cos(rollA)*Math.cos(pitchA);if(upY<-0.3){flipUpsideTime+=dt;}else{flipUpsideTime=0;}if(flipUpsideTime>0.5&&racePhase!=='race'){flipCrashActive=true;raceFadeTimer=3.0;sndCrashFatal.currentTime=0;sndCrashFatal.volume=sfxEnabled?sfxVolume:0;sndCrashFatal.play().catch(function(){});var fo=document.getElementById('flipOverlay');fo.style.display='flex';fo.style.opacity=0;document.getElementById('flipTxt').style.opacity=0;}}
@@ -4198,7 +4197,7 @@ function rLoop(){requestAnimationFrame(rLoop);var dt=Math.min(clk.getDelta(),.05
     if(wallCrashActive){wallCrashTimer-=dt;var wProg=wallCrashTimer>2?Math.max(0,1-(wallCrashTimer-2)/0.8):1;document.getElementById('crashOverlay').style.opacity=wProg;if(wallCrashTimer<2)document.getElementById('crashTxt').style.opacity=1;if(wallCrashTimer<=0){[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;if(mpConn){respawnInPlace()}else{wallCrashActive=false;var co2=document.getElementById('crashOverlay');co2.style.opacity=0;co2.style.display='none';document.getElementById('crashTxt').style.opacity=0;racing=false;document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar();startLobbyMusic();}}}
     updateDebris(dt);for(var si=skidMarks.length-1;si>=0;si--){skidMarks[si].life-=dt;if(skidMarks[si].life<=0){scene.remove(skidMarks[si]);skidMarks.splice(si,1)}else if(skidMarks[si].life<2){if(!skidMarks[si]._fadeMat){skidMarks[si]._fadeMat=skidMat.clone();skidMarks[si].material=skidMarks[si]._fadeMat}skidMarks[si]._fadeMat.opacity=skidMarks[si].life/2*.6}}if(rainDrops&&rainGeo){var rPos=rainGeo.attributes.position.array,rv2=rainGeo.rv,rCnt=rainGeo.pCount;for(var ri2=0;ri2<rCnt;ri2++){rPos[ri2*3+1]-=rv2[ri2]*dt;if(rPos[ri2*3+1]<-P.y){rPos[ri2*3+1]=40+Math.random()*40;rPos[ri2*3]=(Math.random()-.5)*160;rPos[ri2*3+2]=(Math.random()-.5)*160}};rainGeo.attributes.position.needsUpdate=true;rainDrops.position.set(P.x,0,P.z)}
     if(sprayGeo&&sprayPts&&SPD>15){var spPos=sprayGeo.attributes.position.array,spVa=sprayGeo.spV,spLi=sprayGeo.spL,spC=sprayGeo.spCnt;var bwdx=-Math.sin(A),bwdz=-Math.cos(A);var spRate=Math.min(SPD/40,3)*dt*60;for(var spi=0;spi<Math.ceil(spRate);spi++){var idx=sprayGeo.spIdx%spC;spPos[idx*3]=P.x+bwdx*2.5+(Math.random()-.5)*1.2;spPos[idx*3+1]=0.3+Math.random()*0.3;spPos[idx*3+2]=P.z+bwdz*2.5+(Math.random()-.5)*1.2;var spSpd=SPD/80;spVa[idx*3]=bwdx*spSpd+(Math.random()-.5)*1.5;spVa[idx*3+1]=1.5+Math.random()*2;spVa[idx*3+2]=bwdz*spSpd+(Math.random()-.5)*1.5;spLi[idx]=0.4+Math.random()*0.3;sprayGeo.spIdx++}for(var sj=0;sj<spC;sj++){if(spLi[sj]>0){spPos[sj*3]+=spVa[sj*3]*dt;spPos[sj*3+1]+=spVa[sj*3+1]*dt;spVa[sj*3+1]-=6*dt;spPos[sj*3+2]+=spVa[sj*3+2]*dt;spLi[sj]-=dt;if(spLi[sj]<=0)spPos[sj*3+1]=-10}}sprayGeo.attributes.position.needsUpdate=true}else if(sprayGeo){var spHide=sprayGeo.spL,spHPos=sprayGeo.attributes.position.array;for(var sh=0;sh<sprayGeo.spCnt;sh++){if(spHide[sh]>0){spHide[sh]-=dt;if(spHide[sh]<=0)spHPos[sh*3+1]=-10;else{spHPos[sh*3]+=sprayGeo.spV[sh*3]*dt;spHPos[sh*3+1]+=sprayGeo.spV[sh*3+1]*dt;sprayGeo.spV[sh*3+1]-=6*dt;spHPos[sh*3+2]+=sprayGeo.spV[sh*3+2]*dt}}};sprayGeo.attributes.position.needsUpdate=true}
-    playGhost(dt);playAllTimeGhost(dt);playOpponent(dt);playOpGhost(dt);doLaps();doCam(dt);doHUD();doMM();updateSound(dt);if(mpConn&&mpSocket&&performance.now()-lastMpSend>50){mpSend({t:'pos',x:P.x,y:P.y,z:P.z,a:A,pa:pitchA,ra:rollA,s:SPD,lt:lapN>=1?(performance.now()-lapSt):-1,ln:lapN,vx:V.x,vz:V.z});lastMpSend=performance.now()}}if(ren)ren.render(scene,cam)}
+    playGhost(dt);playAllTimeGhost(dt);playOpponent(dt);playOpGhost(dt);doLaps();doCam(dt);doHUD();doMM();updateSound(dt);if(mpConn&&mpSocket&&performance.now()-lastMpSend>50){mpSend({t:'pos',x:P.x,y:P.y,z:P.z,a:A,pa:pitchA,ra:rollA,s:SPD,lt:lapN>=1?(performance.now()-lapSt):-1,ln:lapN,vx:V.x,vz:V.z});lastMpSend=performance.now()}}if(sceneSun&&sceneSun.castShadow&&car){sceneSun.position.set(car.position.x+200,320,car.position.z+140);sceneSun.target.position.set(car.position.x,0,car.position.z);sceneSun.target.updateMatrixWorld()}if(ren)ren.render(scene,cam)}
 // ---- Stat editor ----
 function openSetup(){document.getElementById('setupModal').classList.add('show');document.getElementById('setupDf').value=setupDf;document.getElementById('setupBb').value=setupBb;onSetupChange()}
 function closeSetup(){document.getElementById('setupModal').classList.remove('show')}
