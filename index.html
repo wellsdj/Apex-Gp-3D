@@ -499,6 +499,10 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
       </div>
     </div>
     <div class="sett-row" style="margin-top:8px;border-top:1px solid rgba(255,255,255,.06);padding-top:18px">
+      <span class="sett-lbl">GRAPHICS</span>
+      <button class="sett-acct-btn" id="settQualityBtn" onclick="cycleQuality()" title="Lower = smoother on small laptops">AUTO</button>
+    </div>
+    <div class="sett-row" style="margin-top:8px;border-top:1px solid rgba(255,255,255,.06);padding-top:18px">
       <span class="sett-lbl">CONTROLS</span>
       <button class="sett-acct-btn" onclick="closeSettings();openControls()">EDIT</button>
     </div>
@@ -538,6 +542,36 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
+// ── Performance / quality system ────────────────────────────────────────────
+// Detects the device once, picks a tier (low/med/high), and exposes knobs the
+// renderer + scene builders read. A runtime watchdog also scales render
+// resolution down on weak GPUs so small laptops stay smooth.
+var PERF={tier:'high',pixelRatio:1.5,antialias:true,shadows:true,shadowSize:2048,shadowSoft:true,treeShadows:true,treeCount:350,particleMul:1};
+function applyPerfTier(tier){
+  PERF.tier=tier;
+  if(tier==='low'){PERF.pixelRatio=Math.min(devicePixelRatio,1);PERF.antialias=false;PERF.shadows=false;PERF.shadowSize=1024;PERF.shadowSoft=false;PERF.treeShadows=false;PERF.treeCount=130;PERF.particleMul=.35}
+  else if(tier==='med'){PERF.pixelRatio=Math.min(devicePixelRatio,1.25);PERF.antialias=true;PERF.shadows=true;PERF.shadowSize=1024;PERF.shadowSoft=false;PERF.treeShadows=false;PERF.treeCount=230;PERF.particleMul=.6}
+  else{PERF.pixelRatio=Math.min(devicePixelRatio,1.5);PERF.antialias=true;PERF.shadows=true;PERF.shadowSize=2048;PERF.shadowSoft=true;PERF.treeShadows=true;PERF.treeCount=350;PERF.particleMul=1}
+}
+function detectPerfTier(){
+  var saved=null;try{saved=localStorage.getItem('apexgp_quality')}catch(e){}
+  if(saved&&saved!=='auto'){applyPerfTier(saved);return}
+  var score=0;
+  var cores=navigator.hardwareConcurrency||4,mem=navigator.deviceMemory||4;
+  score+=cores>=8?2:(cores>=4?1:0);
+  score+=mem>=8?2:(mem>=4?1:0);
+  try{
+    var gc=document.createElement('canvas');var gl=gc.getContext('webgl')||gc.getContext('experimental-webgl');
+    var dbg=gl&&gl.getExtension('WEBGL_debug_renderer_info');
+    var r=(dbg?gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL):'')||'';r=r.toLowerCase();
+    if(/(rtx|radeon rx|geforce gtx|geforce rtx|apple m[1-9]|arc a[0-9])/.test(r))score+=3;
+    else if(/(llvmpipe|swiftshader|software)/.test(r))score-=4;
+    else if(/(intel|uhd graphics|hd graphics|iris|mali|adreno|powervr)/.test(r))score-=2;
+  }catch(e){}
+  if(devicePixelRatio>2)score-=1;
+  applyPerfTier(score>=4?'high':(score>=1?'med':'low'));
+}
+detectPerfTier();
 // One-time reset of old best times (remove this block after first load)
 if(!localStorage.getItem('apexgp_v2')){localStorage.removeItem('apexgp_bests');['SUNSET CIRCUIT','T-BONE','THE BOOT'].forEach(function(n){localStorage.removeItem('apexgp_ghost_'+n)});localStorage.setItem('apexgp_v2','1')}
 // One-time reset of SUNSET CIRCUIT & T-BONE best times/ghosts for everyone.
@@ -756,7 +790,7 @@ function trackEnv(renderer,topHex,horHex,botHex){
   var rt=renderer._pmrem.fromEquirectangular(tex);tex.dispose();
   renderer._envCache[key]=rt.texture;return rt.texture;
 }
-function initMenu(){var cv=document.getElementById('menuCanvas');mS=new THREE.Scene();mS.background=new THREE.Color(0x04060e);mS.fog=new THREE.Fog(0x04060e,12,42);mC=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,100);mR=new THREE.WebGLRenderer({canvas:cv,antialias:true});mR.setSize(innerWidth,innerHeight);mR.setPixelRatio(Math.min(devicePixelRatio,2));mR.toneMapping=THREE.ACESFilmicToneMapping;mR.toneMappingExposure=1.05;mR.outputEncoding=THREE.sRGBEncoding;mS.environment=trackEnv(mR,0x2a3e5a,0x10202e,0x05070e);
+function initMenu(){var cv=document.getElementById('menuCanvas');mS=new THREE.Scene();mS.background=new THREE.Color(0x04060e);mS.fog=new THREE.Fog(0x04060e,12,42);mC=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,100);mR=new THREE.WebGLRenderer({canvas:cv,antialias:PERF.antialias});mR.setSize(innerWidth,innerHeight);mR.setPixelRatio(Math.min(devicePixelRatio,PERF.tier==='low'?1:2));mR.toneMapping=THREE.ACESFilmicToneMapping;mR.toneMappingExposure=1.05;mR.outputEncoding=THREE.sRGBEncoding;mS.environment=trackEnv(mR,0x2a3e5a,0x10202e,0x05070e);
 mS.add(new THREE.AmbientLight(0x6688bb,.35));
 var kl=new THREE.SpotLight(0xeaf6ff,2.6);kl.position.set(5,9,4);kl.angle=.5;kl.penumbra=.6;mS.add(kl);
 var cy=new THREE.SpotLight(0x00c8ff,1.6);cy.position.set(-7,4,5);cy.angle=.6;cy.penumbra=.7;mS.add(cy);
@@ -783,7 +817,7 @@ function _gBindOrbit(cv){
   cv.addEventListener('pointerup',function(){gOrb.drag=false;gOrb.lastInput=performance.now()});
   cv.addEventListener('wheel',function(e){gOrb.dist=Math.max(4.2,Math.min(16,gOrb.dist+e.deltaY*.008));gOrb.lastInput=performance.now();e.preventDefault()},{passive:false});
 }
-function initGarage(){var cv=document.getElementById('garageCanvas');gS=new THREE.Scene();gS.background=new THREE.Color(0x04060e);gS.fog=new THREE.Fog(0x04060e,16,55);gC=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,200);gR=new THREE.WebGLRenderer({canvas:cv,antialias:true});gR.setSize(innerWidth,innerHeight);gR.setPixelRatio(Math.min(devicePixelRatio,2));gR.toneMapping=THREE.ACESFilmicToneMapping;gR.toneMappingExposure=1.05;gR.outputEncoding=THREE.sRGBEncoding;gS.environment=trackEnv(gR,0x2a3e5a,0x10202e,0x05070e);
+function initGarage(){var cv=document.getElementById('garageCanvas');gS=new THREE.Scene();gS.background=new THREE.Color(0x04060e);gS.fog=new THREE.Fog(0x04060e,16,55);gC=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,200);gR=new THREE.WebGLRenderer({canvas:cv,antialias:PERF.antialias});gR.setSize(innerWidth,innerHeight);gR.setPixelRatio(Math.min(devicePixelRatio,PERF.tier==='low'?1:2));gR.toneMapping=THREE.ACESFilmicToneMapping;gR.toneMappingExposure=1.05;gR.outputEncoding=THREE.sRGBEncoding;gS.environment=trackEnv(gR,0x2a3e5a,0x10202e,0x05070e);
 gS.add(new THREE.AmbientLight(0x99aacc,.3));
 var kl=new THREE.SpotLight(0xffffff,2.8);kl.position.set(6,9,4);kl.angle=.4;kl.penumbra=.55;gS.add(kl);
 var cy=new THREE.SpotLight(0x00c8ff,1.5);cy.position.set(-7,4.5,4);cy.angle=.6;cy.penumbra=.7;gS.add(cy);
@@ -1374,7 +1408,7 @@ var amI=W.ambOver!==null?W.ambOver:T.ambI,snI=W.sunOver!==null?W.sunOver:T.sunI;
 var snC=W.sunCOver!==null?W.sunCOver:T.sunC,hsC=W.hemiSkyOver!==null?W.hemiSkyOver:T.hemiSky;
 var hgC=W.hemiGndOver!==null?W.hemiGndOver:T.hemiGnd,grC=W.grassOver!==null?W.grassOver:T.grass;
 scene.background=new THREE.Color(skC);scene.fog=new THREE.Fog(fgC,300,1200);if(ren)scene.environment=trackEnv(ren,skC,fgC,grC);
-scene.add(new THREE.AmbientLight(0xffffff,amI*1.15));var sun=new THREE.DirectionalLight(snC,snI*1.25);var _isNight=selWeather==='night'||selWeather==='night_dark';sun.castShadow=!_isNight;if(sun.castShadow){sun.shadow.mapSize.set(2048,2048);var sc=sun.shadow.camera;sc.left=-360;sc.right=360;sc.top=360;sc.bottom=-360;sc.near=50;sc.far=1400;sun.shadow.bias=-0.0006}scene.add(sun);scene.add(new THREE.HemisphereLight(hsC,hgC,.45));skidMat=new THREE.MeshBasicMaterial({color:0x333333,transparent:true,opacity:0.6});skidMarks=[];mkTrack(grC);car=bldCar(carBodyColor,false);scene.add(car);
+scene.add(new THREE.AmbientLight(0xffffff,amI*1.15));var sun=new THREE.DirectionalLight(snC,snI*1.25);var _isNight=selWeather==='night'||selWeather==='night_dark';sun.castShadow=!_isNight&&PERF.shadows;if(sun.castShadow){sun.shadow.mapSize.set(PERF.shadowSize,PERF.shadowSize);var sc=sun.shadow.camera;sc.left=-360;sc.right=360;sc.top=360;sc.bottom=-360;sc.near=50;sc.far=1400;sun.shadow.bias=-0.0006}scene.add(sun);scene.add(new THREE.HemisphereLight(hsC,hgC,.45));skidMat=new THREE.MeshBasicMaterial({color:0x333333,transparent:true,opacity:0.6});skidMarks=[];mkTrack(grC);car=bldCar(carBodyColor,false);scene.add(car);
 // Sun follows a fixed azimuth, shadows centred on the circuit
 sun.position.set(tCX+340,430,tCZ+220);sun.target.position.set(tCX,0,tCZ);scene.add(sun.target);
 mkSky(skC,fgC,snC,_isNight);
@@ -1383,7 +1417,7 @@ if(selWeather==='night'||selWeather==='night_dark'){car.hlOn=true;if(car.headlig
 ghostCar=bldCar(0x4488ff,true);ghostCar.visible=false;scene.add(ghostCar);allTimeCar=bldCar(0xddaa00,true);allTimeCar.visible=false;scene.add(allTimeCar);opCar=bldCar(0x44ff88,true);opCar.visible=false;scene.add(opCar);opBestCar=bldCar(0xff8844,true);opBestCar.visible=false;scene.add(opBestCar);rebuildPeerCars();
 // Rain particles
 if(W.rain){var rType=W.rain,isSnow=rType==='snow'||rType==='snow_heavy',isHeavy=rType==='rain_heavy'||rType==='snow_heavy';
-  var pCount=isHeavy?(isSnow?1750:2500):(isSnow?1000:1500);
+  var pCount=Math.round((isHeavy?(isSnow?1750:2500):(isSnow?1000:1500))*PERF.particleMul);
   rainGeo=new THREE.BufferGeometry();var rp=new Float32Array(pCount*3),rv=new Float32Array(pCount);var spawnC=sd[sfIdx]?sd[sfIdx].c:{x:tCX,z:tCZ};
   for(var ri=0;ri<pCount;ri++){rp[ri*3]=(Math.random()-.5)*160;rp[ri*3+1]=Math.random()*80;rp[ri*3+2]=(Math.random()-.5)*160;rv[ri]=isSnow?(isHeavy?5+Math.random()*8:3+Math.random()*5):(isHeavy?30+Math.random()*45:20+Math.random()*30)}
   rainGeo.setAttribute('position',new THREE.Float32BufferAttribute(rp,3));rainGeo.rv=rv;rainGeo.pCount=pCount;
@@ -1424,7 +1458,7 @@ if(selWeather==='night'||selWeather==='night_dark'){
   }
 }
 builtTrack=selTrack;builtWeather=selWeather;bestLT=Infinity;lastLT=0;bestGhost=[];ghostPlaying=false;_buildColGrid();_mmBounds=null;_mmTrackIdx=-1}
-function initRace(){if(rInit&&builtTrack===selTrack&&builtWeather===selWeather)return;if(!rInit){rInit=true;ren=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});ren.setSize(innerWidth,innerHeight);ren.setPixelRatio(Math.min(devicePixelRatio,1.5));ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.08;ren.outputEncoding=THREE.sRGBEncoding;document.body.insertBefore(ren.domElement,document.getElementById('menuScreen'));cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,2600);clk=new THREE.Clock();mirrorCam=new THREE.PerspectiveCamera(55,340/80,1,800);mmx=document.getElementById('mmC').getContext('2d');addEventListener('keydown',function(e){KY[e.key.toLowerCase()]=true;if(e.key==='Escape'&&missileMode==='aim'){cancelMissileAim();e.preventDefault();return}if(e.key==='Escape'&&reviewMode){exitReview();e.preventDefault();return}if(e.key==='Escape'&&racing){racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()};if(e.key.toLowerCase()==='g')toggleGhost();if(e.key.toLowerCase()==='e'&&racing)activateShield();if(e.key.toLowerCase()==='h')toggleHeadlights();if(e.key.toLowerCase()==='p'&&racing)toggleTireInfo();if(e.key.toLowerCase()==='f'&&racing)toggleFullscreen();if(racing&&mpConn&&e.key>='1'&&e.key<='4')sendEmote(parseInt(e.key,10)-1);e.preventDefault()});addEventListener('keyup',function(e){KY[e.key.toLowerCase()]=false});addEventListener('resize',function(){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});buildScene();rLoop()}else{buildScene()}}
+function initRace(){if(rInit&&builtTrack===selTrack&&builtWeather===selWeather)return;if(!rInit){rInit=true;ren=new THREE.WebGLRenderer({antialias:PERF.antialias,powerPreference:'high-performance'});ren.setSize(innerWidth,innerHeight);_perfBasePR=PERF.pixelRatio;_perfCurPR=PERF.pixelRatio;ren.setPixelRatio(PERF.pixelRatio);ren.shadowMap.enabled=PERF.shadows;ren.shadowMap.type=PERF.shadowSoft?THREE.PCFSoftShadowMap:THREE.PCFShadowMap;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.08;ren.outputEncoding=THREE.sRGBEncoding;document.body.insertBefore(ren.domElement,document.getElementById('menuScreen'));cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,2600);clk=new THREE.Clock();mirrorCam=new THREE.PerspectiveCamera(55,340/80,1,800);mmx=document.getElementById('mmC').getContext('2d');addEventListener('keydown',function(e){KY[e.key.toLowerCase()]=true;if(e.key==='Escape'&&missileMode==='aim'){cancelMissileAim();e.preventDefault();return}if(e.key==='Escape'&&reviewMode){exitReview();e.preventDefault();return}if(e.key==='Escape'&&racing){racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()};if(e.key.toLowerCase()==='g')toggleGhost();if(e.key.toLowerCase()==='e'&&racing)activateShield();if(e.key.toLowerCase()==='h')toggleHeadlights();if(e.key.toLowerCase()==='p'&&racing)toggleTireInfo();if(e.key.toLowerCase()==='f'&&racing)toggleFullscreen();if(racing&&mpConn&&e.key>='1'&&e.key<='4')sendEmote(parseInt(e.key,10)-1);e.preventDefault()});addEventListener('keyup',function(e){KY[e.key.toLowerCase()]=false});addEventListener('resize',function(){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});buildScene();rLoop()}else{buildScene()}}
 
 // ── Procedural asphalt (publicly reproducible, no network needed) ───────────
 // Real photographic asphalt + a normal map derived from its luminance, so the
@@ -1914,25 +1948,36 @@ function mkPitLane(){
   scene.add(lface);
 }
 function mkWorld(){
-  var lC=[0x226633,0x1d7a2d,0x2d8a3e,0x1a5c28];
   var slots=[];
-  for(var i=0;i<350;i++){
+  var want=PERF.treeCount||350;
+  for(var i=0;i<want;i++){
     var a=Math.random()*Math.PI*2,d=55+Math.random()*600,x=tCX+Math.cos(a)*d,z=tCZ+Math.sin(a)*d;
     if(dtt(x,z)<38)continue;
-    slots.push({x:x,z:z,gy:groundHeightAt(x,z)+0.45,h:4+Math.random()*7,cr:2.5+Math.random()*3.5,col:lC[Math.floor(Math.random()*4)]});
+    slots.push({x:x,z:z,gy:groundHeightAt(x,z)+0.45,sc:2.5+(Math.random()-.5)*.6,ry:Math.random()*Math.PI*2});
   }
   var n=slots.length;
-  if(n===0)return;
-  if(TREE_MODEL.ready&&TREE_MODEL.scene){
-    for(var ti=0;ti<n;ti++){
-      var treeClone=TREE_MODEL.scene.clone();
-      var s=slots[ti];
-      var sc=2.5+(Math.random()-.5)*.6;
-      treeClone.position.set(s.x,s.gy,s.z);
-      treeClone.scale.set(sc,sc,sc);
-      treeClone.castShadow=true;
-      treeClone.traverse(function(o){if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
-      scene.add(treeClone);
+  if(n>0&&TREE_MODEL.ready&&TREE_MODEL.scene){
+    // One InstancedMesh per source mesh in the tree model: hundreds of trees
+    // become a couple of draw calls (and a couple of shadow draws) instead of
+    // 700+ per frame. This is the single biggest framerate win.
+    TREE_MODEL.scene.updateMatrixWorld(true);
+    var srcMeshes=[];
+    TREE_MODEL.scene.traverse(function(o){if(o.isMesh&&o.geometry)srcMeshes.push(o)});
+    var _slotM=new THREE.Matrix4(),_instM=new THREE.Matrix4(),_p=new THREE.Vector3(),_q=new THREE.Quaternion(),_s=new THREE.Vector3(),_yAx=new THREE.Vector3(0,1,0);
+    for(var mi=0;mi<srcMeshes.length;mi++){
+      var sm=srcMeshes[mi];
+      var localM=sm.matrixWorld.clone();
+      var inst=new THREE.InstancedMesh(sm.geometry,sm.material,n);
+      inst.castShadow=PERF.treeShadows;inst.receiveShadow=true;inst.frustumCulled=false;
+      for(var ti=0;ti<n;ti++){
+        var s=slots[ti];
+        _q.setFromAxisAngle(_yAx,s.ry);
+        _slotM.compose(_p.set(s.x,s.gy,s.z),_q,_s.set(s.sc,s.sc,s.sc));
+        _instM.multiplyMatrices(_slotM,localM);
+        inst.setMatrixAt(ti,_instM);
+      }
+      inst.instanceMatrix.needsUpdate=true;
+      scene.add(inst);
     }
   }
   mkTrackProps();
@@ -2949,10 +2994,22 @@ document.addEventListener('keydown',function(e){
   rebindAction=null;refreshControlsUI();
   e.preventDefault();e.stopImmediatePropagation();
 },true);
-function openSettings(){document.getElementById('settingsModal').classList.remove('hide');}
+function openSettings(){document.getElementById('settingsModal').classList.remove('hide');updateQualityLbl();}
 function closeSettings(){document.getElementById('settingsModal').classList.add('hide');}
 function toggleSettMusic(){musicEnabled=!musicEnabled;document.getElementById('settMusicTog').classList.toggle('on',musicEnabled);if(musicEnabled){startLobbyMusic();}else{if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}sndLobby.pause();lobbyPlaying=false;}}
 function toggleSettSfx(){sfxEnabled=!sfxEnabled;document.getElementById('settSfxTog').classList.toggle('on',sfxEnabled);if(!sfxEnabled)[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});}
+function _qualityPref(){try{return localStorage.getItem('apexgp_quality')||'auto'}catch(e){return'auto'}}
+function updateQualityLbl(){var b=document.getElementById('settQualityBtn');if(!b)return;var cur=_qualityPref();b.textContent=cur==='auto'?'AUTO · '+PERF.tier.toUpperCase():cur.toUpperCase()}
+function cycleQuality(){
+  var order=['auto','low','med','high'],cur=_qualityPref();
+  var nx=order[(order.indexOf(cur)+1)%order.length];
+  try{localStorage.setItem('apexgp_quality',nx)}catch(e){}
+  if(nx==='auto')detectPerfTier();else applyPerfTier(nx);
+  _perfBasePR=PERF.pixelRatio;_perfCurPR=PERF.pixelRatio;
+  if(ren){ren.setPixelRatio(PERF.pixelRatio);ren.shadowMap.enabled=PERF.shadows;ren.shadowMap.type=PERF.shadowSoft?THREE.PCFSoftShadowMap:THREE.PCFShadowMap;ren.shadowMap.needsUpdate=true}
+  builtTrack=-1; // force a scene rebuild so tree count / particles pick up the new tier next race
+  updateQualityLbl();
+}
 function setMusicVol(v){musicVolume=v/100;if(lobbyPlaying&&musicEnabled)sndLobby.volume=musicVolume;}
 function setSfxVol(v){sfxVolume=v/100;}
 // ── Multiplayer (PartyKit WebSockets) ───────────────────────────────────────
@@ -4113,7 +4170,18 @@ function doMirror(){
   ren.setScissorTest(false);
   ren.setViewport(0,0,cw,ch);
 }
-function rLoop(){requestAnimationFrame(rLoop);var dt=Math.min(clk.getDelta(),.05);if(reviewMode){if(KY['c']&&!KY._cp)cycleCam();KY._cp=KY['c'];reviewTick();doCam(dt);if(ren)ren.render(scene,cam);return}if(racing){if(KY['c']&&!KY._cp)cycleCam();KY._cp=KY['c'];if(KY['r']&&!KY._rp)resetCar();KY._rp=KY['r'];updateRaceLights();updateQualifying();tickRaceLeaderboard(dt);updatePitState();updateTireDynamics(dt);updateCar(dt);updateAI(dt);updateMissiles(dt);if(tireInfoOpen)renderTireInfo();
+var _perfBasePR=1.5,_perfCurPR=1.5,_perfFrames=0,_perfAccum=0;
+function perfWatchdog(dt){
+  // Adaptive resolution: if the GPU can't keep up, quietly drop render scale
+  // (no shader recompile, instant relief); recover gently when there's headroom.
+  if(!ren)return;
+  _perfFrames++;_perfAccum+=dt;
+  if(_perfAccum<2)return;
+  var fps=_perfFrames/_perfAccum;_perfFrames=0;_perfAccum=0;
+  if(fps<40&&_perfCurPR>0.62){_perfCurPR=Math.max(0.6,_perfCurPR*0.85);ren.setPixelRatio(_perfCurPR)}
+  else if(fps>57&&_perfCurPR<_perfBasePR){_perfCurPR=Math.min(_perfBasePR,_perfCurPR*1.08);ren.setPixelRatio(_perfCurPR)}
+}
+function rLoop(){requestAnimationFrame(rLoop);var dt=Math.min(clk.getDelta(),.05);perfWatchdog(dt);if(reviewMode){if(KY['c']&&!KY._cp)cycleCam();KY._cp=KY['c'];reviewTick();doCam(dt);if(ren)ren.render(scene,cam);return}if(racing){if(KY['c']&&!KY._cp)cycleCam();KY._cp=KY['c'];if(KY['r']&&!KY._rp)resetCar();KY._rp=KY['r'];updateRaceLights();updateQualifying();tickRaceLeaderboard(dt);updatePitState();updateTireDynamics(dt);updateCar(dt);updateAI(dt);updateMissiles(dt);if(tireInfoOpen)renderTireInfo();
     if(!flipCrashActive){var upY=Math.cos(rollA)*Math.cos(pitchA);if(upY<-0.3){flipUpsideTime+=dt;}else{flipUpsideTime=0;}if(flipUpsideTime>0.5&&racePhase!=='race'){flipCrashActive=true;raceFadeTimer=3.0;sndCrashFatal.currentTime=0;sndCrashFatal.volume=sfxEnabled?sfxVolume:0;sndCrashFatal.play().catch(function(){});var fo=document.getElementById('flipOverlay');fo.style.display='flex';fo.style.opacity=0;document.getElementById('flipTxt').style.opacity=0;}}
     if(flipCrashActive){raceFadeTimer-=dt;var prog=raceFadeTimer>2?Math.max(0,1-(raceFadeTimer-2)/1):1;document.getElementById('flipOverlay').style.opacity=prog;if(raceFadeTimer<2)document.getElementById('flipTxt').style.opacity=1;if(raceFadeTimer<=0){[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;if(mpConn){respawnInPlace()}else{flipCrashActive=false;flipUpsideTime=0;var fo2=document.getElementById('flipOverlay');fo2.style.opacity=0;fo2.style.display='none';document.getElementById('flipTxt').style.opacity=0;racing=false;document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar();startLobbyMusic();}}}
     if(wallCrashActive){wallCrashTimer-=dt;var wProg=wallCrashTimer>2?Math.max(0,1-(wallCrashTimer-2)/0.8):1;document.getElementById('crashOverlay').style.opacity=wProg;if(wallCrashTimer<2)document.getElementById('crashTxt').style.opacity=1;if(wallCrashTimer<=0){[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;if(mpConn){respawnInPlace()}else{wallCrashActive=false;var co2=document.getElementById('crashOverlay');co2.style.opacity=0;co2.style.display='none';document.getElementById('crashTxt').style.opacity=0;racing=false;document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar();startLobbyMusic();}}}
