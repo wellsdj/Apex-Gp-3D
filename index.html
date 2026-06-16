@@ -194,6 +194,25 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .tog-sm.on{background:rgba(255,100,0,.15);color:#ff7722;border-color:rgba(255,120,0,.4)}
 .img-upload-lbl{font-family:'Orbitron';font-size:8px;letter-spacing:1px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);padding:6px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;overflow:hidden;max-width:100px;text-overflow:ellipsis;text-transform:uppercase;transition:all .2s}
 .img-upload-lbl:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.35);color:#fff}
+/* Sponsor grid in custom panel */
+.spons-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.spons-chip{font-family:'Orbitron';font-size:7.5px;font-weight:700;letter-spacing:.5px;padding:6px 9px;border-radius:6px;cursor:pointer;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);transition:all .18s;text-align:center;min-width:62px;line-height:1.2}
+.spons-chip:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35);transform:scale(1.06)}
+.spons-chip.placed{border-color:rgba(60,255,140,.55);background:rgba(0,100,50,.3);box-shadow:0 0 8px rgba(60,255,140,.2)}
+/* Sponsor popup */
+#sponsPopBg{position:fixed;inset:0;z-index:640;background:rgba(0,0,0,.55);display:none}
+#sponsPopBg.show{display:block}
+#sponsorPopup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:650;background:linear-gradient(195deg,rgba(6,14,32,.97),rgba(3,6,16,.98));border:2px solid rgba(60,200,255,.45);border-radius:14px;padding:22px 26px;width:280px;display:none;pointer-events:all;box-shadow:0 0 40px rgba(0,80,200,.4)}
+#sponsorPopup.show{display:block}
+.spon-title{font-family:'Orbitron';font-size:13px;font-weight:900;letter-spacing:3px;color:#fff;text-align:center;margin-bottom:12px}
+.spon-preview{height:48px;background:rgba(255,255,255,.05);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;border:1px solid rgba(255,255,255,.1);overflow:hidden}
+.spon-place-btns{display:flex;flex-direction:column;gap:7px}
+.spon-pbtn{font-family:'Orbitron';font-size:10px;font-weight:700;letter-spacing:2px;padding:10px 14px;border-radius:7px;cursor:pointer;border:1.5px solid rgba(60,200,255,.4);background:rgba(0,50,120,.4);color:#7dd8ff;transition:all .18s;text-align:center;width:100%}
+.spon-pbtn:hover{background:rgba(0,100,200,.5);border-color:rgba(60,200,255,.8);color:#fff}
+.spon-pbtn.remove{border-color:rgba(255,60,60,.4);background:rgba(100,0,0,.4);color:rgba(255,140,140,.9)}
+.spon-pbtn.remove:hover{background:rgba(180,20,20,.5);border-color:rgba(255,60,60,.8);color:#fff}
+.spon-pbtn.cancel{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:rgba(255,255,255,.45)}
+.spon-pbtn.cancel:hover{background:rgba(255,255,255,.1);color:#fff}
 /* Grip box replaces gear box */
 .gearNum{transition:color .2s}
 /* Cog / settings button */
@@ -473,7 +492,6 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
     <div class="custom-controls">
       <div class="custom-row"><span class="custom-lbl">BODY</span><input type="color" class="cpick" id="carColorPick" value="#dd1111" oninput="applyCarColor(this.value)"></div>
       <div class="custom-row"><span class="custom-lbl">WINGS</span><input type="color" class="cpick" id="accentColorPick" value="#16181c" oninput="applyAccentColor(this.value)"></div>
-      <div class="custom-row"><span class="custom-lbl">HELMET</span><input type="color" class="cpick" id="helmetColorPick" value="#ffffff" oninput="applyHelmetColor(this.value)"></div>
       <div class="custom-row"><span class="custom-lbl">RIMS</span><input type="color" class="cpick" id="rimColorPick" value="#cccccc" oninput="applyRimColor(this.value)"></div>
     </div>
     <div class="custom-sec">Stripes</div>
@@ -485,12 +503,20 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
     <div class="custom-controls">
       <div class="custom-row"><span class="custom-lbl">NUMBER</span><input type="text" class="num-input" id="carNumInput" maxlength="2" value="1" oninput="setCarNumber(this.value)"></div>
     </div>
-    <div class="custom-sec">Livery Photo</div>
-    <div class="custom-controls">
-      <div class="custom-row"><span class="custom-lbl">IMAGE</span><label class="img-upload-lbl" id="imgUploadLbl">UPLOAD<input type="file" accept="image/*" style="display:none" onchange="handleCarImage(event)"></label><button class="cyc-arr" id="imgRemoveBtn" style="display:none" onclick="removeCarImage()">&#10005;</button></div>
-      <div class="custom-row" id="decalPosRow" style="display:none"><span class="custom-lbl">POSITION</span><div id="decalPosWidget" style="width:110px;height:34px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);border-radius:4px;position:relative;cursor:crosshair;touch-action:none;user-select:none" onmousedown="decalPosStart(event)" ontouchstart="decalPosStart(event)"><div id="decalPosDot" style="width:8px;height:8px;background:#ff5500;border-radius:50%;position:absolute;transform:translate(-50%,-50%);left:50%;top:50%;pointer-events:none"></div></div></div>
-      <div class="custom-row" id="decalSzRow" style="display:none"><span class="custom-lbl">SIZE</span><input type="range" min="10" max="90" value="45" id="decalSzSlider" oninput="setDecalSize(this.value)" style="width:110px;cursor:pointer;accent-color:#ff5500"></div>
-    </div>
+    <div class="custom-sec">Sponsors</div>
+    <div class="spons-grid" id="sponsGrid"></div>
+  </div>
+</div>
+<div id="sponsPopBg" onclick="closeSponsorPopup()"></div>
+<div id="sponsorPopup">
+  <div class="spon-title" id="sponsPopTitle">SPONSOR</div>
+  <div class="spon-preview"><canvas id="sponsPreviewCv" width="240" height="44"></canvas></div>
+  <div class="spon-place-btns">
+    <button class="spon-pbtn" onclick="placeSponsor('both')">BOTH PODS</button>
+    <button class="spon-pbtn" onclick="placeSponsor('left')">LEFT POD</button>
+    <button class="spon-pbtn" onclick="placeSponsor('right')">RIGHT POD</button>
+    <button class="spon-pbtn remove" onclick="placeSponsor('remove')">REMOVE ALL</button>
+    <button class="spon-pbtn cancel" onclick="closeSponsorPopup()">CANCEL</button>
   </div>
 </div>
 <div id="settingsModal" class="hide">
@@ -747,10 +773,12 @@ var STRIPE_STYLES=['NONE','CENTER','TWIN','BOLD'];
 var carBodyColor=_saved.body||0xdd1111,stripeStyle=(typeof _saved.stripeStyle==='number'?_saved.stripeStyle:(_saved.stripe?1:0)),stripeColorVal=_saved.stripeCol||0xffffff,carImageTexture=null;
 var accentColor=_saved.accent||0x16181c,helmetColor=_saved.helmet||0xffffff,rimColor=_saved.rim||0xcccccc;
 var carNumber=(_saved.num!=null?String(_saved.num):'1').replace(/[^0-9]/g,'')||'1';
-var carImageData=_saved.img||null; // small dataURL copy of the livery photo (persisted)
-var decalSpots=_saved.decals||{pods:true,nose:false,wing:false};
-var decalSz=_saved.decalSz||0.45,decalOffX=_saved.decalOffX||0.5,decalOffY=_saved.decalOffY||0.5;
+var carImageData=null;
+var decalSpots={pods:true,nose:false,wing:false};
+var decalSz=0.45,decalOffX=0.5,decalOffY=0.5;
 var _carImgRaw=null,_livCanvas=null,_livCtx=null,_livTex=null,_decalDragging=false;
+var sponsorPlacements=_saved.sponsors||{pod_l:null,pod_r:null};
+var _pendingSponsor=null,_carSponTexCache={};
 // Team paint presets: [body, accent, stripe colour, helmet]
 var CAR_PRESETS=[
   {n:'Scarlet',b:0xd40000,a:0x16181c,s:0xffffff,h:0xffe600},
@@ -1110,9 +1138,11 @@ function mkNumberTexture(num){
   var t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t;
 }
 function updateDecalVisibility(g){
-  if(!g)return;
-  var hasImg=!!(carImageTexture&&_carImgRaw);
-  if(g.liveryDecals){g.liveryDecals.forEach(function(d){d.material.map=hasImg?carImageTexture:null;d.material.opacity=hasImg?1:0;d.material.needsUpdate=true})}
+  if(!g||!g.liveryDecals)return;
+  var texL=sponsorPlacements.pod_l?mkCarSponsorTex(sponsorPlacements.pod_l):null;
+  var texR=sponsorPlacements.pod_r?mkCarSponsorTex(sponsorPlacements.pod_r):null;
+  if(g.liveryDecals[0]){g.liveryDecals[0].material.map=texL;g.liveryDecals[0].material.opacity=texL?0.92:0;g.liveryDecals[0].material.needsUpdate=true}
+  if(g.liveryDecals[1]){g.liveryDecals[1].material.map=texR;g.liveryDecals[1].material.opacity=texR?0.92:0;g.liveryDecals[1].material.needsUpdate=true}
 }
 function refreshLivery(){
   if(!_livCanvas){_livCanvas=document.createElement('canvas');_livCanvas.width=512;_livCanvas.height=64;_livCtx=_livCanvas.getContext('2d')}
@@ -1132,6 +1162,95 @@ function refreshLivery(){
   if(dot){dot.style.left=(decalOffX*100)+'%';dot.style.top=(decalOffY*100)+'%'}
 }
 function setDecalSize(v){decalSz=parseFloat(v)/100;refreshLivery();saveCustom()}
+// ── Car sponsor livery system ────────────────────────────────────────────────
+var CAR_SPONSORS=[
+  {id:'apexfuel',name:'APEX FUEL',col:'#00d8ff'},
+  {id:'velocity',name:'VELOCITY',col:'#ffffff'},
+  {id:'nitromax',name:'NITROMAX',col:'#ff6600'},
+  {id:'gridlock',name:'GRIDLOCK',col:'#ffdd00'},
+  {id:'torquex',name:'TORQUE X',col:'#ff2244'},
+  {id:'speedtech',name:'SPEEDTECH',col:'#c8d4ff'},
+  {id:'vortex',name:'VORTEX',col:'#cc44ff'},
+  {id:'titanmot',name:'TITAN MOTORS',col:'#ffffff'},
+  {id:'circpro',name:'CIRCUIT PRO',col:'#33ff88'},
+  {id:'slip',name:'SLIPSTREAM',col:'#4488ff'},
+  {id:'revline',name:'REVLINE',col:'#ffffff'},
+  {id:'accel',name:'ACCEL TECH',col:'#ff8844'},
+  {id:'kore',name:'KORE PERF',col:'#ff3355'},
+  {id:'magnit',name:'MAGNITUDE',col:'#aaddff'},
+  {id:'raptor',name:'RAPTOR',col:'#ffcc00'},
+  {id:'driftco',name:'DRIFT CO',col:'#ffffff'},
+  {id:'surge',name:'SURGE ENERGY',col:'#44ff88'},
+  {id:'carbon',name:'CARBON EDGE',col:'#99ccff'},
+  {id:'pinnacle',name:'PINNACLE',col:'#aaccff'},
+  {id:'hyperdrive',name:'HYPERDRIVE',col:'#00ccff'},
+  {id:'zenith',name:'ZENITH CAP',col:'#ffd700'},
+  {id:'gforce',name:'G-FORCE',col:'#ffffff'},
+  {id:'redline',name:'REDLINE',col:'#ff2244'},
+  {id:'aerodyne',name:'AERODYNE',col:'#88ddff'},
+  {id:'boost',name:'BOOST',col:'#ff8800'},
+  {id:'fuelmax',name:'FUELMAX',col:'#44ff44'},
+  {id:'momentum',name:'MOMENTUM',col:'#e0e0ff'},
+  {id:'overture',name:'OVERTURE',col:'#cc88ff'},
+  {id:'polygon',name:'POLYGON',col:'#ffcc00'},
+  {id:'zenix',name:'ZENIX TECH',col:'#00ccff'},
+  {id:'axisdrv',name:'AXIS DRIVE',col:'#ff8844'},
+  {id:'vectorm',name:'VECTOR',col:'#ffffff'},
+  {id:'crestf',name:'CREST FINANCE',col:'#99ffcc'},
+  {id:'phasemot',name:'PHASE MOTORS',col:'#cc99ff'},
+  {id:'deltaeng',name:'DELTA ENG.',col:'#ffaa44'}
+];
+function mkCarSponsorTex(spid){
+  if(_carSponTexCache[spid])return _carSponTexCache[spid];
+  var sp=null;for(var _i=0;_i<CAR_SPONSORS.length;_i++){if(CAR_SPONSORS[_i].id===spid){sp=CAR_SPONSORS[_i];break}}
+  if(!sp)return null;
+  var cv=document.createElement('canvas');cv.width=512;cv.height=64;
+  var ctx=cv.getContext('2d');ctx.clearRect(0,0,512,64);
+  ctx.font='900 36px Orbitron,sans-serif';
+  ctx.textBaseline='middle';ctx.textAlign='center';
+  ctx.shadowColor='rgba(0,0,0,0.7)';ctx.shadowBlur=8;ctx.lineWidth=6;ctx.lineJoin='round';
+  ctx.strokeStyle='rgba(0,0,0,0.55)';ctx.strokeText(sp.name,256,32);
+  ctx.fillStyle=sp.col;ctx.fillText(sp.name,256,32);
+  var t=new THREE.CanvasTexture(cv);t.needsUpdate=true;
+  _carSponTexCache[spid]=t;return t;
+}
+function applyCarSponsors(){allCustomCars().forEach(function(g){if(g)updateDecalVisibility(g)});if(opCar)updateDecalVisibility(opCar)}
+function renderSponsorGrid(){
+  var el=document.getElementById('sponsGrid');if(!el)return;
+  var h='';
+  for(var i=0;i<CAR_SPONSORS.length;i++){
+    var sp=CAR_SPONSORS[i];
+    var placed=sponsorPlacements.pod_l===sp.id||sponsorPlacements.pod_r===sp.id;
+    h+='<div class="spons-chip'+(placed?' placed':'')+'" onclick="openSponsorPopup(\''+sp.id+'\')" style="color:'+sp.col+'">'+sp.name+'</div>';
+  }
+  el.innerHTML=h;
+}
+function openSponsorPopup(spid){
+  var sp=null;for(var _i=0;_i<CAR_SPONSORS.length;_i++){if(CAR_SPONSORS[_i].id===spid){sp=CAR_SPONSORS[_i];break}}
+  if(!sp)return;_pendingSponsor=spid;
+  document.getElementById('sponsPopTitle').textContent=sp.name;
+  var cv=document.getElementById('sponsPreviewCv');
+  if(cv){var ctx=cv.getContext('2d');ctx.clearRect(0,0,240,44);
+    ctx.font='900 24px Orbitron,sans-serif';ctx.textBaseline='middle';ctx.textAlign='center';
+    ctx.shadowColor='rgba(0,0,0,.6)';ctx.shadowBlur=6;ctx.lineWidth=4;ctx.lineJoin='round';
+    ctx.strokeStyle='rgba(0,0,0,.5)';ctx.strokeText(sp.name,120,22);
+    ctx.fillStyle=sp.col;ctx.fillText(sp.name,120,22)}
+  document.getElementById('sponsPopBg').classList.add('show');
+  document.getElementById('sponsorPopup').classList.add('show');
+}
+function closeSponsorPopup(){
+  document.getElementById('sponsPopBg').classList.remove('show');
+  document.getElementById('sponsorPopup').classList.remove('show');
+  _pendingSponsor=null;
+}
+function placeSponsor(placement){
+  if(!_pendingSponsor)return;
+  if(placement==='both'){sponsorPlacements.pod_l=_pendingSponsor;sponsorPlacements.pod_r=_pendingSponsor}
+  else if(placement==='left'){sponsorPlacements.pod_l=_pendingSponsor}
+  else if(placement==='right'){sponsorPlacements.pod_r=_pendingSponsor}
+  else if(placement==='remove'){sponsorPlacements.pod_l=null;sponsorPlacements.pod_r=null}
+  applyCarSponsors();renderSponsorGrid();saveCustom();closeSponsorPopup();
+}
 function decalPosStart(e){_decalDragging=true;_decalPosUpdate(e);e.preventDefault()}
 function _decalPosUpdate(e){
   var w=document.getElementById('decalPosWidget');if(!w)return;
@@ -1482,7 +1601,7 @@ if(selWeather==='night'||selWeather==='night_dark'){
   }
 }
 builtTrack=selTrack;builtWeather=selWeather;bestLT=Infinity;lastLT=0;bestGhost=[];ghostPlaying=false;_buildColGrid();_mmBounds=null;_mmTrackIdx=-1}
-function initRace(){if(rInit&&builtTrack===selTrack&&builtWeather===selWeather)return;if(!rInit){rInit=true;_perfBasePR=PERF.pixelRatio;_perfCurPR=PERF.pixelRatio;ren.setPixelRatio(PERF.pixelRatio);ren.toneMappingExposure=1.08;ren.shadowMap.enabled=PERF.shadows;ren.shadowMap.type=PERF.shadowSoft?THREE.PCFSoftShadowMap:THREE.PCFShadowMap;cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,2600);clk=new THREE.Clock();mirrorCam=new THREE.PerspectiveCamera(55,340/80,1,800);mmx=document.getElementById('mmC').getContext('2d');addEventListener('keydown',function(e){if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;KY[e.key.toLowerCase()]=true;if(e.key==='Escape'&&missileMode==='aim'){cancelMissileAim();e.preventDefault();return}if(e.key==='Escape'&&reviewMode){exitReview();e.preventDefault();return}if(e.key==='Escape'&&mpSpectating){mpSpectating=false;mpFinishCountdown=0;var _sfb=document.getElementById('mpFinishBanner');if(_sfb)_sfb.classList.remove('show');var _ssb=document.getElementById('spectBanner');if(_ssb)_ssb.classList.remove('show');e.preventDefault();return}if(e.key==='Escape'&&racing){racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()};if(e.key.toLowerCase()==='g')toggleGhost();if(e.key.toLowerCase()==='e'&&racing)activateShield();if(e.key.toLowerCase()==='h')toggleHeadlights();if(e.key.toLowerCase()==='p'&&racing)toggleTireInfo();if(e.key.toLowerCase()==='f'&&racing)toggleFullscreen();if(racing&&mpConn&&e.key>='1'&&e.key<='4')sendEmote(parseInt(e.key,10)-1);e.preventDefault()});addEventListener('keyup',function(e){KY[e.key.toLowerCase()]=false});addEventListener('resize',function(){if(cam){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}});buildScene();rLoop()}else{buildScene()}}
+function initRace(){if(rInit&&builtTrack===selTrack&&builtWeather===selWeather)return;if(!rInit){rInit=true;_perfBasePR=PERF.pixelRatio;_perfCurPR=PERF.pixelRatio;ren.setPixelRatio(PERF.pixelRatio);ren.toneMappingExposure=1.08;ren.shadowMap.enabled=PERF.shadows;ren.shadowMap.type=PERF.shadowSoft?THREE.PCFSoftShadowMap:THREE.PCFShadowMap;cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,2600);clk=new THREE.Clock();mirrorCam=new THREE.PerspectiveCamera(55,340/80,1,800);mmx=document.getElementById('mmC').getContext('2d');addEventListener('keydown',function(e){if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;KY[e.key.toLowerCase()]=true;if(e.key==='Escape'&&missileMode==='aim'){cancelMissileAim();e.preventDefault();return}if(e.key==='Escape'&&reviewMode){exitReview();e.preventDefault();return}if(e.key==='Escape'&&mpSpectating){mpSpectating=false;mpFinishCountdown=0;var _sfb=document.getElementById('mpFinishBanner');if(_sfb)_sfb.classList.remove('show');var _ssb=document.getElementById('spectBanner');if(_ssb)_ssb.classList.remove('show');e.preventDefault();return}if(e.key==='Escape'&&racing){racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()};if(e.key.toLowerCase()==='g')toggleGhost();if(e.key.toLowerCase()==='e'&&racing)activateShield();if(e.key.toLowerCase()==='h')toggleHeadlights();if(e.key.toLowerCase()==='p'&&racing)toggleTireInfo();if(e.key.toLowerCase()==='f'&&racing)toggleFullscreen();if(racing&&mpConn&&e.key>='1'&&e.key<='4')sendEmote(parseInt(e.key,10)-1);e.preventDefault()});addEventListener('keyup',function(e){if(!e.key)return;KY[e.key.toLowerCase()]=false});addEventListener('resize',function(){if(cam){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}});buildScene();rLoop()}else{buildScene()}}
 
 // ── Procedural asphalt (publicly reproducible, no network needed) ───────────
 // Real photographic asphalt + a normal map derived from its luminance, so the
@@ -2699,19 +2818,14 @@ function applyPreset(p){
   syncCustomUI();
 }
 function syncCustomUI(){
-  var ids={carColorPick:carBodyColor,accentColorPick:accentColor,helmetColorPick:helmetColor,rimColorPick:rimColor,stripeColorPick:stripeColorVal};
+  var ids={carColorPick:carBodyColor,accentColorPick:accentColor,rimColorPick:rimColor,stripeColorPick:stripeColorVal};
   Object.keys(ids).forEach(function(k){var el=document.getElementById(k);if(el)el.value=_hex(ids[k])});
   var lbl=document.getElementById('stripeStyleLbl');if(lbl)lbl.textContent=STRIPE_STYLES[stripeStyle];
   var ni=document.getElementById('carNumInput');if(ni)ni.value=carNumber;
-  var rb=document.getElementById('imgRemoveBtn');if(rb)rb.style.display=_carImgRaw?'inline-block':'none';
-  var pr=document.getElementById('decalPosRow'),sr=document.getElementById('decalSzRow');
-  if(pr)pr.style.display=_carImgRaw?'':'none';if(sr)sr.style.display=_carImgRaw?'':'none';
-  var sl=document.getElementById('decalSzSlider');if(sl)sl.value=Math.round(decalSz*100);
-  var dot=document.getElementById('decalPosDot');if(dot){dot.style.left=(decalOffX*100)+'%';dot.style.top=(decalOffY*100)+'%'}
 }
 function openCustom(){
   document.getElementById('customModal').classList.add('show');
-  buildPresetRow();syncCustomUI();
+  buildPresetRow();syncCustomUI();renderSponsorGrid();
 }
 function closeCustom(){document.getElementById('customModal').classList.remove('show');}
 function allCustomCars(){return [gCar,car,mCar]}
@@ -4338,7 +4452,7 @@ function resetSetup(){
 document.addEventListener('click',function(e){if(e.target.id==='setupModal')closeSetup()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('setupModal').classList.contains('show')){closeSetup();e.stopImmediatePropagation()}},true);
 // ---- Car styling ----
-function saveCustom(){try{localStorage.setItem('apexgp_custom',JSON.stringify({body:carBodyColor,stripeStyle:stripeStyle,stripeCol:stripeColorVal,accent:accentColor,helmet:helmetColor,rim:rimColor,num:carNumber,decals:decalSpots,img:carImageData,decalSz:decalSz,decalOffX:decalOffX,decalOffY:decalOffY}))}catch(e){}scheduleCloudSave()}
+function saveCustom(){try{localStorage.setItem('apexgp_custom',JSON.stringify({body:carBodyColor,stripeStyle:stripeStyle,stripeCol:stripeColorVal,accent:accentColor,helmet:helmetColor,rim:rimColor,num:carNumber,sponsors:sponsorPlacements}))}catch(e){}scheduleCloudSave()}
 function applyCarColor(hexStr){
   carBodyColor=parseInt(hexStr.replace('#',''),16);
   allCustomCars().forEach(function(c){if(c&&c.bodyMat)c.bodyMat.color.setHex(carBodyColor)});
@@ -4544,11 +4658,8 @@ function _applyCustomData(c){
   carBodyColor=c.body||0xdd1111;stripeStyle=(typeof c.stripeStyle==='number')?Math.min(c.stripeStyle,STRIPE_STYLES.length-1):(c.stripe?1:0);stripeColorVal=c.stripeCol||0xffffff;
   accentColor=c.accent||0x16181c;helmetColor=c.helmet||0xffffff;rimColor=c.rim||0xcccccc;
   if(c.num!=null)carNumber=String(c.num).replace(/[^0-9]/g,'')||'1';
-  if(c.decals)decalSpots=c.decals;
-  if(c.decalSz!=null)decalSz=c.decalSz;
-  if(c.decalOffX!=null)decalOffX=c.decalOffX;
-  if(c.decalOffY!=null)decalOffY=c.decalOffY;
-  if(c.img){loadCarImageData(c.img)}
+  if(c.sponsors)sponsorPlacements=c.sponsors;
+  applyCarSponsors();
   try{localStorage.setItem('apexgp_custom',JSON.stringify(c))}catch(e){}
   allCustomCars().forEach(function(cc){
     if(!cc)return;
@@ -4685,7 +4796,7 @@ document.getElementById('authPass').addEventListener('keydown',function(e){if(e.
 document.getElementById('authPass').addEventListener('keydown',function(e){if(e.key==='Enter')authSubmit()});
 document.addEventListener('click',function(e){if(e.target.id==='authModal')closeAuth()});
 
-if(carImageData)loadCarImageData(carImageData);
+applyCarSponsors();
 initMenu();
 </script>
 </body>
