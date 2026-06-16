@@ -426,7 +426,7 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 <div id="flipOverlay"><div class="crash-txt" id="flipTxt">FATAL CRASH</div></div>
 <div id="crashOverlay"><div class="crash-txt" id="crashTxt">FATAL CRASH</div></div>
 <div id="qualiUI"><div class="quali-title">QUALIFYING<span class="quali-time" id="qualiTime">3:00</span></div><div class="quali-standings" id="qualiStandings"></div></div>
-<div id="raceLbUI"><div class="quali-title">LIVE STANDINGS</div><div class="quali-standings" id="raceLbStandings"></div></div>
+<div id="raceLbUI"><div class="quali-title" id="raceLbTitle">RACE POSITIONS</div><div class="quali-standings" id="raceLbStandings"></div></div>
 <div id="raceLights"><div class="rl-light" id="rl1"></div><div class="rl-light" id="rl2"></div><div class="rl-light" id="rl3"></div><div class="rl-light" id="rl4"></div><div class="rl-light" id="rl5"></div></div>
 <div id="reviewModal"><div class="rv-box"><button class="ctrl-close" onclick="closeReviewMenu()">&#10005;</button><div class="rv-title">REVIEW BEST LAP</div><div id="reviewList"></div><div class="rv-hint">Click a track to watch your fastest lap. Esc to exit.</div></div></div>
 <div id="reviewIndicator">▶ REVIEWING BEST LAP — C CAMERA · ESC EXIT</div>
@@ -711,7 +711,7 @@ var RECORD_INTERVAL=50,lastRecordTime=0;
 var mpConn=null,mpMode=null; // null|'host'|'join'
 var mpCode='',mpReady=false;
 var opCar=null,opPos=null,opPrevPos=null,opPosTime=0;
-var opSpd=0,opLapT=-1,opLapTRcvAt=0,opLapN=0,opVel=null;
+var opSpd=0,opLapT=-1,opLapTRcvAt=0,opLapN=0,opVel=null,opNearIdx=0;
 var nuked=false,nukeActive=false;
 var blackedOut=false,blackoutActive=false;
 var inPitLane=false,inPitBox=false,pitOpen=false,recentlyPitted=false;
@@ -3309,6 +3309,7 @@ function handleMpMessage(raw){
     pp2.posTime=now2;
     if(typeof d.s==='number')pp2.spd=d.s;
     if(typeof d.ln==='number')pp2.lapN=d.ln;
+    if(typeof d.ni==='number')pp2.nearIdx=d.ni;
     if(typeof d.lt==='number'){pp2.lapT=d.lt;pp2.lapTAt=now2}
     if(typeof d.vx==='number'&&typeof d.vz==='number')pp2.vel={x:d.vx,z:d.vz};
     if(pp2.id===primaryPeerId){
@@ -3318,6 +3319,7 @@ function handleMpMessage(raw){
       if(typeof d.s==='number')opSpd=d.s;
       if(typeof d.lt==='number'){opLapT=d.lt;opLapTRcvAt=now2}
       if(typeof d.ln==='number')opLapN=d.ln;
+      if(typeof d.ni==='number')opNearIdx=d.ni;
       if(typeof d.vx==='number'&&typeof d.vz==='number')opVel={x:d.vx,z:d.vz};
     }
     return;
@@ -3828,18 +3830,23 @@ function cancelQualifying(){
 var _rbTickT=0;
 function renderRaceLeaderboard(){
   var el=document.getElementById('raceLbStandings');if(!el)return;
-  var rows=[{n:'YOU',b:bestLT,me:true}];
+  var n=tPts?tPts.length:2400;
+  // Race distance = completed laps * track points + current nearest index
+  var myDist=lapN*n+carNearIdx;
+  var rows=[{name:'YOU',lapN:lapN,dist:myDist,me:true}];
   for(var id in peers){
     var p=peers[id];
-    rows.push({n:p.name,b:p.raceBest,me:false});
+    var pni=(p.nearIdx||0);
+    var pln=(p.lapN||0);
+    rows.push({name:p.name||'OPPONENT',lapN:pln,dist:pln*n+pni,me:false});
   }
-  rows.sort(function(a,b){return (a.b||Infinity)-(b.b||Infinity)});
-  var h='',myPos=0;
+  rows.sort(function(a,b){return b.dist-a.dist});
+  var myPos=0,h='';
   for(var i=0;i<rows.length;i++){
     var r=rows[i];
     if(r.me)myPos=i;
-    var ts=isFinite(r.b)?fmt(r.b):'--:--.---';
-    h+='<div class="quali-row'+(r.me?' me':'')+'"><span class="qn">P'+(i+1)+' '+r.n+'</span><span class="qt">'+ts+'</span></div>';
+    var lapTxt='LAP '+(Math.max(1,r.lapN));
+    h+='<div class="quali-row'+(r.me?' me':'')+'"><span class="qn">P'+(i+1)+' '+r.name+'</span><span class="qt">'+lapTxt+'</span></div>';
   }
   el.innerHTML=h;
   var pb=document.getElementById('posBox');
@@ -3850,10 +3857,11 @@ function renderRaceLeaderboard(){
 }
 function tickRaceLeaderboard(dt){
   var rb=document.getElementById('raceLbUI');if(!rb)return;
-  if(racePhase==='race'&&racing){
+  if(racePhase==='race'&&racing&&peerCount>0){
     rb.classList.add('show');
+    var tl=document.getElementById('raceLbTitle');if(tl)tl.textContent='RACE POSITIONS';
     _rbTickT-=dt;
-    if(_rbTickT<=0){renderRaceLeaderboard();_rbTickT=0.4}
+    if(_rbTickT<=0){renderRaceLeaderboard();_rbTickT=0.25}
   } else {
     rb.classList.remove('show');
   }
@@ -4198,13 +4206,13 @@ function perfWatchdog(dt){
   else if(fps<45&&_perfCurPR>0.55){_perfCurPR=Math.max(0.55,_perfCurPR*0.88);ren.setPixelRatio(_perfCurPR)}
   else if(fps>57&&_perfCurPR<_perfBasePR){_perfCurPR=Math.min(_perfBasePR,_perfCurPR*1.05);ren.setPixelRatio(_perfCurPR)}
 }
-function rLoop(){requestAnimationFrame(rLoop);var dt=Math.min(clk.getDelta(),.05);perfWatchdog(dt);if(reviewMode){if(KY['c']&&!KY._cp)cycleCam();KY._cp=KY['c'];reviewTick();doCam(dt);if(ren)ren.render(scene,cam);return}if(racing){if(KY['c']&&!KY._cp)cycleCam();KY._cp=KY['c'];if(KY['r']&&!KY._rp)resetCar();KY._rp=KY['r'];updateRaceLights();updateQualifying();tickRaceLeaderboard(dt);updatePitState();updateTireDynamics(dt);updateCar(dt);updateAI(dt);updateMissiles(dt);if(tireInfoOpen)renderTireInfo();
+function rLoop(){requestAnimationFrame(rLoop);var dt=Math.min(clk.getDelta(),.05);perfWatchdog(dt);if(reviewMode){if(KY['c']&&!KY._cp)cycleCam();KY._cp=KY['c'];reviewTick();doCam(dt);if(ren)ren.render(scene,cam);return}if(racing){if(KY['c']&&!KY._cp)cycleCam();KY._cp=KY['c'];if(KY['r']&&!KY._rp&&!(mpConn&&racePhase==='race'))resetCar();KY._rp=KY['r'];updateRaceLights();updateQualifying();tickRaceLeaderboard(dt);updatePitState();updateTireDynamics(dt);updateCar(dt);updateAI(dt);updateMissiles(dt);if(tireInfoOpen)renderTireInfo();
     if(!flipCrashActive){var upY=Math.cos(rollA)*Math.cos(pitchA);if(upY<-0.3){flipUpsideTime+=dt;}else{flipUpsideTime=0;}if(flipUpsideTime>0.5&&racePhase!=='race'){flipCrashActive=true;raceFadeTimer=3.0;sndCrashFatal.currentTime=0;sndCrashFatal.volume=sfxEnabled?sfxVolume:0;sndCrashFatal.play().catch(function(){});var fo=document.getElementById('flipOverlay');fo.style.display='flex';fo.style.opacity=0;document.getElementById('flipTxt').style.opacity=0;}}
     if(flipCrashActive){raceFadeTimer-=dt;var prog=raceFadeTimer>2?Math.max(0,1-(raceFadeTimer-2)/1):1;document.getElementById('flipOverlay').style.opacity=prog;if(raceFadeTimer<2)document.getElementById('flipTxt').style.opacity=1;if(raceFadeTimer<=0){[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;if(mpConn){respawnInPlace()}else{flipCrashActive=false;flipUpsideTime=0;var fo2=document.getElementById('flipOverlay');fo2.style.opacity=0;fo2.style.display='none';document.getElementById('flipTxt').style.opacity=0;racing=false;document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar();startLobbyMusic();}}}
     if(wallCrashActive){wallCrashTimer-=dt;var wProg=wallCrashTimer>2?Math.max(0,1-(wallCrashTimer-2)/0.8):1;document.getElementById('crashOverlay').style.opacity=wProg;if(wallCrashTimer<2)document.getElementById('crashTxt').style.opacity=1;if(wallCrashTimer<=0){[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;if(mpConn){respawnInPlace()}else{wallCrashActive=false;var co2=document.getElementById('crashOverlay');co2.style.opacity=0;co2.style.display='none';document.getElementById('crashTxt').style.opacity=0;racing=false;document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar();startLobbyMusic();}}}
     updateDebris(dt);for(var si=skidMarks.length-1;si>=0;si--){skidMarks[si].life-=dt;if(skidMarks[si].life<=0){scene.remove(skidMarks[si]);skidMarks.splice(si,1)}else if(skidMarks[si].life<2){if(!skidMarks[si]._fadeMat){skidMarks[si]._fadeMat=skidMat.clone();skidMarks[si].material=skidMarks[si]._fadeMat}skidMarks[si]._fadeMat.opacity=skidMarks[si].life/2*.6}}if(rainDrops&&rainGeo){var rPos=rainGeo.attributes.position.array,rv2=rainGeo.rv,rCnt=rainGeo.pCount;for(var ri2=0;ri2<rCnt;ri2++){rPos[ri2*3+1]-=rv2[ri2]*dt;if(rPos[ri2*3+1]<-P.y){rPos[ri2*3+1]=40+Math.random()*40;rPos[ri2*3]=(Math.random()-.5)*160;rPos[ri2*3+2]=(Math.random()-.5)*160}};rainGeo.attributes.position.needsUpdate=true;rainDrops.position.set(P.x,0,P.z)}
     if(sprayGeo&&sprayPts&&SPD>15){var spPos=sprayGeo.attributes.position.array,spVa=sprayGeo.spV,spLi=sprayGeo.spL,spC=sprayGeo.spCnt;var bwdx=-Math.sin(A),bwdz=-Math.cos(A);var spRate=Math.min(SPD/40,3)*dt*60;for(var spi=0;spi<Math.ceil(spRate);spi++){var idx=sprayGeo.spIdx%spC;spPos[idx*3]=P.x+bwdx*2.5+(Math.random()-.5)*1.2;spPos[idx*3+1]=0.3+Math.random()*0.3;spPos[idx*3+2]=P.z+bwdz*2.5+(Math.random()-.5)*1.2;var spSpd=SPD/80;spVa[idx*3]=bwdx*spSpd+(Math.random()-.5)*1.5;spVa[idx*3+1]=1.5+Math.random()*2;spVa[idx*3+2]=bwdz*spSpd+(Math.random()-.5)*1.5;spLi[idx]=0.4+Math.random()*0.3;sprayGeo.spIdx++}for(var sj=0;sj<spC;sj++){if(spLi[sj]>0){spPos[sj*3]+=spVa[sj*3]*dt;spPos[sj*3+1]+=spVa[sj*3+1]*dt;spVa[sj*3+1]-=6*dt;spPos[sj*3+2]+=spVa[sj*3+2]*dt;spLi[sj]-=dt;if(spLi[sj]<=0)spPos[sj*3+1]=-10}}sprayGeo.attributes.position.needsUpdate=true}else if(sprayGeo){var spHide=sprayGeo.spL,spHPos=sprayGeo.attributes.position.array;for(var sh=0;sh<sprayGeo.spCnt;sh++){if(spHide[sh]>0){spHide[sh]-=dt;if(spHide[sh]<=0)spHPos[sh*3+1]=-10;else{spHPos[sh*3]+=sprayGeo.spV[sh*3]*dt;spHPos[sh*3+1]+=sprayGeo.spV[sh*3+1]*dt;sprayGeo.spV[sh*3+1]-=6*dt;spHPos[sh*3+2]+=sprayGeo.spV[sh*3+2]*dt}}};sprayGeo.attributes.position.needsUpdate=true}
-    playGhost(dt);playAllTimeGhost(dt);playOpponent(dt);playOpGhost(dt);doLaps();doCam(dt);doHUD();doMM();updateSound(dt);if(mpConn&&mpSocket&&performance.now()-lastMpSend>50){mpSend({t:'pos',x:P.x,y:P.y,z:P.z,a:A,pa:pitchA,ra:rollA,s:SPD,lt:lapN>=1?(performance.now()-lapSt):-1,ln:lapN,vx:V.x,vz:V.z});lastMpSend=performance.now()}}if(sceneSun&&sceneSun.castShadow&&car){sceneSun.position.set(car.position.x+200,320,car.position.z+140);sceneSun.target.position.set(car.position.x,0,car.position.z);sceneSun.target.updateMatrixWorld()}if(ren&&(racing||reviewMode))ren.render(scene,cam)}
+    playGhost(dt);playAllTimeGhost(dt);playOpponent(dt);playOpGhost(dt);doLaps();doCam(dt);doHUD();doMM();updateSound(dt);if(mpConn&&mpSocket&&performance.now()-lastMpSend>50){mpSend({t:'pos',x:P.x,y:P.y,z:P.z,a:A,pa:pitchA,ra:rollA,s:SPD,lt:lapN>=1?(performance.now()-lapSt):-1,ln:lapN,ni:carNearIdx,vx:V.x,vz:V.z});lastMpSend=performance.now()}}if(sceneSun&&sceneSun.castShadow&&car){sceneSun.position.set(car.position.x+200,320,car.position.z+140);sceneSun.target.position.set(car.position.x,0,car.position.z);sceneSun.target.updateMatrixWorld()}if(ren&&(racing||reviewMode))ren.render(scene,cam)}
 // ---- Stat editor ----
 function openSetup(){document.getElementById('setupModal').classList.add('show');document.getElementById('setupDf').value=setupDf;document.getElementById('setupBb').value=setupBb;onSetupChange()}
 function closeSetup(){document.getElementById('setupModal').classList.remove('show')}
