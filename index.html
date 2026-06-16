@@ -217,7 +217,7 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 #lbGarBtn{top:82px !important;bottom:auto !important;left:50% !important;right:auto !important;transform:translateX(-50%) !important;font-size:11px !important;padding:12px 30px !important}
 #lbModal{position:fixed;inset:0;z-index:750;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center}
 #lbModal.show{display:flex}
-#lbBox{background:linear-gradient(195deg,rgba(6,14,32,.97),rgba(3,6,16,.98));border:2px solid rgba(60,200,255,.45);border-radius:16px;padding:28px 32px;width:min(560px,92vw);max-height:82vh;display:flex;flex-direction:column;position:relative}
+#lbBox{background:linear-gradient(195deg,rgba(6,14,32,.97),rgba(3,6,16,.98));border:2px solid rgba(60,200,255,.45);border-radius:16px;padding:28px 32px;width:min(560px,92vw);max-height:82vh;display:flex;flex-direction:column;position:relative;gap:0}
 .lb-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:22px;color:rgba(255,255,255,.35);cursor:pointer;pointer-events:all;line-height:1}
 .lb-close:hover{color:#fff}
 .lb-title{font-family:'Orbitron';font-size:15px;font-weight:900;letter-spacing:4px;color:#fff;text-align:center;margin-bottom:16px}
@@ -229,14 +229,14 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 #lbTable::-webkit-scrollbar-thumb{background:rgba(60,200,255,.3);border-radius:2px}
 .lb-row{display:grid;grid-template-columns:36px 1fr 108px;gap:6px;align-items:center;padding:7px 10px;border-radius:7px;margin-bottom:2px}
 .lb-row:nth-child(even){background:rgba(255,255,255,.02)}
-.lb-row.lb-me{background:rgba(0,80,200,.28)!important;border:1px solid rgba(60,200,255,.4)}
+.lb-row.lb-me{background:rgba(0,80,200,.28);border:1px solid rgba(60,200,255,.4)}
 .lb-rank{font-family:'Orbitron';font-size:11px;font-weight:700;color:rgba(255,255,255,.35);text-align:center}
-.lb-rank.r1{color:#ffd700}.lb-rank.r2{color:#c0c8d0}.lb-rank.r3{color:#cd7f32}
+.lb-rank.r1{color:#ffd700}.lb-rank.r2{color:#b8c8d8}.lb-rank.r3{color:#cd7f32}
 .lb-name{font-family:'Orbitron';font-size:10px;color:rgba(255,255,255,.8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.5px}
-.lb-time{font-family:'Orbitron';font-size:11px;font-weight:700;color:#7dd8ff;text-align:right}
+.lb-time{font-family:'Orbitron';font-size:11px;font-weight:700;color:#7dd8ff;text-align:right;letter-spacing:.5px}
 .lb-sep{text-align:center;color:rgba(255,255,255,.2);font-size:14px;padding:3px 0;letter-spacing:6px}
 #lbMyRank{font-family:'Orbitron';font-size:9px;font-weight:700;color:#7dd8ff;text-align:center;margin-top:10px;letter-spacing:2px;min-height:14px}
-#lbStatus{font-family:'Orbitron';font-size:8px;color:rgba(255,255,255,.3);text-align:center;margin-top:5px;letter-spacing:1.5px;min-height:12px}
+#lbStatus{font-family:'Orbitron';font-size:8px;color:rgba(255,255,255,.3);text-align:center;margin-top:6px;letter-spacing:1.5px;min-height:12px}
 /* Grip box replaces gear box */
 .gearNum{transition:color .2s}
 /* Cog / settings button */
@@ -545,8 +545,8 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 </div>
 <div id="lbModal">
   <div id="lbBox">
-    <button class="lb-close" onclick="closeLeaderboard()">&#10005;</button>
-    <div class="lb-title">&#127937; LEADERBOARD</div>
+    <button class="lb-close" onclick="closeLeaderboard()">✕</button>
+    <div class="lb-title">🏁 LEADERBOARD</div>
     <div id="lbTabs"></div>
     <div id="lbTable"></div>
     <div id="lbMyRank"></div>
@@ -602,8 +602,8 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
       <div class="auth-status" id="authSyncStatus">DATA SYNCED</div>
       <button class="auth-btn auth-btn-primary" onclick="cloudSave()" style="margin-bottom:8px">SAVE TO CLOUD</button>
       <button class="auth-btn auth-btn-secondary" onclick="cloudLoad()">LOAD FROM CLOUD</button>
-      <button class="auth-btn auth-btn-secondary" onclick="openLeaderboard();closeAuth()" style="margin-top:6px">LEADERBOARD</button>
-      <button class="auth-btn auth-btn-secondary" onclick="authLogout()" style="margin-top:4px">SIGN OUT</button>
+      <button class="auth-btn auth-btn-secondary" onclick="openLeaderboard()" style="margin-top:6px">LEADERBOARD</button>
+<button class="auth-btn auth-btn-secondary" onclick="authLogout()" style="margin-top:6px">SIGN OUT</button>
     </div>
   </div>
 </div>
@@ -4822,7 +4822,6 @@ if(fbAuth)fbAuth.onAuthStateChanged(function(user){
   if(fbUser&&!was)cloudMergeLoad();
 });
 // ── Global Leaderboard ──────────────────────────────────────────────────────
-// Requires Firestore rule: match /lb/{t}/e/{uid}{allow read:if true;allow write:if request.auth.uid==uid;}
 var _lbTrackIdx=0;
 function openLeaderboard(){
   var el=document.getElementById('lbModal');el.classList.add('show');
@@ -4833,17 +4832,18 @@ function openLeaderboard(){
 function closeLeaderboard(){document.getElementById('lbModal').classList.remove('show')}
 function loadLbTrack(idx){
   _lbTrackIdx=idx;
-  document.getElementById('lbTabs').querySelectorAll('.lb-tab').forEach(function(t,i){t.className='lb-tab'+(i===idx?' active':'')});
+  var tabs=document.getElementById('lbTabs').querySelectorAll('.lb-tab');
+  tabs.forEach(function(t,i){t.className='lb-tab'+(i===idx?' active':'')});
   var table=document.getElementById('lbTable'),status=document.getElementById('lbStatus'),myRankEl=document.getElementById('lbMyRank');
   table.innerHTML='';status.textContent='LOADING...';myRankEl.textContent='';
   if(!fbDb){status.textContent='';myRankEl.textContent='SIGN IN TO VIEW LEADERBOARD';return}
   var trackName=TRACKS[idx].name;
   fbDb.collection('lb').doc(trackName).collection('e').orderBy('ms').limit(200).get()
     .then(function(snap){
-      var entries=[];snap.forEach(function(doc){var d=doc.data();if(typeof d.ms==='number')entries.push({uid:doc.id,name:d.name||'RACER',ms:d.ms})});
+      var entries=[];snap.forEach(function(doc){var d=doc.data();entries.push({uid:doc.id,name:d.name||'RACER',ms:d.ms})});
       entries.sort(function(a,b){return a.ms-b.ms});
       _renderLbTable(entries,trackName);
-    }).catch(function(){status.textContent='COULD NOT LOAD — CHECK FIRESTORE RULES';myRankEl.textContent=''});
+    }).catch(function(e){status.textContent='COULD NOT LOAD — CHECK FIRESTORE RULES';myRankEl.textContent=''});
 }
 function _renderLbTable(entries,trackName){
   var table=document.getElementById('lbTable'),status=document.getElementById('lbStatus'),myRankEl=document.getElementById('lbMyRank');
@@ -4854,19 +4854,20 @@ function _renderLbTable(entries,trackName){
   for(var i=0;i<Math.min(3,entries.length);i++)show[i]=true;
   if(myIdx>=0){for(var i=Math.max(0,myIdx-5);i<=Math.min(entries.length-1,myIdx+5);i++)show[i]=true}
   var idxs=Object.keys(show).map(Number).sort(function(a,b){return a-b}),html='',prev=-2;
-  idxs.forEach(function(n){
-    if(prev>=0&&n>prev+1)html+='<div class="lb-sep">···</div>';
-    var e=entries[n],rank=n+1,isMe=e.uid===myUid;
+  idxs.forEach(function(idx){
+    if(prev>=0&&idx>prev+1)html+='<div class="lb-sep">···</div>';
+    var e=entries[idx],rank=idx+1,isMe=e.uid===myUid;
     var rCls=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
-    html+='<div class="lb-row'+(isMe?' lb-me':'')+'"><div class="lb-rank '+rCls+'">'+rank+'</div><div class="lb-name">'+(isMe?'&#9658; ':'')+e.name+'</div><div class="lb-time">'+fmt(e.ms)+'</div></div>';
-    prev=n;
+    html+='<div class="lb-row'+(isMe?' lb-me':'')+'"><div class="lb-rank '+rCls+'">'+rank+'</div><div class="lb-name">'+(isMe?'▸ ':'')+e.name+'</div><div class="lb-time">'+fmt(e.ms)+'</div></div>';
+    prev=idx;
   });
   table.innerHTML=html;
-  status.textContent=entries.length>=200?'SHOWING TOP 200':'';
   if(myIdx>=0){myRankEl.textContent='YOUR RANK: #'+(myIdx+1)+' OF '+entries.length}
-  else if(myUid){var b=getTrackBests()[trackName];myRankEl.textContent=b?'YOUR BEST: '+fmt(b)+' — RACE AGAIN TO SUBMIT':'NO TIME SET FOR THIS CIRCUIT'}
+  else if(myUid){var b=getTrackBests()[trackName];myRankEl.textContent=b?'YOUR BEST: '+fmt(b)+' — SET A NEW BEST TO APPEAR':'NO TIME SET FOR THIS CIRCUIT'}
   else{myRankEl.textContent='SIGN IN TO APPEAR ON LEADERBOARD'}
+  status.textContent=entries.length>=200?'SHOWING TOP 200':'';
 }
+// Requires Firestore rule: match /lb/{t}/e/{uid} { allow read:if true; allow write:if request.auth.uid==uid; }
 function lbSubmitBest(trackName,ms){
   if(!fbUser||!fbDb)return;
   fbDb.collection('lb').doc(trackName).collection('e').doc(fbUser.uid)
