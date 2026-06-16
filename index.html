@@ -200,8 +200,8 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .spons-chip:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35);transform:scale(1.06)}
 .spons-chip.placed{border-color:rgba(60,255,140,.55);background:rgba(0,100,50,.3);box-shadow:0 0 8px rgba(60,255,140,.2)}
 /* Sponsor popup */
-#sponsPopBg{position:fixed;inset:0;z-index:640;background:rgba(0,0,0,.55);display:none}
-#sponsPopBg.show{display:block}
+#sponsPopBg{position:fixed;inset:0;z-index:640;background:rgba(0,0,0,.55);display:none;pointer-events:none}
+#sponsPopBg.show{display:block;pointer-events:all}
 #sponsorPopup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:650;background:linear-gradient(195deg,rgba(6,14,32,.97),rgba(3,6,16,.98));border:2px solid rgba(60,200,255,.45);border-radius:14px;padding:22px 26px;width:280px;display:none;pointer-events:all;box-shadow:0 0 40px rgba(0,80,200,.4)}
 #sponsorPopup.show{display:block}
 .spon-title{font-family:'Orbitron';font-size:13px;font-weight:900;letter-spacing:3px;color:#fff;text-align:center;margin-bottom:12px}
@@ -1657,12 +1657,17 @@ var BARRIER={geo:null,mat:null,ready:false,len:5,zHalf:0};
   },undefined,function(e){console.error('barrier load failed',e)});
 })();
 var TREE_MODEL={scene:null,ready:false};
-(function loadPineTree(){
-  if(typeof THREE.GLTFLoader==='undefined'){setTimeout(loadPineTree,200);return}
-  var treeUrl='https://xtgnhbmwmhgk4sm2.private.blob.vercel-storage.com/pine_tree.glb?vercel-blob-delegation=eyJzdG9yZUlkIjoic3RvcmVfWFRnTmhCbXdNaGdrNFNtMiIsIm93bmVySWQiOiJ0ZWFtX1B4cEhnVkNpWTd0UDFBSjdFcWpOb1QwYiIsInBhdGhuYW1lIjoiKiIsIm9wZXJhdGlvbnMiOlsiZ2V0IiwiaGVhZCJdLCJ2YWxpZFVudGlsIjoxNzgxNDE3NDQ1OTg5LCJpYXQiOjE3ODEzNzQyNDYwODd9.m3Hj5nf54FVPodzPGfdQ8rQmVFx2acG6lULSrs7BYaA&vercel-blob-signature=pKUA8aeUfP7hbxADI9YbIiPRrfzbFUbzAYx-8ft8T58';
-  new THREE.GLTFLoader().load(treeUrl,function(g){
-    TREE_MODEL.scene=g.scene;TREE_MODEL.ready=true;
-  },undefined,function(e){console.error('pine tree load failed',e)});
+(function buildTree(){
+  var g=new THREE.Group();
+  var trunkM=new THREE.MeshLambertMaterial({color:0x4a2f1a});
+  var foliageM=new THREE.MeshLambertMaterial({color:0x1e6830});
+  var trunk=new THREE.Mesh(new THREE.CylinderGeometry(.16,.26,2.4,7),trunkM);
+  trunk.position.y=1.2;trunk.castShadow=true;trunk.receiveShadow=true;g.add(trunk);
+  [[2.1,1.65,1.9],[1.5,2.95,1.5],[.95,4.0,1.15]].forEach(function(t){
+    var c=new THREE.Mesh(new THREE.ConeGeometry(t[0],t[2]*1.9,8),foliageM);
+    c.position.y=t[1];c.castShadow=true;c.receiveShadow=true;g.add(c);
+  });
+  TREE_MODEL.scene=g;TREE_MODEL.ready=true;
 })();
 function mkAsphaltTexture(weather){
   var _wet0=weather&&weather.indexOf('rain')>=0,_snow0=weather&&weather.indexOf('snow')>=0;
