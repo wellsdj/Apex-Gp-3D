@@ -3042,6 +3042,7 @@ function showVoicePopup(){
   _voicePopupHideTimer=setTimeout(function(){p.classList.remove('show');if(_vcUITimer){clearInterval(_vcUITimer);_vcUITimer=null}},4500);
 }
 document.addEventListener('keydown',function(e){
+  if(!e.key)return;
   if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;
   if(rebindAction)return;
   if(e.key.toLowerCase()===keyBindings.voice&&!_voiceKeyP){_voiceKeyP=true;toggleVoiceChat();e.preventDefault()}
@@ -3050,7 +3051,7 @@ document.addEventListener('mousemove',function(e){if(_decalDragging)_decalPosUpd
 document.addEventListener('mouseup',function(){_decalDragging=false});
 document.addEventListener('touchmove',function(e){if(_decalDragging&&e.touches[0])_decalPosUpdate(e.touches[0]);},{passive:false});
 document.addEventListener('touchend',function(){_decalDragging=false});
-document.addEventListener('keyup',function(e){if(e.key.toLowerCase()===keyBindings.voice)_voiceKeyP=false});
+document.addEventListener('keyup',function(e){if(!e.key)return;if(e.key.toLowerCase()===keyBindings.voice)_voiceKeyP=false});
 function openReviewMenu(){
   var list=document.getElementById('reviewList');if(!list)return;
   var h='';
@@ -3124,6 +3125,7 @@ function closeControls(){rebindAction=null;document.getElementById('controlsModa
 function startRebind(action){rebindAction=action;refreshControlsUI()}
 document.addEventListener('keydown',function(e){
   if(!rebindAction)return;
+  if(!e.key)return;
   var k=e.key.toLowerCase();
   if(k==='escape'){rebindAction=null;refreshControlsUI();e.preventDefault();return}
   if(k===' ')k='space';
