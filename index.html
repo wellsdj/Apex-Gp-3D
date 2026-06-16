@@ -10,7 +10,8 @@
 *{margin:0;padding:0;box-sizing:border-box}body{overflow:hidden;background:#000;font-family:'Rajdhani',sans-serif;color:#fff}canvas{display:block}.hide{display:none!important}
 #menuScreen,#garageScreen{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center}
 #menuScreen canvas,#garageScreen canvas:not(#trackPreview){position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
-#garageScreen{background:#04060e}
+#menuScreen>canvas,#garageScreen>canvas:not(#trackPreview){display:none}
+#garageScreen{background:transparent}
 #garageScreen canvas:not(#trackPreview){cursor:grab}
 #garageScreen canvas:not(#trackPreview):active{cursor:grabbing}
 .mo{position:relative;z-index:1;text-align:center;pointer-events:none;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;padding-top:10vh;padding-bottom:3vh;box-sizing:border-box}
@@ -412,6 +413,7 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 </style>
 </head>
 <body>
+<canvas id="bg3d" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block"></canvas>
 <div id="mobileBlock" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px">
   <div style="font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;background:linear-gradient(175deg,#ff1f1f,#ff5500,#ffaa00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:20px">APEX GP</div>
   <div style="font-family:'Rajdhani',sans-serif;font-size:18px;color:rgba(255,255,255,.7);line-height:1.6;max-width:320px">This game requires a keyboard to play.<br><br>Please open on a <span style="color:#ff8833;font-weight:700">laptop or PC</span> for the full experience.</div>
@@ -576,6 +578,11 @@ function detectPerfTier(){
   applyPerfTier(score>=3?'high':(score>=-3?'med':'low'));
 }
 detectPerfTier();
+var ren=new THREE.WebGLRenderer({canvas:document.getElementById('bg3d'),antialias:PERF.antialias,powerPreference:'high-performance'});
+ren.setSize(innerWidth,innerHeight);ren.setPixelRatio(PERF.pixelRatio);
+ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.outputEncoding=THREE.sRGBEncoding;
+addEventListener('resize',function(){if(ren){ren.setSize(innerWidth,innerHeight)}});
+var mR=ren,gR=ren;
 // One-time reset of old best times (remove this block after first load)
 if(!localStorage.getItem('apexgp_v2')){localStorage.removeItem('apexgp_bests');['SUNSET CIRCUIT','T-BONE','THE BOOT'].forEach(function(n){localStorage.removeItem('apexgp_ghost_'+n)});localStorage.setItem('apexgp_v2','1')}
 // One-time reset of SUNSET CIRCUIT & T-BONE best times/ghosts for everyone.
@@ -794,7 +801,7 @@ function trackEnv(renderer,topHex,horHex,botHex){
   var rt=renderer._pmrem.fromEquirectangular(tex);tex.dispose();
   renderer._envCache[key]=rt.texture;return rt.texture;
 }
-function initMenu(){var cv=document.getElementById('menuCanvas');mS=new THREE.Scene();mS.background=new THREE.Color(0x04060e);mS.fog=new THREE.Fog(0x04060e,12,42);mC=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,100);mR=new THREE.WebGLRenderer({canvas:cv,antialias:PERF.antialias});mR.setSize(innerWidth,innerHeight);mR.setPixelRatio(Math.min(devicePixelRatio,PERF.tier==='low'?1:2));mR.toneMapping=THREE.ACESFilmicToneMapping;mR.toneMappingExposure=1.05;mR.outputEncoding=THREE.sRGBEncoding;mS.environment=trackEnv(mR,0x2a3e5a,0x10202e,0x05070e);
+function initMenu(){mS=new THREE.Scene();mS.background=new THREE.Color(0x04060e);mS.fog=new THREE.Fog(0x04060e,12,42);mC=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,100);mR=ren;mR.shadowMap.enabled=false;mS.environment=trackEnv(mR,0x2a3e5a,0x10202e,0x05070e);
 mS.add(new THREE.AmbientLight(0x6688bb,.35));
 var kl=new THREE.SpotLight(0xeaf6ff,2.6);kl.position.set(5,9,4);kl.angle=.5;kl.penumbra=.6;mS.add(kl);
 var cy=new THREE.SpotLight(0x00c8ff,1.6);cy.position.set(-7,4,5);cy.angle=.6;cy.penumbra=.7;mS.add(cy);
@@ -821,7 +828,7 @@ function _gBindOrbit(cv){
   cv.addEventListener('pointerup',function(){gOrb.drag=false;gOrb.lastInput=performance.now()});
   cv.addEventListener('wheel',function(e){gOrb.dist=Math.max(4.2,Math.min(16,gOrb.dist+e.deltaY*.008));gOrb.lastInput=performance.now();e.preventDefault()},{passive:false});
 }
-function initGarage(){var cv=document.getElementById('garageCanvas');gS=new THREE.Scene();gS.background=new THREE.Color(0x04060e);gS.fog=new THREE.Fog(0x04060e,16,55);gC=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,200);gR=new THREE.WebGLRenderer({canvas:cv,antialias:PERF.antialias});gR.setSize(innerWidth,innerHeight);gR.setPixelRatio(Math.min(devicePixelRatio,PERF.tier==='low'?1:2));gR.toneMapping=THREE.ACESFilmicToneMapping;gR.toneMappingExposure=1.05;gR.outputEncoding=THREE.sRGBEncoding;gS.environment=trackEnv(gR,0x2a3e5a,0x10202e,0x05070e);
+function initGarage(){gS=new THREE.Scene();gS.background=new THREE.Color(0x04060e);gS.fog=new THREE.Fog(0x04060e,16,55);gC=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,200);gR=ren;gR.shadowMap.enabled=false;gS.environment=trackEnv(gR,0x2a3e5a,0x10202e,0x05070e);
 gS.add(new THREE.AmbientLight(0x99aacc,.3));
 var kl=new THREE.SpotLight(0xffffff,2.8);kl.position.set(6,9,4);kl.angle=.4;kl.penumbra=.55;gS.add(kl);
 var cy=new THREE.SpotLight(0x00c8ff,1.5);cy.position.set(-7,4.5,4);cy.angle=.6;cy.penumbra=.7;gS.add(cy);
@@ -832,7 +839,7 @@ var plat=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.4,.05,64),new THREE.Mes
 var ring=new THREE.Mesh(new THREE.RingGeometry(3.15,3.5,64),new THREE.MeshBasicMaterial({color:0x00d0ff,transparent:true,opacity:.35,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.03;gS.add(ring);
 var ring2=new THREE.Mesh(new THREE.RingGeometry(.5,.55,64),new THREE.MeshBasicMaterial({color:0x7a5cff,transparent:true,opacity:.22,side:THREE.DoubleSide}));ring2.rotation.x=-Math.PI/2;ring2.position.y=.03;gS.add(ring2);
 gCar=bldCar(carBodyColor,false);gS.add(gCar);
-_gBindOrbit(cv);gOrb.lastInput=0;
+_gBindOrbit(document.getElementById('garageScreen'));gOrb.lastInput=0;
 gRun=true;(function a(){if(!gRun)return;requestAnimationFrame(a);
 if(!gOrb.drag&&performance.now()-gOrb.lastInput>2600)gOrb.yaw+=.0035;
 _gApplyCam();gR.render(gS,gC)})()}
@@ -1464,7 +1471,7 @@ if(selWeather==='night'||selWeather==='night_dark'){
   }
 }
 builtTrack=selTrack;builtWeather=selWeather;bestLT=Infinity;lastLT=0;bestGhost=[];ghostPlaying=false;_buildColGrid();_mmBounds=null;_mmTrackIdx=-1}
-function initRace(){if(rInit&&builtTrack===selTrack&&builtWeather===selWeather)return;if(!rInit){rInit=true;ren=new THREE.WebGLRenderer({antialias:PERF.antialias,powerPreference:'high-performance'});ren.setSize(innerWidth,innerHeight);_perfBasePR=PERF.pixelRatio;_perfCurPR=PERF.pixelRatio;ren.setPixelRatio(PERF.pixelRatio);ren.shadowMap.enabled=PERF.shadows;ren.shadowMap.type=PERF.shadowSoft?THREE.PCFSoftShadowMap:THREE.PCFShadowMap;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.08;ren.outputEncoding=THREE.sRGBEncoding;document.body.insertBefore(ren.domElement,document.getElementById('menuScreen'));cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,2600);clk=new THREE.Clock();mirrorCam=new THREE.PerspectiveCamera(55,340/80,1,800);mmx=document.getElementById('mmC').getContext('2d');addEventListener('keydown',function(e){KY[e.key.toLowerCase()]=true;if(e.key==='Escape'&&missileMode==='aim'){cancelMissileAim();e.preventDefault();return}if(e.key==='Escape'&&reviewMode){exitReview();e.preventDefault();return}if(e.key==='Escape'&&racing){racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()};if(e.key.toLowerCase()==='g')toggleGhost();if(e.key.toLowerCase()==='e'&&racing)activateShield();if(e.key.toLowerCase()==='h')toggleHeadlights();if(e.key.toLowerCase()==='p'&&racing)toggleTireInfo();if(e.key.toLowerCase()==='f'&&racing)toggleFullscreen();if(racing&&mpConn&&e.key>='1'&&e.key<='4')sendEmote(parseInt(e.key,10)-1);e.preventDefault()});addEventListener('keyup',function(e){KY[e.key.toLowerCase()]=false});addEventListener('resize',function(){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});buildScene();rLoop()}else{buildScene()}}
+function initRace(){if(rInit&&builtTrack===selTrack&&builtWeather===selWeather)return;if(!rInit){rInit=true;_perfBasePR=PERF.pixelRatio;_perfCurPR=PERF.pixelRatio;ren.setPixelRatio(PERF.pixelRatio);ren.toneMappingExposure=1.08;ren.shadowMap.enabled=PERF.shadows;ren.shadowMap.type=PERF.shadowSoft?THREE.PCFSoftShadowMap:THREE.PCFShadowMap;cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,2600);clk=new THREE.Clock();mirrorCam=new THREE.PerspectiveCamera(55,340/80,1,800);mmx=document.getElementById('mmC').getContext('2d');addEventListener('keydown',function(e){KY[e.key.toLowerCase()]=true;if(e.key==='Escape'&&missileMode==='aim'){cancelMissileAim();e.preventDefault();return}if(e.key==='Escape'&&reviewMode){exitReview();e.preventDefault();return}if(e.key==='Escape'&&racing){racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()};if(e.key.toLowerCase()==='g')toggleGhost();if(e.key.toLowerCase()==='e'&&racing)activateShield();if(e.key.toLowerCase()==='h')toggleHeadlights();if(e.key.toLowerCase()==='p'&&racing)toggleTireInfo();if(e.key.toLowerCase()==='f'&&racing)toggleFullscreen();if(racing&&mpConn&&e.key>='1'&&e.key<='4')sendEmote(parseInt(e.key,10)-1);e.preventDefault()});addEventListener('keyup',function(e){KY[e.key.toLowerCase()]=false});addEventListener('resize',function(){if(cam){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}});buildScene();rLoop()}else{buildScene()}}
 
 // ── Procedural asphalt (publicly reproducible, no network needed) ───────────
 // Real photographic asphalt + a normal map derived from its luminance, so the
@@ -2250,7 +2257,7 @@ if(_drifting&&SPD>120&&performance.now()-_lastSkidT>30&&skidMat){
   for(var _sw=-1;_sw<=1;_sw+=2){
     var _skm=new THREE.Mesh(_skidGeo,skidMat);
     _skm.position.set(P.x-_bfx*1.8+_brx*_sw*1.02,_sky,P.z-_bfz*1.8+_brz*_sw*1.02);
-    _skm.rotation.y=A;_skm.life=7;scene.add(_skm);skidMarks.push(_skm);
+    _skm.rotation.y=A;_skm.life=7;if(skidMarks.length>=25){scene.remove(skidMarks.shift())}scene.add(_skm);skidMarks.push(_skm);
   }
 }
 if(car.wheels){var _ws=(V.x*Math.sin(A)+V.z*Math.cos(A))*dt/WHEEL_RAD;for(var _wi=0;_wi<car.wheels.length;_wi++)car.wheels[_wi].rotation.x+=_ws;if(car.steerL){var _stt=ST*0.22;car.steerL.rotation.y+=(_stt-car.steerL.rotation.y)*Math.min(1,dt*18);car.steerR.rotation.y=car.steerL.rotation.y}}
@@ -4197,7 +4204,7 @@ function rLoop(){requestAnimationFrame(rLoop);var dt=Math.min(clk.getDelta(),.05
     if(wallCrashActive){wallCrashTimer-=dt;var wProg=wallCrashTimer>2?Math.max(0,1-(wallCrashTimer-2)/0.8):1;document.getElementById('crashOverlay').style.opacity=wProg;if(wallCrashTimer<2)document.getElementById('crashTxt').style.opacity=1;if(wallCrashTimer<=0){[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;if(mpConn){respawnInPlace()}else{wallCrashActive=false;var co2=document.getElementById('crashOverlay');co2.style.opacity=0;co2.style.display='none';document.getElementById('crashTxt').style.opacity=0;racing=false;document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar();startLobbyMusic();}}}
     updateDebris(dt);for(var si=skidMarks.length-1;si>=0;si--){skidMarks[si].life-=dt;if(skidMarks[si].life<=0){scene.remove(skidMarks[si]);skidMarks.splice(si,1)}else if(skidMarks[si].life<2){if(!skidMarks[si]._fadeMat){skidMarks[si]._fadeMat=skidMat.clone();skidMarks[si].material=skidMarks[si]._fadeMat}skidMarks[si]._fadeMat.opacity=skidMarks[si].life/2*.6}}if(rainDrops&&rainGeo){var rPos=rainGeo.attributes.position.array,rv2=rainGeo.rv,rCnt=rainGeo.pCount;for(var ri2=0;ri2<rCnt;ri2++){rPos[ri2*3+1]-=rv2[ri2]*dt;if(rPos[ri2*3+1]<-P.y){rPos[ri2*3+1]=40+Math.random()*40;rPos[ri2*3]=(Math.random()-.5)*160;rPos[ri2*3+2]=(Math.random()-.5)*160}};rainGeo.attributes.position.needsUpdate=true;rainDrops.position.set(P.x,0,P.z)}
     if(sprayGeo&&sprayPts&&SPD>15){var spPos=sprayGeo.attributes.position.array,spVa=sprayGeo.spV,spLi=sprayGeo.spL,spC=sprayGeo.spCnt;var bwdx=-Math.sin(A),bwdz=-Math.cos(A);var spRate=Math.min(SPD/40,3)*dt*60;for(var spi=0;spi<Math.ceil(spRate);spi++){var idx=sprayGeo.spIdx%spC;spPos[idx*3]=P.x+bwdx*2.5+(Math.random()-.5)*1.2;spPos[idx*3+1]=0.3+Math.random()*0.3;spPos[idx*3+2]=P.z+bwdz*2.5+(Math.random()-.5)*1.2;var spSpd=SPD/80;spVa[idx*3]=bwdx*spSpd+(Math.random()-.5)*1.5;spVa[idx*3+1]=1.5+Math.random()*2;spVa[idx*3+2]=bwdz*spSpd+(Math.random()-.5)*1.5;spLi[idx]=0.4+Math.random()*0.3;sprayGeo.spIdx++}for(var sj=0;sj<spC;sj++){if(spLi[sj]>0){spPos[sj*3]+=spVa[sj*3]*dt;spPos[sj*3+1]+=spVa[sj*3+1]*dt;spVa[sj*3+1]-=6*dt;spPos[sj*3+2]+=spVa[sj*3+2]*dt;spLi[sj]-=dt;if(spLi[sj]<=0)spPos[sj*3+1]=-10}}sprayGeo.attributes.position.needsUpdate=true}else if(sprayGeo){var spHide=sprayGeo.spL,spHPos=sprayGeo.attributes.position.array;for(var sh=0;sh<sprayGeo.spCnt;sh++){if(spHide[sh]>0){spHide[sh]-=dt;if(spHide[sh]<=0)spHPos[sh*3+1]=-10;else{spHPos[sh*3]+=sprayGeo.spV[sh*3]*dt;spHPos[sh*3+1]+=sprayGeo.spV[sh*3+1]*dt;sprayGeo.spV[sh*3+1]-=6*dt;spHPos[sh*3+2]+=sprayGeo.spV[sh*3+2]*dt}}};sprayGeo.attributes.position.needsUpdate=true}
-    playGhost(dt);playAllTimeGhost(dt);playOpponent(dt);playOpGhost(dt);doLaps();doCam(dt);doHUD();doMM();updateSound(dt);if(mpConn&&mpSocket&&performance.now()-lastMpSend>50){mpSend({t:'pos',x:P.x,y:P.y,z:P.z,a:A,pa:pitchA,ra:rollA,s:SPD,lt:lapN>=1?(performance.now()-lapSt):-1,ln:lapN,vx:V.x,vz:V.z});lastMpSend=performance.now()}}if(sceneSun&&sceneSun.castShadow&&car){sceneSun.position.set(car.position.x+200,320,car.position.z+140);sceneSun.target.position.set(car.position.x,0,car.position.z);sceneSun.target.updateMatrixWorld()}if(ren)ren.render(scene,cam)}
+    playGhost(dt);playAllTimeGhost(dt);playOpponent(dt);playOpGhost(dt);doLaps();doCam(dt);doHUD();doMM();updateSound(dt);if(mpConn&&mpSocket&&performance.now()-lastMpSend>50){mpSend({t:'pos',x:P.x,y:P.y,z:P.z,a:A,pa:pitchA,ra:rollA,s:SPD,lt:lapN>=1?(performance.now()-lapSt):-1,ln:lapN,vx:V.x,vz:V.z});lastMpSend=performance.now()}}if(sceneSun&&sceneSun.castShadow&&car){sceneSun.position.set(car.position.x+200,320,car.position.z+140);sceneSun.target.position.set(car.position.x,0,car.position.z);sceneSun.target.updateMatrixWorld()}if(ren&&(racing||reviewMode))ren.render(scene,cam)}
 // ---- Stat editor ----
 function openSetup(){document.getElementById('setupModal').classList.add('show');document.getElementById('setupDf').value=setupDf;document.getElementById('setupBb').value=setupBb;onSetupChange()}
 function closeSetup(){document.getElementById('setupModal').classList.remove('show')}
