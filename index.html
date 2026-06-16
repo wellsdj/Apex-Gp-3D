@@ -861,7 +861,7 @@ function _gApplyCam(){
 }
 function _gBindOrbit(cv){
   if(gOrb.bound)return;gOrb.bound=true;
-  cv.addEventListener('pointerdown',function(e){gOrb.drag=true;gOrb.px=e.clientX;gOrb.py=e.clientY;gOrb.lastInput=performance.now();try{cv.setPointerCapture(e.pointerId)}catch(_){}});
+  cv.addEventListener('pointerdown',function(e){var t=e.target;while(t&&t!==cv){if(t.tagName==='BUTTON'||t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='A')return;var cn=t.className||'';if(cn.indexOf('tog')>=0||cn.indexOf('gar-btn')>=0||cn.indexOf('track-arr')>=0||cn.indexOf('mp-')>=0||cn.indexOf('cog-')>=0)return;t=t.parentElement}gOrb.drag=true;gOrb.px=e.clientX;gOrb.py=e.clientY;gOrb.lastInput=performance.now();try{cv.setPointerCapture(e.pointerId)}catch(_){}});
   cv.addEventListener('pointermove',function(e){if(!gOrb.drag)return;gOrb.yaw-=(e.clientX-gOrb.px)*.0062;gOrb.pitch=Math.max(.06,Math.min(1.15,gOrb.pitch+(e.clientY-gOrb.py)*.0045));gOrb.px=e.clientX;gOrb.py=e.clientY;gOrb.lastInput=performance.now()});
   cv.addEventListener('pointerup',function(){gOrb.drag=false;gOrb.lastInput=performance.now()});
   cv.addEventListener('wheel',function(e){gOrb.dist=Math.max(4.2,Math.min(16,gOrb.dist+e.deltaY*.008));gOrb.lastInput=performance.now();e.preventDefault()},{passive:false});
