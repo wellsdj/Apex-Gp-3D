@@ -3289,7 +3289,9 @@ function toggleSettSfx(){sfxEnabled=!sfxEnabled;document.getElementById('settSfx
 // Steering mode selector (mobile). For now only TILT (GYRO) — tilt the phone
 // like a steering wheel. Placeholder for future modes; cycling is a no-op while
 // only one mode exists.
-var STEER_MODES=['TILT (GYRO)','ANALOG PAD'],_steerModeIdx=parseInt(localStorage.getItem('steerMode'))||0;
+var STEER_MODES=['TILT (GYRO)','ANALOG PAD'];
+var _steerModeSaved=localStorage.getItem('steerMode');
+var _steerModeIdx=_steerModeSaved===null?1:(parseInt(_steerModeSaved)||0);
 function cycleSteerMode(){
   _steerModeIdx=(_steerModeIdx+1)%STEER_MODES.length;
   localStorage.setItem('steerMode',_steerModeIdx);
