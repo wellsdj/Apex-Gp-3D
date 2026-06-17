@@ -122,7 +122,7 @@
 .gearBar{width:70vw;max-width:600px;height:18px;background:rgba(255,255,255,.06);border-radius:9px;margin:10px auto 0;overflow:hidden;position:relative;box-shadow:inset 0 0 10px rgba(0,0,0,.3)}.gearBar::after{content:'';position:absolute;left:50%;top:0;width:3px;height:100%;background:rgba(255,255,255,.5);transform:translateX(-50%);z-index:1;border-radius:2px}
 .gearFill{height:100%;border-radius:9px;transition:width .08s,margin-left .08s;box-shadow:0 0 12px currentColor}
 /* Build speed popup */
-.buildSpd{position:absolute;top:100px;left:50%;transform:translateX(-50%);background:rgba(255,140,0,.85);border-radius:8px;padding:8px 25px;text-align:center;opacity:0;transition:opacity .3s}
+.buildSpd{display:none!important;position:absolute;top:100px;left:50%;transform:translateX(-50%);background:rgba(255,140,0,.85);border-radius:8px;padding:8px 25px;text-align:center;opacity:0;transition:opacity .3s}
 .buildSpd.show{opacity:1}
 .buildSpd .bt{font-family:'Orbitron';font-size:11px;letter-spacing:2px;color:#fff}
 .buildSpd .bbar{width:120px;height:4px;background:rgba(255,255,255,.3);border-radius:2px;margin-top:5px;overflow:hidden}
@@ -506,7 +506,7 @@ body.mobile #missileWarn{cursor:pointer;padding:10px 18px}
 body.mobile #fuelWarn{cursor:pointer;padding:10px 18px}
 body.mobile .nukeBtn{display:none!important}
 body.mobile .blackoutBtn{display:none!important}
-body.mobile .lbb{top:6px;right:auto;left:50%;transform:translateX(-50%);min-width:auto;padding:3px 8px;border-radius:6px;background:rgba(0,0,0,.6);border:none}
+body.mobile .lbb{top:6px;left:auto;right:50px;transform:none;text-align:right;min-width:auto;padding:3px 8px;border-radius:6px;background:rgba(0,0,0,.6);border:none}
 body.mobile .lbb .lt{font-size:7px;letter-spacing:1px;margin-bottom:0}
 body.mobile .lbb .lv{font-size:13px}
 body.mobile .lbb .lbv{font-size:10px}
