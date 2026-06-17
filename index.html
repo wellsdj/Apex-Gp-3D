@@ -670,6 +670,10 @@ body.mobile #spdOutlineSvg{display:none}
       <button class="sett-acct-btn" onclick="closeSettings();openControls()">EDIT</button>
     </div>
     <div class="sett-row">
+      <span class="sett-lbl">STEERING MODE</span>
+      <button class="sett-acct-btn" id="settSteerModeBtn" onclick="cycleSteerMode()" title="How you steer on a phone">TILT (GYRO)</button>
+    </div>
+    <div class="sett-row">
       <span class="sett-lbl" id="settAcctLbl">ACCOUNT</span>
       <button class="sett-acct-btn" id="settAcctBtn" onclick="closeSettings();openAuth()">SIGN IN</button>
     </div>
@@ -3272,6 +3276,11 @@ function openSettings(){document.getElementById('settingsModal').classList.remov
 function closeSettings(){document.getElementById('settingsModal').classList.add('hide');}
 function toggleSettMusic(){musicEnabled=!musicEnabled;document.getElementById('settMusicTog').classList.toggle('on',musicEnabled);if(musicEnabled){startLobbyMusic();}else{if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}sndLobby.pause();lobbyPlaying=false;}}
 function toggleSettSfx(){sfxEnabled=!sfxEnabled;document.getElementById('settSfxTog').classList.toggle('on',sfxEnabled);if(!sfxEnabled)[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});}
+// Steering mode selector (mobile). For now only TILT (GYRO) — tilt the phone
+// like a steering wheel. Placeholder for future modes; cycling is a no-op while
+// only one mode exists.
+var STEER_MODES=['TILT (GYRO)'],_steerModeIdx=0;
+function cycleSteerMode(){_steerModeIdx=(_steerModeIdx+1)%STEER_MODES.length;var b=document.getElementById('settSteerModeBtn');if(b)b.textContent=STEER_MODES[_steerModeIdx];}
 function _qualityPref(){try{return localStorage.getItem('apexgp_quality')||'auto'}catch(e){return'auto'}}
 function updateQualityLbl(){var b=document.getElementById('settQualityBtn');if(!b)return;var cur=_qualityPref();b.textContent=cur==='auto'?'AUTO · '+PERF.tier.toUpperCase():cur.toUpperCase()}
 function cycleQuality(){
