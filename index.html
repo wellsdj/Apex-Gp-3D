@@ -4493,15 +4493,23 @@ function doMirror(){
   ren.setScissorTest(false);
   ren.setViewport(0,0,cw,ch);
 }
-var _perfBasePR=1.25,_perfCurPR=1.25,_perfFrames=0,_perfAccum=0;
+// Ceiling = the detected/selected tier's pixel ratio (NOT a hardcoded 1.25).
+// Starting from PERF.pixelRatio stops the watchdog from over-driving mid-tier
+// laptops and phones past what they can hold — which is what made the picture
+// settle pixelated, especially under the extra load of multiplayer.
+var _perfBasePR=PERF.pixelRatio,_perfCurPR=PERF.pixelRatio,_perfFrames=0,_perfAccum=0;
 function perfWatchdog(dt){
   if(!ren)return;
   _perfFrames++;_perfAccum+=dt;
   if(_perfAccum<1)return;
   var fps=_perfFrames/_perfAccum;_perfFrames=0;_perfAccum=0;
-  if(fps<30&&_perfCurPR>0.45){_perfCurPR=Math.max(0.45,_perfCurPR*0.75);ren.setPixelRatio(_perfCurPR)}
-  else if(fps<45&&_perfCurPR>0.55){_perfCurPR=Math.max(0.55,_perfCurPR*0.88);ren.setPixelRatio(_perfCurPR)}
-  else if(fps>57&&_perfCurPR<_perfBasePR){_perfCurPR=Math.min(_perfBasePR,_perfCurPR*1.05);ren.setPixelRatio(_perfCurPR)}
+  // Keep the picture sharp: only drop when genuinely struggling, hold a higher
+  // floor (0.6, or the tier ceiling if lower), and climb back quickly after a
+  // transient dip (e.g. an opponent appearing) so graphics return fast.
+  var floor=Math.min(0.6,_perfBasePR);
+  if(fps<26&&_perfCurPR>floor){_perfCurPR=Math.max(floor,_perfCurPR*0.85);ren.setPixelRatio(_perfCurPR)}
+  else if(fps<40&&_perfCurPR>floor){_perfCurPR=Math.max(floor,_perfCurPR*0.93);ren.setPixelRatio(_perfCurPR)}
+  else if(fps>50&&_perfCurPR<_perfBasePR){_perfCurPR=Math.min(_perfBasePR,_perfCurPR*1.12);ren.setPixelRatio(_perfCurPR)}
 }
 function rLoop(){requestAnimationFrame(rLoop);var dt=Math.min(clk.getDelta(),.05);perfWatchdog(dt);if(reviewMode){if(KY['c']&&!KY._cp)cycleCam();KY._cp=KY['c'];reviewTick();doCam(dt);if(ren)ren.render(scene,cam);return}if(racing){if(KY['c']&&!KY._cp)cycleCam();KY._cp=KY['c'];if(KY['r']&&!KY._rp){if(mpConn&&racePhase==='race')respawnInPlace();else resetCar();}KY._rp=KY['r'];updateRaceLights();updateQualifying();tickRaceLeaderboard(dt);updatePitState();updateTireDynamics(dt);updateCar(dt);updateAI(dt);updateMissiles(dt);if(tireInfoOpen)renderTireInfo();
     if(!flipCrashActive){var upY=Math.cos(rollA)*Math.cos(pitchA);if(upY<-0.3){flipUpsideTime+=dt;}else{flipUpsideTime=0;}if(flipUpsideTime>0.5&&racePhase!=='race'){flipCrashActive=true;raceFadeTimer=3.0;sndCrashFatal.currentTime=0;sndCrashFatal.volume=sfxEnabled?sfxVolume:0;sndCrashFatal.play().catch(function(){});var fo=document.getElementById('flipOverlay');fo.style.display='flex';fo.style.opacity=0;document.getElementById('flipTxt').style.opacity=0;}}
