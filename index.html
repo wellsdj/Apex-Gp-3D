@@ -1290,13 +1290,12 @@ function bldCarF1(col,isGhost){
     var carGlow=new THREE.PointLight(0xffddbb,.8,15,2);carGlow.position.set(0,1.2,0);g.add(carGlow);g.carGlow=carGlow;carGlow.visible=false;
     g.headlights=[sl1,sl2];g.hlOn=false;sl1.visible=false;sl2.visible=false;
   }
-  // Livery decal panels on the sidepods (image wraps the bodywork sides)
   g.liveryDecals=[];g.podDecals=[];
-  if(!isGhost){
-    var livMatF=new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,opacity:0,map:null});
+  {
+    var livMatF=new THREE.MeshStandardMaterial({transparent:true,depthWrite:true,side:THREE.DoubleSide,opacity:0,map:null,roughness:.32,metalness:.72,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
     for(var sxf=-1;sxf<=1;sxf+=2){
       var ldf=new THREE.Mesh(new THREE.PlaneGeometry(3.4,.55),livMatF.clone());
-      ldf.rotation.y=sxf*Math.PI/2;ldf.position.set(sxf*.93,.45,.20);g.add(ldf);g.liveryDecals.push(ldf);
+      ldf.rotation.y=sxf*Math.PI/2;ldf.position.set(sxf*.88,.45,.20);ldf.renderOrder=1;g.add(ldf);g.liveryDecals.push(ldf);
     }
     updateDecalVisibility(g);
   }
@@ -1323,10 +1322,15 @@ function mkNumberTexture(num){
 }
 function updateDecalVisibility(g){
   if(!g||!g.liveryDecals)return;
-  var texL=sponsorPlacements.pod_l?mkCarSponsorTex(sponsorPlacements.pod_l):null;
-  var texR=sponsorPlacements.pod_r?mkCarSponsorTex(sponsorPlacements.pod_r):null;
-  if(g.liveryDecals[0]){g.liveryDecals[0].material.map=texL;g.liveryDecals[0].material.opacity=texL?0.92:0;g.liveryDecals[0].material.needsUpdate=true}
-  if(g.liveryDecals[1]){g.liveryDecals[1].material.map=texR;g.liveryDecals[1].material.opacity=texR?0.92:0;g.liveryDecals[1].material.needsUpdate=true}
+  var sp=g._sponsorData||sponsorPlacements;
+  var texL=sp.pod_l?mkCarSponsorTex(sp.pod_l):null;
+  var texR=sp.pod_r?mkCarSponsorTex(sp.pod_r):null;
+  for(var _di=0;_di<g.liveryDecals.length;_di++){
+    var dd=g.liveryDecals[_di],tex=_di===0?texL:texR;
+    dd.material.map=tex;dd.material.opacity=tex?1:0;
+    dd.material.color.setHex(0xffffff);
+    dd.material.needsUpdate=true;
+  }
 }
 function refreshLivery(){
   if(!_livCanvas){_livCanvas=document.createElement('canvas');_livCanvas.width=512;_livCanvas.height=64;_livCtx=_livCanvas.getContext('2d')}
@@ -1528,13 +1532,12 @@ for(sx=-1;sx<=1;sx+=2){
   if(sx<0)g.steerL=piv;else g.steerR=piv;
   var rwh=mkWheel(RRAD,.44);rwh.position.set(sx*1.02,RRAD-.30,-1.8);g.add(rwh);g.wheels.push(rwh);
 }
-// livery — full side planes (left & right) with CanvasTexture for drag positioning
 g.liveryDecals=[];g.podDecals=[];
-if(!isGhost){
-  var livMat=new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,opacity:0,map:null});
+{
+  var livMat=new THREE.MeshStandardMaterial({transparent:true,depthWrite:true,side:THREE.DoubleSide,opacity:0,map:null,roughness:.32,metalness:.72,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
   for(var sxd=-1;sxd<=1;sxd+=2){
     var ld=new THREE.Mesh(new THREE.PlaneGeometry(5.0,.50),livMat.clone());
-    ld.rotation.y=sxd*Math.PI/2;ld.position.set(sxd*1.022,.31,-.10);g.add(ld);g.liveryDecals.push(ld);
+    ld.rotation.y=sxd*Math.PI/2;ld.position.set(sxd*.98,.31,-.10);ld.renderOrder=1;g.add(ld);g.liveryDecals.push(ld);
   }
   updateDecalVisibility(g);
   // race number — nose + shark fin sides
@@ -3518,7 +3521,7 @@ function mpOpen(code,role){
 function mpSendHello(){
   var myGhost=getTrackGhost(TRACKS[selTrack].name)||[];
   var myBest=getTrackBest(TRACKS[selTrack].name);
-  mpSend({t:'hello',name:getPlayerName(),ghost:myGhost.length>200?[]:myGhost,best:myBest,col:carBodyColor,num:carNumber});
+  mpSend({t:'hello',name:getPlayerName(),ghost:myGhost.length>200?[]:myGhost,best:myBest,col:carBodyColor,num:carNumber,sponsors:sponsorPlacements});
 }
 function createParty(){
   ensureVoiceMic(function(){});
@@ -3610,6 +3613,7 @@ function handleMpMessage(raw){
     var hp=ensurePeer(d.from,d.name,d.col);
     if(!primaryPeerId)primaryPeerId=hp.id;
     voiceConnectTo(hp.id);
+    if(d.sponsors&&hp.car){hp.car._sponsorData=d.sponsors;updateDecalVisibility(hp.car)}
     if(hp.id===primaryPeerId){
       if(d.name)qualiOpName=d.name;
       if(d.ghost&&d.ghost.length>0){opBestGhost=d.ghost;opGhostPlaying=false}
