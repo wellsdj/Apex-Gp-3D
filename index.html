@@ -368,13 +368,13 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .vc-hint{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:1.5px;margin-top:8px}
 .vc-peer{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.85);padding:4px 0;text-align:left;border-bottom:1px solid rgba(255,255,255,.07)}
 /* ── Voice Chat Search ── */
-#vcSearchPanel{position:fixed;bottom:12px;right:12px;z-index:12;font-family:'Rajdhani';width:220px}
+#vcSearchPanel{position:fixed;bottom:12px;right:12px;z-index:120;font-family:'Rajdhani';width:220px}
 #vcSearchWrap{position:relative}
 #vcSearchInput{width:100%;box-sizing:border-box;background:rgba(10,10,20,.88);border:1px solid rgba(60,255,140,.35);border-radius:8px;color:#fff;font-family:'Rajdhani';font-size:14px;font-weight:600;padding:8px 12px 8px 30px;outline:none;letter-spacing:1px}
 #vcSearchInput::placeholder{color:rgba(255,255,255,.35);letter-spacing:1px}
 #vcSearchInput:focus{border-color:rgba(60,255,140,.7);box-shadow:0 0 12px rgba(60,255,140,.15)}
 #vcSearchIcon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.5;pointer-events:none}
-#vcSearchResults{position:absolute;bottom:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:rgba(10,10,20,.96);border:1px solid rgba(60,255,140,.3);border-radius:8px 8px 0 0;margin-bottom:4px;display:none;backdrop-filter:blur(8px)}
+#vcSearchResults{position:absolute;bottom:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:rgba(10,10,20,.96);border:1px solid rgba(60,255,140,.3);border-radius:8px 8px 0 0;margin-bottom:4px;display:none;backdrop-filter:blur(8px);z-index:121}
 #vcSearchResults.show{display:block}
 #vcSearchResults::-webkit-scrollbar{width:4px}
 #vcSearchResults::-webkit-scrollbar-thumb{background:rgba(60,255,140,.3);border-radius:2px}
