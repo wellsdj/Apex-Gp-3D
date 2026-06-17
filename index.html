@@ -2904,10 +2904,27 @@ var prevEngineActive=false,prevCoastActive=false;
 var musicEnabled=true,sfxEnabled=true,musicVolume=0.6,sfxVolume=0.8;
 var lobbyPlaying=false,lobbyFadeId=null;
 var sndClick=new Audio('click.mp3');
-var sndLobby=new Audio('lobby.wav');sndLobby.loop=true;sndLobby.volume=0;
+// Lobby playlist — shuffled: a random track each cycle, then plays through the
+// rest until none are left, then reshuffles and starts from a random one again.
+var MUSIC_TRACKS=['music1.mp3','music2.mp3','music3.mp3','music4.mp3','music5.mp3'];
+var _musicQueue=[],_musicIdx=0;
+var sndLobby=new Audio();sndLobby.loop=false;sndLobby.volume=0;
+function _shuffleMusic(){
+  _musicQueue=MUSIC_TRACKS.slice();
+  for(var i=_musicQueue.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=_musicQueue[i];_musicQueue[i]=_musicQueue[j];_musicQueue[j]=t;}
+  _musicIdx=0;
+}
+function _loadNextTrack(){
+  if(!_musicQueue.length||_musicIdx>=_musicQueue.length)_shuffleMusic();
+  sndLobby.src=_musicQueue[_musicIdx];_musicIdx++;
+}
+sndLobby.addEventListener('ended',function(){
+  if(!musicEnabled){lobbyPlaying=false;return;}
+  _loadNextTrack();sndLobby.volume=musicVolume;sndLobby.play().catch(function(){});
+});
 function playClick(){if(!sfxEnabled)return;sndClick.currentTime=0;sndClick.volume=sfxVolume;sndClick.play().catch(function(){});}
-function startLobbyMusic(){if(!musicEnabled||lobbyPlaying)return;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}sndLobby.volume=musicVolume;sndLobby.play().catch(function(){});lobbyPlaying=true;}
-function fadeLobbyMusic(){if(!lobbyPlaying)return;var steps=40,iv=50,sv=sndLobby.volume,step=sv/steps,i=0;lobbyFadeId=setInterval(function(){i++;sndLobby.volume=Math.max(0,sv-step*i);if(i>=steps){clearInterval(lobbyFadeId);lobbyFadeId=null;sndLobby.pause();sndLobby.currentTime=0;sndLobby.volume=0;lobbyPlaying=false;}},iv);}
+function startLobbyMusic(){if(!musicEnabled||lobbyPlaying)return;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}if(!sndLobby.src)_loadNextTrack();sndLobby.volume=musicVolume;sndLobby.play().catch(function(){});lobbyPlaying=true;}
+function fadeLobbyMusic(){if(!lobbyPlaying)return;var steps=40,iv=50,sv=sndLobby.volume,step=sv/steps,i=0;lobbyFadeId=setInterval(function(){i++;sndLobby.volume=Math.max(0,sv-step*i);if(i>=steps){clearInterval(lobbyFadeId);lobbyFadeId=null;sndLobby.pause();sndLobby.volume=0;lobbyPlaying=false;}},iv);}
 // ── Best lap beep & persistent best times ─────────────────────────────────
 var sndBeep=new Audio('beep2.mp3');sndBeep.volume=0.8;
 function playBeep(){if(!sfxEnabled)return;sndBeep.currentTime=0;sndBeep.volume=sfxVolume;sndBeep.play().catch(function(){});}
