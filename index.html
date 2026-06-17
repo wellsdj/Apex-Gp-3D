@@ -460,6 +460,30 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .crash-txt{font-family:'Orbitron';font-size:48px;font-weight:900;color:#ff2222;letter-spacing:6px;text-shadow:0 0 30px rgba(255,0,0,.6),0 0 60px rgba(255,0,0,.3);opacity:0;transition:opacity .3s}
 /* Wall crash overlay — black with red glow border */
 #crashOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;opacity:0;z-index:500;pointer-events:none;display:none;align-items:center;justify-content:center;box-shadow:inset 0 0 0 10px rgba(255,0,0,1),inset 0 0 120px 60px rgba(200,0,0,.95),inset 0 0 250px 80px rgba(180,0,0,.6)}
+/* ── Mobile controls ── */
+#mobileStick{display:none;position:fixed;bottom:40px;left:30px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);z-index:200;touch-action:none}
+#mobileStickKnob{position:absolute;top:50%;left:50%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.5);pointer-events:none}
+#mobileDriftBtn{display:none;position:fixed;bottom:40px;right:30px;width:70px;height:70px;border-radius:50%;background:rgba(255,100,40,.5);border:2px solid rgba(255,130,70,.6);color:#fff;font-family:'Orbitron';font-size:11px;font-weight:700;letter-spacing:1px;z-index:200;touch-action:none;cursor:pointer;align-items:center;justify-content:center}
+#mobileDriftBtn.active{background:rgba(255,60,20,.75);border-color:rgba(255,160,80,.9);box-shadow:0 0 18px rgba(255,80,30,.5)}
+#mobileMenuBtn{display:none;position:fixed;bottom:125px;right:35px;width:50px;height:50px;border-radius:12px;background:rgba(100,140,255,.5);border:2px solid rgba(140,170,255,.6);color:#fff;font-size:22px;z-index:200;cursor:pointer;align-items:center;justify-content:center}
+#mobileMenuPopup{display:none;position:fixed;bottom:185px;right:20px;width:200px;background:rgba(15,15,25,.92);border:1px solid rgba(100,140,255,.4);border-radius:14px;padding:12px;z-index:210;backdrop-filter:blur(12px)}
+#mobileMenuPopup.show{display:flex;flex-direction:column;gap:6px}
+.mm-title{font-family:'Orbitron';font-size:11px;font-weight:700;letter-spacing:2px;color:rgba(140,180,255,.8);text-align:center;margin-bottom:4px}
+.mm-btn{background:rgba(60,90,160,.4);border:1px solid rgba(100,140,255,.35);color:#fff;font-family:'Rajdhani';font-size:14px;font-weight:600;padding:10px;border-radius:8px;cursor:pointer;text-align:left}
+.mm-btn:active{background:rgba(80,120,200,.6)}
+.mm-close{background:rgba(200,60,60,.4);border-color:rgba(255,100,80,.4);text-align:center}
+body.mobile #mobileStick{display:block}
+body.mobile #mobileDriftBtn{display:flex}
+body.mobile #mobileMenuBtn{display:flex}
+body.mobile .ghostBtn{display:none!important}
+body.mobile #hudScreen>.cog-btn{display:none!important}
+body.mobile #emoteHint{display:none}
+body.mobile .ci{display:none}
+body.mobile #camHint{display:none}
+body.mobile #missileWarn{cursor:pointer;padding:10px 18px}
+body.mobile #fuelWarn{cursor:pointer;padding:10px 18px}
+body.mobile .nukeBtn{display:none!important}
+body.mobile .blackoutBtn{display:none!important}
 </style>
 </head>
 <body>
@@ -468,10 +492,10 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
   <div style="font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;background:linear-gradient(175deg,#ff1f1f,#ff5500,#ffaa00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:20px">APEX GP</div>
   <div style="font-family:'Rajdhani',sans-serif;font-size:18px;color:rgba(255,255,255,.7);line-height:1.6;max-width:320px">This game requires a keyboard to play.<br><br>Please open on a <span style="color:#ff8833;font-weight:700">laptop or PC</span> for the full experience.</div>
 </div>
-<script>if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){document.getElementById('mobileBlock').style.display='flex'}</script>
+<script>var isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);if(isMobile){document.body.classList.add('mobile')}</script>
 <div id="menuScreen"><canvas id="menuCanvas"></canvas><button class="cog-btn" style="position:absolute;top:18px;right:18px;z-index:10" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="menu-fx"></div><div class="menu-vig"></div><div class="mo"><div class="title">APEX<br>GP</div><div class="sub">Formula Apex &middot; World Championship</div><button class="play-btn" onclick="onPlayClick()"><span class="play-car-ico">🏎️</span><span class="play-txt">PLAY</span></button><button class="play-btn review-btn" id="reviewBtn" style="display:none" onclick="openReviewMenu()"><span class="play-car-ico">▶</span><span class="play-txt">REVIEW BEST LAP</span></button><div class="ci"><span>W/&#8593;</span> Accelerate &middot; <span>S/&#8595;</span> Brake &middot; <span>A/&#8592;</span> <span>D/&#8594;</span> Steer<br><span>C</span> Camera &middot; <span>R</span> Restart &middot; <span>G</span> Ghost &middot; <span>H</span> Headlights &middot; <span>SPACE</span> Drift &middot; <span>B</span> Look Back &middot; <span>1-4</span> Emotes (party)</div></div></div>
 <div id="garageScreen" class="hide"><canvas id="garageCanvas"></canvas><button class="cog-btn" style="position:absolute;top:18px;right:18px;z-index:10" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="gar-left"><div class="gar-brand">APEX GP &mdash; TIME ATTACK</div><div class="gar-car-name">APEX<br>GP</div><div class="gar-divider"></div><div class="gar-rank" id="garRank">BEGINNER</div><div class="gar-laps" id="garLaps">0 LAPS</div></div><div class="track-sel"><button class="track-arr" onclick="chgTrack(-1)">&#9664;</button><div class="track-info"><canvas id="trackPreview" width="120" height="120"></canvas><div class="track-name" id="trackName">SUNSET CIRCUIT</div><div class="track-best" id="trackBest">BEST: --:--.---</div><div class="track-num" id="trackNum">1 / 5</div><div class="tog" id="battleTog" onclick="toggleBattle()" style="margin-top:10px;font-size:10px;text-align:center">🚀 MISSILES: ON</div></div><button class="track-arr" onclick="chgTrack(1)">&#9654;</button></div><div class="hud-bottom"><div class="gar-section">HUD DISPLAY</div><div class="tog-row"><div class="tog" id="togLap" onclick="togHUD('lap')">LAP TIMES</div><div class="tog" id="togMap" onclick="togHUD('map')">MINIMAP</div><div class="tog" id="togGrip" onclick="togHUD('grip')">DELTA</div><div class="tog" id="togGhost" onclick="togHUD('ghost')">GHOST</div><div class="tog" id="togLine" onclick="togHUD('line')">RACING LINE</div><div class="tog off" id="togOpponent" onclick="togHUD('opponent')" style="display:none">OPPONENT</div><div class="tog off" id="togOpGhost" onclick="togHUD('opGhost')" style="display:none">OPP. GHOST</div></div></div><button class="gar-btn" id="lbGarBtn" onclick="openLeaderboard()">LEADERBOARD</button><button class="gar-btn" id="customBtn" onclick="openCustom();event.stopPropagation()">CUSTOMISE</button><button class="gar-btn" id="startBtn" onclick="showWeatherMenu()">RACE</button><div class="orbit-hint">DRAG TO ORBIT &middot; SCROLL TO ZOOM</div><div class="mp-panel" id="mpPanel"><div class="gar-section">MULTIPLAYER</div><div id="mpButtons" class="mp-buttons"><div class="tog" onclick="createParty()">CREATE PARTY</div><div class="tog" onclick="showJoinUI()">JOIN PARTY</div></div><div id="mpHosting" class="mp-hosting hide"><div class="mp-code-label">PARTY CODE</div><div class="mp-code" id="mpCode">-----</div><div class="mp-status" id="mpHostStatus">Waiting for opponent...</div><div class="tog mp-leave" onclick="leaveParty()">CANCEL</div></div><div id="mpJoining" class="mp-joining hide"><div class="mp-row"><input class="mp-input" id="mpCodeInput" maxlength="5" placeholder="CODE"><div class="tog" onclick="joinParty()">JOIN</div></div><div class="mp-status" id="mpJoinStatus"></div><div class="tog mp-leave" onclick="cancelJoin()">CANCEL</div></div><div id="mpConnected" class="mp-connected hide"><div class="mp-status ok">CONNECTED &#10003;</div><div class="mp-opponent" id="mpOpponent"></div><div class="tog mp-leave" onclick="leaveParty()">LEAVE</div></div></div></div>
-<div id="hudScreen" class="hide"><button class="ghostBtn" id="camLbl" style="top:18px;left:25px;background:rgba(80,180,255,.4);border-color:rgba(80,180,255,.3)" onclick="cycleCam()" title="Click or press C to change camera">CHASE CAM</button><div id="camHint">DRAG TO AIM CAMERA &middot; SCROLL TO ZOOM</div><button class="ghostBtn" id="ghostBtn" onclick="toggleGhost()">GHOST: ON</button><button class="ghostBtn soundBtn" id="soundBtn" onclick="toggleRaceSound()">♪ SOUND: ON</button><button class="ghostBtn" id="fullscreenBtn" style="top:176px;background:rgba(100,180,255,.4);border-color:rgba(100,180,255,.3)" onclick="toggleFullscreen()" title="Press F for fullscreen">&#x26F6; FULLSCREEN</button><button class="ghostBtn" id="missileBtn" style="top:176px;display:none;background:rgba(255,90,40,.5);border-color:rgba(255,130,70,.55)" onclick="startMissileAim()">🚀 MISSILE</button><button class="ghostBtn" id="shieldBtn" style="top:215px;display:none;background:rgba(60,160,255,.45);border-color:rgba(100,190,255,.5)" onclick="activateShield()">🛡 SHIELD (E)</button><div id="missileWarn"><span id="missileWarnTxt"></span><button id="missileWarnX" onclick="dismissMissileWarn()">&#x2715;</button></div><div id="fuelWarn"><span id="fuelWarnTxt"></span><button id="fuelWarnX" onclick="dismissFuelWarn()">&#x2715;</button></div><button class="cog-btn" style="position:absolute;top:110px;left:70px" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="hb lbb" id="lapBox"><div class="lt">Current Lap</div><div class="lv" id="curLap">00:00.000</div><div class="lt" style="margin-top:7px">Best Lap</div><div class="lbv" id="bestLap">--:--.---</div><div class="lt" style="margin-top:7px">Last Lap</div><div class="lc" id="lastLap">--:--.---</div><div class="lc" id="lapCnt" style="margin-top:5px">LAP 1</div></div><div class="hb sbb" id="spdBox"><svg id="spdOutlineSvg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible"><rect id="spdOutlineRect" x="0" y="0" width="10" height="10" rx="10" ry="10" fill="none" stroke="#ff3333" stroke-width="9" stroke-dasharray="0 9999" stroke-linecap="round"/></svg><div class="sv" id="spdVal">0</div><div class="su">KM/H</div><div class="sbc"><div class="sb2" id="spdBar"></div></div></div><div class="gearBox" id="gearBox"><div class="gearLbl">VS GHOST</div><div class="gearNum" id="gearD">--</div><div class="gearBar"><div class="gearFill" id="gearFill"></div></div></div><div class="hb mmb" id="mapBox"><canvas id="mmC" width="150" height="150"></canvas></div><div id="posBox"><div class="pv" id="posVal">P1</div><div class="pl">POSITION</div></div><div id="emoteToast"><div id="etEmoji">👋</div><div class="et-name" id="etName"></div></div><div class="nb" id="nB">&#9733; NEW BEST LAP &#9733;</div><div class="opDeltaBox" id="opDeltaBox"><div class="opDeltaLbl">VS OPPONENT</div><div class="opDeltaNum" id="opDeltaD">--</div></div><div class="opLiveBox" id="opLiveBox"><div class="opLiveLbl">OPPONENT</div><div class="opLiveSpd" id="opLiveSpd">0</div><div class="opLiveSpdU">KM/H</div><div class="opLiveTimeLbl">CURRENT LAP</div><div class="opLiveTime" id="opLiveTime">--:--.---</div></div><div class="emote-hint" id="emoteHint">1 👋 &nbsp; 2 😂 &nbsp; 3 🔥 &nbsp; 4 🏁</div><button class="nukeBtn" id="nukeBtn" onclick="toggleNuke()">☢ NUKE</button><button class="blackoutBtn" id="blackoutBtn" onclick="toggleBlackout()">⬛ BLACKOUT</button><div class="pitLaneInd" id="pitLaneInd">PIT LANE — 70 KM/H</div><div id="tireInfo"><div class="ti-title">TIRES</div><div class="ti-cur"><div class="ti-dot" id="tiDot"></div><div class="ti-name" id="tiName">MEDIUM</div></div><div class="ti-section">TEMPERATURE</div><div class="ti-temp-bar"><div class="ti-temp-opt-lo" id="tiTempOptLo"></div><div class="ti-temp-opt-hi" id="tiTempOptHi"></div><div class="ti-temp-marker" id="tiTempMarker"></div></div><div class="ti-temp-num" id="tiTempNum">25°C</div><div class="ti-temp-state" id="tiTempState">COLD</div><div class="ti-section">WEAR</div><div class="ti-wear-bar"><div class="ti-wear-fill" id="tiWearFill"></div></div><div class="ti-wear-num" id="tiWearNum">100%</div><div class="ti-section">STOCK</div><div class="ti-stock" id="tiStock"></div><div class="ti-section">FUEL</div><div class="ti-fuel" id="tiFuel">--</div><div class="ti-hint">PRESS P TO CLOSE</div></div><div class="nukedOverlay" id="nukedOverlay">☢ NUKED ☢<div class="nukedSub">CONTROLS DISABLED</div></div><div class="buildSpd" id="buildSpd"><div class="bt">BUILDING SPEED</div><div class="bbar"><div class="bfill" id="buildFill"></div></div></div></div>
+<div id="hudScreen" class="hide"><button class="ghostBtn" id="camLbl" style="top:18px;left:25px;background:rgba(80,180,255,.4);border-color:rgba(80,180,255,.3)" onclick="cycleCam()" title="Click or press C to change camera">CHASE CAM</button><div id="camHint">DRAG TO AIM CAMERA &middot; SCROLL TO ZOOM</div><button class="ghostBtn" id="ghostBtn" onclick="toggleGhost()">GHOST: ON</button><button class="ghostBtn soundBtn" id="soundBtn" onclick="toggleRaceSound()">♪ SOUND: ON</button><button class="ghostBtn" id="fullscreenBtn" style="top:176px;background:rgba(100,180,255,.4);border-color:rgba(100,180,255,.3)" onclick="toggleFullscreen()" title="Press F for fullscreen">&#x26F6; FULLSCREEN</button><button class="ghostBtn" id="missileBtn" style="top:176px;display:none;background:rgba(255,90,40,.5);border-color:rgba(255,130,70,.55)" onclick="startMissileAim()">🚀 MISSILE</button><button class="ghostBtn" id="shieldBtn" style="top:215px;display:none;background:rgba(60,160,255,.45);border-color:rgba(100,190,255,.5)" onclick="activateShield()">🛡 SHIELD (E)</button><div id="missileWarn"><span id="missileWarnTxt"></span><button id="missileWarnX" onclick="dismissMissileWarn()">&#x2715;</button></div><div id="fuelWarn"><span id="fuelWarnTxt"></span><button id="fuelWarnX" onclick="dismissFuelWarn()">&#x2715;</button></div><button class="cog-btn" style="position:absolute;top:110px;left:70px" onclick="openSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><div class="hb lbb" id="lapBox"><div class="lt">Current Lap</div><div class="lv" id="curLap">00:00.000</div><div class="lt" style="margin-top:7px">Best Lap</div><div class="lbv" id="bestLap">--:--.---</div><div class="lt" style="margin-top:7px">Last Lap</div><div class="lc" id="lastLap">--:--.---</div><div class="lc" id="lapCnt" style="margin-top:5px">LAP 1</div></div><div class="hb sbb" id="spdBox"><svg id="spdOutlineSvg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible"><rect id="spdOutlineRect" x="0" y="0" width="10" height="10" rx="10" ry="10" fill="none" stroke="#ff3333" stroke-width="9" stroke-dasharray="0 9999" stroke-linecap="round"/></svg><div class="sv" id="spdVal">0</div><div class="su">KM/H</div><div class="sbc"><div class="sb2" id="spdBar"></div></div></div><div class="gearBox" id="gearBox"><div class="gearLbl">VS GHOST</div><div class="gearNum" id="gearD">--</div><div class="gearBar"><div class="gearFill" id="gearFill"></div></div></div><div class="hb mmb" id="mapBox"><canvas id="mmC" width="150" height="150"></canvas></div><div id="posBox"><div class="pv" id="posVal">P1</div><div class="pl">POSITION</div></div><div id="emoteToast"><div id="etEmoji">👋</div><div class="et-name" id="etName"></div></div><div class="nb" id="nB">&#9733; NEW BEST LAP &#9733;</div><div class="opDeltaBox" id="opDeltaBox"><div class="opDeltaLbl">VS OPPONENT</div><div class="opDeltaNum" id="opDeltaD">--</div></div><div class="opLiveBox" id="opLiveBox"><div class="opLiveLbl">OPPONENT</div><div class="opLiveSpd" id="opLiveSpd">0</div><div class="opLiveSpdU">KM/H</div><div class="opLiveTimeLbl">CURRENT LAP</div><div class="opLiveTime" id="opLiveTime">--:--.---</div></div><div class="emote-hint" id="emoteHint">1 👋 &nbsp; 2 😂 &nbsp; 3 🔥 &nbsp; 4 🏁</div><button class="nukeBtn" id="nukeBtn" onclick="toggleNuke()">☢ NUKE</button><button class="blackoutBtn" id="blackoutBtn" onclick="toggleBlackout()">⬛ BLACKOUT</button><div class="pitLaneInd" id="pitLaneInd">PIT LANE — 70 KM/H</div><div id="tireInfo"><div class="ti-title">TIRES</div><div class="ti-cur"><div class="ti-dot" id="tiDot"></div><div class="ti-name" id="tiName">MEDIUM</div></div><div class="ti-section">TEMPERATURE</div><div class="ti-temp-bar"><div class="ti-temp-opt-lo" id="tiTempOptLo"></div><div class="ti-temp-opt-hi" id="tiTempOptHi"></div><div class="ti-temp-marker" id="tiTempMarker"></div></div><div class="ti-temp-num" id="tiTempNum">25°C</div><div class="ti-temp-state" id="tiTempState">COLD</div><div class="ti-section">WEAR</div><div class="ti-wear-bar"><div class="ti-wear-fill" id="tiWearFill"></div></div><div class="ti-wear-num" id="tiWearNum">100%</div><div class="ti-section">STOCK</div><div class="ti-stock" id="tiStock"></div><div class="ti-section">FUEL</div><div class="ti-fuel" id="tiFuel">--</div><div class="ti-hint">PRESS P TO CLOSE</div></div><div class="nukedOverlay" id="nukedOverlay">☢ NUKED ☢<div class="nukedSub">CONTROLS DISABLED</div></div><div class="buildSpd" id="buildSpd"><div class="bt">BUILDING SPEED</div><div class="bbar"><div class="bfill" id="buildFill"></div></div></div><div id="mobileStick"><div id="mobileStickKnob"></div></div><button id="mobileDriftBtn">DRIFT</button><button id="mobileMenuBtn">&#9776;</button><div id="mobileMenuPopup"><div class="mm-title">CONTROLS</div><button class="mm-btn" onclick="cycleCam();closeMobileMenu()">&#128247; CAMERA</button><button class="mm-btn" onclick="toggleGhost();closeMobileMenu()">&#128123; GHOST</button><button class="mm-btn" onclick="toggleRaceSound();closeMobileMenu()">&#9835; SOUND</button><button class="mm-btn" onclick="toggleFullscreen();closeMobileMenu()">&#x26F6; FULLSCREEN</button><button class="mm-btn" onclick="toggleHeadlights();closeMobileMenu()">&#128161; LIGHTS</button><button class="mm-btn" onclick="toggleTireInfo();closeMobileMenu()">&#127937; TIRES</button><button class="mm-btn" id="mmMissileBtn" onclick="startMissileAim();closeMobileMenu()" style="display:none">&#128640; MISSILE</button><button class="mm-btn" id="mmShieldBtn" onclick="activateShield();closeMobileMenu()" style="display:none">&#128737; SHIELD</button><button class="mm-btn" onclick="toggleNuke();closeMobileMenu()">&#9762; NUKE</button><button class="mm-btn" onclick="toggleBlackout();closeMobileMenu()">&#11035; BLACKOUT</button><button class="mm-btn" onclick="if(!mpConn||racePhase!=='race')resetCar();closeMobileMenu()">&#128260; RESTART</button><button class="mm-btn mm-close" onclick="closeMobileMenu()">&#10005; CLOSE</button></div></div>
 <div id="missileAim" onclick="missileAimClick(event)"><div class="ma-hint">CLICK GROUND TO STRIKE — CLICK A CAR TO LOCK A HOMING MISSILE — ESC TO CANCEL</div></div>
 <div id="flipOverlay"><div class="crash-txt" id="flipTxt">FATAL CRASH</div></div>
 <div id="crashOverlay"><div class="crash-txt" id="crashTxt">FATAL CRASH</div></div>
@@ -706,8 +730,8 @@ function updateTireDynamics(dt){
   var fwd=_ucFwd.set(Math.sin(A),0,Math.cos(A)),rgt=_ucRgt.set(fwd.z,0,-fwd.x);
   var ls=Math.abs(V.dot(rgt));
   var slip=Math.min(1.5,ls/7);
-  var brkIn=(KY['s']||KY['arrowdown'])?1:0;
-  var gasIn=(KY['w']||KY['arrowup'])?1:0;
+  var brkIn=(KY['s']||KY['arrowdown'])?1:mobileBrake;
+  var gasIn=(KY['w']||KY['arrowup'])?1:mobileGas;
   var steerMag=Math.abs(ST);
   var coasting=(gasIn===0&&brkIn===0); // off throttle and off brake
   var optMid=(t.optTemp.lo+t.optTemp.hi)/2;
@@ -2406,8 +2430,8 @@ var onCurb=false,curbShakeT=0,_drifting=false,_lastSkidT=0,_skidGeo=null;
 // ── Rear view mirror ──
 var mirrorCam=null;
 var _mirFwd=new THREE.Vector3(),_mirPos=new THREE.Vector3(),_mirLook=new THREE.Vector3();
-function updateCar(dt){var steps=Math.max(1,Math.min(8,Math.ceil(dt*100))),sdt=dt/steps;var W=WEATHER[selWeather];var _tf=tireFactor();var _fAcc=fuelAccMul();var _fBrk=fuelBrkMul();if(inPitLane&&racing&&PIT){var _plim=PIT.speedLimit*400/468,_hv2=Math.sqrt(V.x*V.x+V.z*V.z);if(_hv2>_plim){var _sc3=_plim/_hv2;V.x*=_sc3;V.z*=_sc3}}var _gasOn=((KY[keyBindings.accel]||KY['arrowup'])&&fuelLaps>0)?1:0;if(racePhase!=='quali'&&!pitOpen&&_gasOn){var _hsp0=Math.sqrt(V.x*V.x+V.z*V.z);fuelLaps=Math.max(0,fuelLaps-_hsp0*dt/trackLenM)}var _tT=TIRES[currentTire];var effTOPMS=TOPMS*(1-getDmgPenalty())*(W.topSpdMul||1)*((_tT&&_tT.topSpdMul)||1)*fuelTopMul();for(var i=0;i<steps;i++){var gas=(KY[keyBindings.accel]||KY['arrowup'])?1:0,brk=(KY[keyBindings.brake]||KY['arrowdown'])?1:0;var str=((KY[keyBindings.left]||KY['arrowleft'])?1:0)-((KY[keyBindings.right]||KY['arrowright'])?1:0);if(fuelLaps<=0)gas=0;if(nuked){gas=1;brk=0;str=0}if(pitOpen||missileMode||(raceLightsActive&&raceLightsStep<6)){gas=0;brk=0;str=0;V.x=0;V.z=0;V.y=0;AV=0;spinV=0;ST=0}var wSteer=W.steerMul;ST+=(str-ST)*Math.min(1,sdt*25);var fwd=_ucFwd.set(Math.sin(A),0,Math.cos(A)),rgt=_ucRgt.set(fwd.z,0,-fwd.x);var fs=V.dot(fwd),ls=V.dot(rgt);if(!ab){var acc=0,r=Math.abs(fs)/effTOPMS;var aM=stat0to100/5;var wAcc=W.accMul*_tf,wBrk=W.brkMul*_tf;if(gas>0){acc=50*aM*wAcc*_fAcc*(1-r*r*.45);if(fs<-.5)acc=30*aM*wAcc*_fAcc}if(brk>0){acc=fs>1?-60*(statBraking/5)*wBrk*_fBrk:-25*(statBraking/5)*wBrk*_fBrk;var bbRot=(setupBb-5)/5*0.4*Math.min(Math.abs(fs)/8,1);if(Math.abs(ST)>.1)AV+=ST*bbRot*sdt*4}acc-=fs*.18+Math.sign(fs)*.6;V.addScaledVector(fwd,acc*sdt);var wGrip=W.gripMul*_tf;
-      var drift=(KY[' ']&&Math.abs(fs)>6&&!pitOpen&&!(raceLightsActive&&raceLightsStep<6))?1:0;
+function updateCar(dt){var steps=Math.max(1,Math.min(8,Math.ceil(dt*100))),sdt=dt/steps;var W=WEATHER[selWeather];var _tf=tireFactor();var _fAcc=fuelAccMul();var _fBrk=fuelBrkMul();if(inPitLane&&racing&&PIT){var _plim=PIT.speedLimit*400/468,_hv2=Math.sqrt(V.x*V.x+V.z*V.z);if(_hv2>_plim){var _sc3=_plim/_hv2;V.x*=_sc3;V.z*=_sc3}}var _gasOn=((KY[keyBindings.accel]||KY['arrowup']||mobileGas>0)&&fuelLaps>0)?1:0;if(racePhase!=='quali'&&!pitOpen&&_gasOn){var _hsp0=Math.sqrt(V.x*V.x+V.z*V.z);fuelLaps=Math.max(0,fuelLaps-_hsp0*dt/trackLenM)}var _tT=TIRES[currentTire];var effTOPMS=TOPMS*(1-getDmgPenalty())*(W.topSpdMul||1)*((_tT&&_tT.topSpdMul)||1)*fuelTopMul();for(var i=0;i<steps;i++){var gas=(KY[keyBindings.accel]||KY['arrowup'])?1:mobileGas,brk=(KY[keyBindings.brake]||KY['arrowdown'])?1:mobileBrake;var str=((KY[keyBindings.left]||KY['arrowleft'])?1:0)-((KY[keyBindings.right]||KY['arrowright'])?1:0);if(isMobile&&mobileSteerVal!==0)str=mobileSteerVal;if(fuelLaps<=0)gas=0;if(nuked){gas=1;brk=0;str=0}if(pitOpen||missileMode||(raceLightsActive&&raceLightsStep<6)){gas=0;brk=0;str=0;V.x=0;V.z=0;V.y=0;AV=0;spinV=0;ST=0}var wSteer=W.steerMul;ST+=(str-ST)*Math.min(1,sdt*25);var fwd=_ucFwd.set(Math.sin(A),0,Math.cos(A)),rgt=_ucRgt.set(fwd.z,0,-fwd.x);var fs=V.dot(fwd),ls=V.dot(rgt);if(!ab){var acc=0,r=Math.abs(fs)/effTOPMS;var aM=stat0to100/5;var wAcc=W.accMul*_tf,wBrk=W.brkMul*_tf;if(gas>0){acc=50*aM*wAcc*_fAcc*(1-r*r*.45);if(fs<-.5)acc=30*aM*wAcc*_fAcc}if(brk>0){acc=fs>1?-60*(statBraking/5)*wBrk*_fBrk:-25*(statBraking/5)*wBrk*_fBrk;var bbRot=(setupBb-5)/5*0.4*Math.min(Math.abs(fs)/8,1);if(Math.abs(ST)>.1)AV+=ST*bbRot*sdt*4}acc-=fs*.18+Math.sign(fs)*.6;V.addScaledVector(fwd,acc*sdt);var wGrip=W.gripMul*_tf;
+      var drift=((KY[' ']||mobileDrifting)&&Math.abs(fs)>6&&!pitOpen&&!(raceLightsActive&&raceLightsStep<6))?1:0;
       _drifting=drift>0;
       // handbrake drift: rear grip drops away, the car rotates into the steer,
       // and scrubbing tires bleed speed — fun, but slower than clean driving
@@ -2418,7 +2442,7 @@ function updateCar(dt){var steps=Math.max(1,Math.min(8,Math.ceil(dt*100))),sdt=d
         V.x*=(1-sdt*.22);V.z*=(1-sdt*.22);
       }
       var wSlide=W.slideFactor+Math.max(0,0.85-_tf*W.gripMul)*0.35;if(wSlide>0&&Math.abs(fs)>5){var slideStr=wSlide*Math.min((Math.abs(fs)-5)/20,1);var sNoise=(Math.sin(performance.now()*.003+P.x*.3)*0.6+Math.sin(performance.now()*.006+P.z*.2)*0.4);V.addScaledVector(rgt,sNoise*slideStr*12*sdt);if(gas>0&&Math.abs(fs)>6){var wheelSpin=wSlide*0.45*Math.min(r,.6);AV+=sNoise*wheelSpin*sdt*2.2}if(Math.abs(ST)>.25&&Math.abs(fs)>8){var overStr=wSlide*Math.abs(ST)*Math.min((Math.abs(fs)-8)/15,1);AV+=ST*overStr*sdt*2.6}}
-      var sf=Math.min(Math.abs(fs)/3,1),sp=Math.abs(fs),sr=1/(1+sp*.0028+sp*sp*.00000004);var steerYaw=ST*6.5*sf*sr*Math.sign(fs+.001);AV+=(steerYaw*(1-(1-wSteer)*.5)-AV*6)*sdt*12}else{V.y-=9.8*sdt;AV*=.998}A+=AV*sdt+spinV*sdt;spinV*=(1-sdt*3);if(inPitLane&&!pitOpen){var _plim=(PIT&&PIT.speedLimit)||70;var _pitMaxV=_plim*400/130/3.6,_pitVxz=Math.sqrt(V.x*V.x+V.z*V.z);if(_pitVxz>_pitMaxV){var _ps=_pitMaxV/_pitVxz;V.x*=_ps;V.z*=_ps}}P.addScaledVector(V,sdt);doCol();if(racePhase==='race'&&opPos){var _odx=P.x-opPos.x,_odz=P.z-opPos.z,_od=Math.sqrt(_odx*_odx+_odz*_odz),_minD=2.8;if(_od<_minD&&_od>0.05){var _onx=_odx/_od,_onz=_odz/_od,_pen=_minD-_od;P.x+=_onx*_pen;P.z+=_onz*_pen;var _ovx=opVel?opVel.x:0,_ovz=opVel?opVel.z:0;var _rvN=(V.x-_ovx)*_onx+(V.z-_ovz)*_onz;if(_rvN<0){var _imp=-(1+0.45)*_rvN;V.x+=_imp*_onx;V.z+=_imp*_onz;var _impactKph=Math.abs(_rvN)*3.6*130/400;if(_impactKph>40)applyDamage(_impactKph,0.4,0);if(_impactKph>15)playCrash(Math.min(1,_impactKph/80))}}}if(PIT&&_pitInRange(carNearIdx,PIT.coreS,PIT.coreE)){var _s7=sd[carNearIdx];var _lat7=(P.x-_s7.c.x)*_s7.n.x+(P.z-_s7.c.z)*_s7.n.z;var _sl7=_lat7*PIT.side;var _dOff=TW/2+.55,_dHalf=CAR_HW*.55+.35;if(_sl7>_dOff-_dHalf&&_sl7<_dOff+_dHalf){var _so=_pitPrevSL>=_dOff?1:-1;var _tgt=_dOff+_so*_dHalf;var _corr=(_tgt-_sl7)*PIT.side;P.x+=_s7.n.x*_corr;P.z+=_s7.n.z*_corr;var _vN7=(V.x*_s7.n.x+V.z*_s7.n.z)*PIT.side;if((_so<0&&_vN7>0)||(_so>0&&_vN7<0)){V.x-=_s7.n.x*_vN7*PIT.side*1.2;V.z-=_s7.n.z*_vN7*PIT.side*1.2}}else{_pitPrevSL=_sl7}}if(!ab){pitchV+=-pitchA*8*sdt;pitchV*=(1-sdt*2.5);rollV+=-rollA*8*sdt;rollV*=(1-sdt*2.5)}else{pitchV*=(1-sdt*.1);rollV*=(1-sdt*.1)}pitchA+=pitchV*sdt;rollA+=rollV*sdt;var _fy=(sd[carNearIdx]&&sd[carNearIdx].c.y||0)+.8;if(P.y<=_fy+0.45){P.y=_fy;if(V.y<0)V.y=0;ab=false}else ab=true}SPD=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;car.position.copy(P);car.rotation.set(pitchA,A,rollA-ST*Math.min(SPD/120,1)*.02,'YXZ');if(car.tl)car.tl.material.emissiveIntensity=(KY[keyBindings.brake]||KY['arrowdown'])?1.2:.2;
+      var sf=Math.min(Math.abs(fs)/3,1),sp=Math.abs(fs),sr=1/(1+sp*.0028+sp*sp*.00000004);var steerYaw=ST*6.5*sf*sr*Math.sign(fs+.001);AV+=(steerYaw*(1-(1-wSteer)*.5)-AV*6)*sdt*12}else{V.y-=9.8*sdt;AV*=.998}A+=AV*sdt+spinV*sdt;spinV*=(1-sdt*3);if(inPitLane&&!pitOpen){var _plim=(PIT&&PIT.speedLimit)||70;var _pitMaxV=_plim*400/130/3.6,_pitVxz=Math.sqrt(V.x*V.x+V.z*V.z);if(_pitVxz>_pitMaxV){var _ps=_pitMaxV/_pitVxz;V.x*=_ps;V.z*=_ps}}P.addScaledVector(V,sdt);doCol();if(racePhase==='race'&&opPos){var _odx=P.x-opPos.x,_odz=P.z-opPos.z,_od=Math.sqrt(_odx*_odx+_odz*_odz),_minD=2.8;if(_od<_minD&&_od>0.05){var _onx=_odx/_od,_onz=_odz/_od,_pen=_minD-_od;P.x+=_onx*_pen;P.z+=_onz*_pen;var _ovx=opVel?opVel.x:0,_ovz=opVel?opVel.z:0;var _rvN=(V.x-_ovx)*_onx+(V.z-_ovz)*_onz;if(_rvN<0){var _imp=-(1+0.45)*_rvN;V.x+=_imp*_onx;V.z+=_imp*_onz;var _impactKph=Math.abs(_rvN)*3.6*130/400;if(_impactKph>40)applyDamage(_impactKph,0.4,0);if(_impactKph>15)playCrash(Math.min(1,_impactKph/80))}}}if(PIT&&_pitInRange(carNearIdx,PIT.coreS,PIT.coreE)){var _s7=sd[carNearIdx];var _lat7=(P.x-_s7.c.x)*_s7.n.x+(P.z-_s7.c.z)*_s7.n.z;var _sl7=_lat7*PIT.side;var _dOff=TW/2+.55,_dHalf=CAR_HW*.55+.35;if(_sl7>_dOff-_dHalf&&_sl7<_dOff+_dHalf){var _so=_pitPrevSL>=_dOff?1:-1;var _tgt=_dOff+_so*_dHalf;var _corr=(_tgt-_sl7)*PIT.side;P.x+=_s7.n.x*_corr;P.z+=_s7.n.z*_corr;var _vN7=(V.x*_s7.n.x+V.z*_s7.n.z)*PIT.side;if((_so<0&&_vN7>0)||(_so>0&&_vN7<0)){V.x-=_s7.n.x*_vN7*PIT.side*1.2;V.z-=_s7.n.z*_vN7*PIT.side*1.2}}else{_pitPrevSL=_sl7}}if(!ab){pitchV+=-pitchA*8*sdt;pitchV*=(1-sdt*2.5);rollV+=-rollA*8*sdt;rollV*=(1-sdt*2.5)}else{pitchV*=(1-sdt*.1);rollV*=(1-sdt*.1)}pitchA+=pitchV*sdt;rollA+=rollV*sdt;var _fy=(sd[carNearIdx]&&sd[carNearIdx].c.y||0)+.8;if(P.y<=_fy+0.45){P.y=_fy;if(V.y<0)V.y=0;ab=false}else ab=true}SPD=Math.sqrt(V.x*V.x+V.z*V.z)*3.6;car.position.copy(P);car.rotation.set(pitchA,A,rollA-ST*Math.min(SPD/120,1)*.02,'YXZ');if(car.tl)car.tl.material.emissiveIntensity=(KY[keyBindings.brake]||KY['arrowdown']||mobileBrake>0)?1.2:.2;
 if(_drifting&&SPD>120&&performance.now()-_lastSkidT>30&&skidMat){
   _lastSkidT=performance.now();
   if(!_skidGeo){_skidGeo=new THREE.PlaneGeometry(.34,1.5);_skidGeo.rotateX(-Math.PI/2)}
@@ -4272,8 +4296,8 @@ function updateSound(dt){
   if(!sfxEnabled){[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){if(s.volume>0)s.volume=Math.max(0,s.volume-dt*6)});return;}
   if(flipCrashActive||wallCrashActive){var fr=wallCrashActive?dt/1.5:dt/3;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=Math.max(0,s.volume-fr);});return;}
   startAudio();
-  var gas=(KY[keyBindings.accel]||KY['arrowup']);
-  var brk=(KY[keyBindings.brake]||KY['arrowdown']);
+  var gas=(KY[keyBindings.accel]||KY['arrowup']||mobileGas>0);
+  var brk=(KY[keyBindings.brake]||KY['arrowdown']||mobileBrake>0);
   var displaySpd=SPD*(130/400);
   var moving=SPD>1.5;
   var spd=Math.min(1,displaySpd/160);
@@ -4288,7 +4312,7 @@ function updateSound(dt){
   var slowZone=displaySpd<30&&!gas; // below 30 kph, not accelerating → silence
   if(moving&&!slowZone&&!idleZone){
     if(wallHitTimer>0) want='brake';
-    else if(KY[' ']&&displaySpd>35) want='brake';
+    else if((KY[' ']||mobileDrifting)&&displaySpd>35) want='brake';
     else if(gas)        want='engine';
     else if(brk)        want='brake';
     else                want='coast';
@@ -4890,6 +4914,98 @@ document.getElementById('authUsername').addEventListener('keydown',function(e){i
 document.getElementById('authPass').addEventListener('keydown',function(e){if(e.key==='Enter')authSubmit()});
 document.getElementById('authPass').addEventListener('keydown',function(e){if(e.key==='Enter')authSubmit()});
 document.addEventListener('click',function(e){if(e.target.id==='authModal')closeAuth()});
+
+// ── Mobile touch controls ──
+var mobileGas=0,mobileBrake=0,mobileSteerVal=0,mobileDrifting=false;
+var _stickActive=false,_stickTouchId=-1,_stickCX=0,_stickCY=0,_stickR=60;
+if(typeof isMobile==='undefined')var isMobile=false;
+(function initMobileControls(){
+  if(!isMobile)return;
+  var stick=document.getElementById('mobileStick');
+  var knob=document.getElementById('mobileStickKnob');
+  var driftBtn=document.getElementById('mobileDriftBtn');
+  var menuBtn=document.getElementById('mobileMenuBtn');
+  if(!stick||!knob)return;
+  stick.addEventListener('touchstart',function(e){
+    e.preventDefault();
+    if(_stickActive)return;
+    var t=e.changedTouches[0];
+    _stickTouchId=t.identifier;
+    _stickActive=true;
+    var r=stick.getBoundingClientRect();
+    _stickCX=r.left+r.width/2;
+    _stickCY=r.top+r.height/2;
+    _stickR=r.width/2-10;
+    _updateStick(t.clientX,t.clientY);
+  },{passive:false});
+  stick.addEventListener('touchmove',function(e){
+    e.preventDefault();
+    for(var i=0;i<e.changedTouches.length;i++){
+      if(e.changedTouches[i].identifier===_stickTouchId){
+        _updateStick(e.changedTouches[i].clientX,e.changedTouches[i].clientY);
+        break;
+      }
+    }
+  },{passive:false});
+  function onStickEnd(e){
+    for(var i=0;i<e.changedTouches.length;i++){
+      if(e.changedTouches[i].identifier===_stickTouchId){
+        _stickActive=false;_stickTouchId=-1;
+        mobileGas=0;mobileBrake=0;mobileSteerVal=0;
+        knob.style.transform='translate(0px,0px)';
+        break;
+      }
+    }
+  }
+  stick.addEventListener('touchend',onStickEnd,{passive:false});
+  stick.addEventListener('touchcancel',onStickEnd,{passive:false});
+  function _updateStick(cx,cy){
+    var dx=cx-_stickCX,dy=cy-_stickCY;
+    var dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist>_stickR){dx=dx/dist*_stickR;dy=dy/dist*_stickR;dist=_stickR}
+    knob.style.transform='translate('+dx+'px,'+dy+'px)';
+    var nx=dx/_stickR,ny=dy/_stickR;
+    mobileSteerVal=-nx;
+    if(ny<-0.1){mobileGas=Math.min(1,(-ny-0.1)/0.9);mobileBrake=0}
+    else if(ny>0.1){mobileBrake=Math.min(1,(ny-0.1)/0.9);mobileGas=0}
+    else{mobileGas=0;mobileBrake=0}
+  }
+  if(driftBtn){
+    var _driftTouchId=-1;
+    driftBtn.addEventListener('touchstart',function(e){
+      e.preventDefault();_driftTouchId=e.changedTouches[0].identifier;
+      mobileDrifting=true;driftBtn.classList.add('active');
+    },{passive:false});
+    driftBtn.addEventListener('touchend',function(e){
+      for(var i=0;i<e.changedTouches.length;i++){
+        if(e.changedTouches[i].identifier===_driftTouchId){
+          mobileDrifting=false;_driftTouchId=-1;driftBtn.classList.remove('active');break;
+        }
+      }
+    },{passive:false});
+    driftBtn.addEventListener('touchcancel',function(){mobileDrifting=false;_driftTouchId=-1;driftBtn.classList.remove('active')},{passive:false});
+  }
+  if(menuBtn){
+    menuBtn.addEventListener('click',function(){openMobileMenu()});
+  }
+  var mw=document.getElementById('missileWarn');
+  var fw=document.getElementById('fuelWarn');
+  if(mw)mw.addEventListener('click',function(e){if(e.target.id!=='missileWarnX')dismissMissileWarn()});
+  if(fw)fw.addEventListener('click',function(e){if(e.target.id!=='fuelWarnX')dismissFuelWarn()});
+})();
+function openMobileMenu(){
+  var p=document.getElementById('mobileMenuPopup');if(!p)return;
+  p.classList.toggle('show');
+  var mb=document.getElementById('missileBtn');
+  var sb=document.getElementById('shieldBtn');
+  var mmb=document.getElementById('mmMissileBtn');
+  var msb=document.getElementById('mmShieldBtn');
+  if(mmb)mmb.style.display=(mb&&mb.style.display!=='none')?'':'none';
+  if(msb)msb.style.display=(sb&&sb.style.display!=='none')?'':'none';
+}
+function closeMobileMenu(){
+  var p=document.getElementById('mobileMenuPopup');if(p)p.classList.remove('show');
+}
 
 applyCarSponsors();
 initMenu();
