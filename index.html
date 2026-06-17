@@ -367,6 +367,45 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .vc-vol{width:100%;margin:6px 0;accent-color:#3cff8c}
 .vc-hint{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:1.5px;margin-top:8px}
 .vc-peer{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.85);padding:4px 0;text-align:left;border-bottom:1px solid rgba(255,255,255,.07)}
+/* ── Voice Chat Search ── */
+#vcSearchPanel{position:fixed;bottom:12px;right:12px;z-index:12;font-family:'Rajdhani';width:220px}
+#vcSearchWrap{position:relative}
+#vcSearchInput{width:100%;box-sizing:border-box;background:rgba(10,10,20,.88);border:1px solid rgba(60,255,140,.35);border-radius:8px;color:#fff;font-family:'Rajdhani';font-size:14px;font-weight:600;padding:8px 12px 8px 30px;outline:none;letter-spacing:1px}
+#vcSearchInput::placeholder{color:rgba(255,255,255,.35);letter-spacing:1px}
+#vcSearchInput:focus{border-color:rgba(60,255,140,.7);box-shadow:0 0 12px rgba(60,255,140,.15)}
+#vcSearchIcon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.5;pointer-events:none}
+#vcSearchResults{position:absolute;bottom:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:rgba(10,10,20,.96);border:1px solid rgba(60,255,140,.3);border-radius:8px 8px 0 0;margin-bottom:4px;display:none;backdrop-filter:blur(8px)}
+#vcSearchResults.show{display:block}
+#vcSearchResults::-webkit-scrollbar{width:4px}
+#vcSearchResults::-webkit-scrollbar-thumb{background:rgba(60,255,140,.3);border-radius:2px}
+.vcs-item{padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.05);transition:background .1s}
+.vcs-item:hover{background:rgba(60,255,140,.12)}
+.vcs-name{font-size:13px;font-weight:700;color:#fff;letter-spacing:1px}
+.vcs-status{font-size:9px;font-weight:600;letter-spacing:1px}
+.vcs-status.online{color:#3cff8c}
+.vcs-status.offline{color:rgba(255,255,255,.3)}
+.vcs-empty{padding:12px;text-align:center;font-size:11px;color:rgba(255,255,255,.35);letter-spacing:1px;font-family:'Orbitron'}
+.vcs-loading{padding:12px;text-align:center;font-size:11px;color:rgba(60,255,140,.5);letter-spacing:1px;font-family:'Orbitron'}
+#vcSearchLabel{font-family:'Orbitron';font-size:7px;font-weight:700;letter-spacing:2px;color:rgba(60,255,140,.45);text-align:center;margin-bottom:4px}
+/* Voice invite popup */
+#vcInvitePopup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(15,15,20,.97);border:2px solid rgba(60,255,140,.6);border-radius:16px;padding:26px 34px;display:none;z-index:600;font-family:'Orbitron';text-align:center;min-width:300px;backdrop-filter:blur(12px);box-shadow:0 0 40px rgba(60,255,140,.15)}
+#vcInvitePopup.show{display:block}
+.vci-title{font-size:11px;font-weight:700;letter-spacing:4px;color:rgba(60,255,140,.7);margin-bottom:6px}
+.vci-name{font-size:22px;font-weight:900;letter-spacing:3px;color:#fff;margin:10px 0}
+.vci-msg{font-size:10px;color:rgba(255,255,255,.5);letter-spacing:1.5px;margin-bottom:18px}
+.vci-btns{display:flex;gap:12px;justify-content:center}
+.vci-btn{padding:10px 24px;border-radius:8px;border:none;font-family:'Orbitron';font-size:12px;font-weight:800;letter-spacing:2px;cursor:pointer;transition:all .15s}
+.vci-accept{background:rgba(60,255,140,.25);border:1px solid rgba(60,255,140,.5);color:#3cff8c}
+.vci-accept:hover{background:rgba(60,255,140,.4)}
+.vci-decline{background:rgba(255,60,60,.2);border:1px solid rgba(255,60,60,.4);color:#ff5555}
+.vci-decline:hover{background:rgba(255,60,60,.35)}
+/* Notification toast for invite responses */
+#vcNotify{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(15,15,20,.95);border:1px solid rgba(60,255,140,.4);border-radius:10px;padding:12px 24px;display:none;z-index:600;font-family:'Orbitron';font-size:11px;font-weight:700;letter-spacing:2px;color:#fff;text-align:center;backdrop-filter:blur(8px)}
+#vcNotify.show{display:block}
+#vcNotify.declined{border-color:rgba(255,60,60,.5);color:#ff6666}
+body.mobile #vcSearchPanel{bottom:8px;right:8px;width:180px}
+body.mobile #vcSearchInput{font-size:12px;padding:6px 10px 6px 26px}
+body.mobile #vcSearchIcon{font-size:11px;left:8px}
 #reviewModal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:750;backdrop-filter:blur(10px)}
 #reviewModal.show{display:flex}
 .rv-box{background:rgba(15,15,20,.96);border:1px solid rgba(255,200,0,.5);border-radius:14px;padding:32px 38px;min-width:380px;font-family:'Orbitron';position:relative}
@@ -586,6 +625,9 @@ body.mobile #spdOutlineSvg{display:none}
 <div id="reviewModal"><div class="rv-box"><button class="ctrl-close" onclick="closeReviewMenu()">&#10005;</button><div class="rv-title">REVIEW BEST LAP</div><div id="reviewList"></div><div class="rv-hint">Click a track to watch your fastest lap. Esc to exit.</div></div></div>
 <div id="reviewIndicator">▶ REVIEWING BEST LAP — C CAMERA · ESC EXIT</div>
 <div id="voicePopup"><div class="vc-title">🎙 VOICE CHAT</div><div class="vc-state" id="vcState">MIC ON</div><div id="vcPeers"></div><div class="vc-vol-lbl">VOLUME</div><input type="range" class="vc-vol" id="vcVol" min="0" max="100" value="80" oninput="setVoiceVolume(this.value/100)"><div class="vc-hint">PRESS V TO TOGGLE</div></div>
+<div id="vcSearchPanel" style="display:none"><div id="vcSearchLabel">VOICE CHAT</div><div id="vcSearchWrap"><span id="vcSearchIcon">🔍</span><input type="text" id="vcSearchInput" placeholder="Search player..." autocomplete="off" maxlength="24"><div id="vcSearchResults"></div></div></div>
+<div id="vcInvitePopup"><div class="vci-title">VOICE CHAT INVITE</div><div class="vci-name" id="vciFromName">PLAYER</div><div class="vci-msg">wants to voice chat with you</div><div class="vci-btns"><button class="vci-btn vci-accept" onclick="vcAcceptInvite()">ACCEPT</button><button class="vci-btn vci-decline" onclick="vcDeclineInvite()">DECLINE</button></div></div>
+<div id="vcNotify"></div>
 <div id="controlsModal"><div class="ctrl-box"><button class="ctrl-close" onclick="closeControls()">&#10005;</button><div class="ctrl-title">EDIT CONTROLS</div><div class="ctrl-row"><span class="ctrl-act">ACCELERATE</span><span class="ctrl-key" id="key_accel">W</span><button class="ctrl-btn" onclick="startRebind('accel')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">BRAKE</span><span class="ctrl-key" id="key_brake">S</span><button class="ctrl-btn" onclick="startRebind('brake')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">STEER LEFT</span><span class="ctrl-key" id="key_left">A</span><button class="ctrl-btn" onclick="startRebind('left')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">STEER RIGHT</span><span class="ctrl-key" id="key_right">D</span><button class="ctrl-btn" onclick="startRebind('right')">EDIT</button></div><div class="ctrl-row"><span class="ctrl-act">VOICE TOGGLE</span><span class="ctrl-key" id="key_voice">V</span><button class="ctrl-btn" onclick="startRebind('voice')">EDIT</button></div><div class="ctrl-hint">Arrow keys always work as backup. Press a key after EDIT — Esc cancels.</div></div></div>
 <div id="endResultOv"><div class="end-box"><div class="end-title">RACE COMPLETE</div><div class="end-new" id="endResNew">★ NEW PERSONAL BEST ★</div><div class="end-stat"><div class="end-lbl">TOTAL TIME</div><div class="end-val" id="endResTotal">--:--.---</div></div><div class="end-stat"><div class="end-lbl">BEST EVER</div><div class="end-val" id="endResBest">--:--.---</div></div><div class="end-stat"><div class="end-lbl">FASTEST LAP</div><div class="end-val" id="endResFastest">--:--.---</div></div><button class="pit-leave" onclick="dismissEndResult()">RETURN TO GARAGE</button></div></div>
 <div id="pitModal"><div class="pit-box"><div class="pit-title">PIT BOX</div><div class="pit-section">TIRE COMPOUND<span class="pit-rec" id="pitRec"></span></div><div class="tire-row" id="tireRow"></div><div class="pit-section">DOWNFORCE</div><div class="pit-setup-row"><div class="pit-setup-header"><span>LEVEL</span><span class="pit-setup-val" id="pitDfVal">BALANCED</span></div><input type="range" class="pit-slider" id="pitDf" min="0" max="10" value="5" oninput="onPitSetupChange()"><div class="pit-setup-labels"><span class="pit-setup-lbl">LOW DRAG</span><span class="pit-setup-lbl">MAX GRIP</span></div></div><div class="pit-section">BRAKE BIAS</div><div class="pit-setup-row"><div class="pit-setup-header"><span>BIAS</span><span class="pit-setup-val" id="pitBbVal">50:50</span></div><input type="range" class="pit-slider" id="pitBb" min="0" max="10" value="5" oninput="onPitSetupChange()"><div class="pit-setup-labels"><span class="pit-setup-lbl">FRONT</span><span class="pit-setup-lbl">REAR</span></div></div><div class="pit-section">FUEL — <span id="pitFuelCur">--</span> LAPS IN TANK</div><div class="pit-setup-row"><div class="pit-setup-header"><span>REFUEL TO</span><span class="pit-setup-val" id="pitFuelVal">20.0 LAPS</span></div><input type="range" class="pit-slider" id="pitFuel" min="1.1" max="50.9" step="0.1" value="20" oninput="onPitFuelChange()"><div class="pit-setup-labels"><span class="pit-setup-lbl">LIGHT &amp; FAST</span><span class="pit-setup-lbl">HEAVY &amp; LONG</span></div></div><button class="pit-leave" onclick="leavePit()">LEAVE PIT — DRIVE OFF</button></div></div>
@@ -1640,9 +1682,9 @@ function toggleRaceSound(){
 }
 function toggleGhost(){ghostMode=(ghostMode+1)%3;var btn=document.getElementById('ghostBtn');if(ghostMode===0){btn.textContent='GHOST: ON';btn.className='ghostBtn';btn.style.background='';btn.style.borderColor=''}else if(ghostMode===1){btn.textContent='GHOST: BEST';btn.className='ghostBtn';btn.style.background='rgba(200,170,0,.4)';btn.style.borderColor='rgba(200,170,0,.3)'}else{btn.textContent='GHOST: OFF';btn.className='ghostBtn off';btn.style.background='';btn.style.borderColor=''}if(ghostCar)ghostCar.visible=ghostMode===0&&ghostPlaying;if(allTimeCar)allTimeCar.visible=ghostMode===1&&allTimeGhostPlaying}
 function toggleFullscreen(){if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(function(e){console.error('fullscreen request failed',e)})}else{document.exitFullscreen()}}
-function showGarage(){if(typeof _mobileIsRacing!=='undefined')_mobileIsRacing=false;mRun=false;document.getElementById('menuScreen').classList.add('hide');document.getElementById('garageScreen').classList.remove('hide');initGarage();startLobbyMusic();drawTrackPreview();checkRankUp();if(mpMode==='join'&&mpConn){document.getElementById('startBtn').textContent='WAITING FOR HOST...';document.getElementById('startBtn').style.pointerEvents='none';document.getElementById('startBtn').style.opacity='0.5'}else{document.getElementById('startBtn').textContent='RACE';document.getElementById('startBtn').style.pointerEvents='';document.getElementById('startBtn').style.opacity=''}}
-function backToMenu(){if(typeof _mobileIsRacing!=='undefined')_mobileIsRacing=false;racing=false;gRun=false;document.getElementById('hudScreen').classList.add('hide');document.getElementById('garageScreen').classList.add('hide');document.getElementById('menuScreen').classList.remove('hide');mRun=true;initMenu();startLobbyMusic();}
-function startDrive(){if(typeof _mobileIsRacing!=='undefined'){_mobileIsRacing=true;_tiltBase=null;if(typeof _enableTilt==='function')_enableTilt();if(typeof _unlockEngineSounds==='function')_unlockEngineSounds()}var _cl=document.getElementById('camLbl');if(_cl)_cl.textContent=camN[camM];if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}fadeLobbyMusic();gRun=false;document.getElementById('garageScreen').classList.add('hide');document.getElementById('hudScreen').classList.remove('hide');applyHUD();initRace();resetCar();racing=true;raceStartedAt=performance.now();if(!isMobile)audioStarted=false;mpSpectating=false;mpFinishCountdown=0;mpMyRaceTime=0;mpOpRaceTime=0;prevEngineActive=false;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;s.currentTime=0;});clk.getDelta();opPos=null;opPrevPos=null;opGhostFrame=0;lastMpSend=0;opSpd=0;opLapT=-1;opLapTRcvAt=0;resetNuke();resetBlackout();resetMissiles();missileReadyAt=0;closePit();recentlyPitted=false;resetTiresForRace();fuelLaps=fuelLoad;endRaceStart=0;endFastestLap=Infinity;cleanupAI();cancelQualifying();if(raceMode==='endurance'){startQualifying()}else{setOpponentSolid(true)}/* TT = free practice — no 5-light start */if(pendingLightsDelay===null)pendingLightsDelay=1000+Math.random()*4000;if(mpMode==='host'&&mpSocket){mpSend({t:'start',weather:selWeather,track:selTrack,lightsDelay:pendingLightsDelay,laps:END_LAPS,mode:raceMode,battle:battleMode?1:0})}if(opBestGhost.length>1&&tPts){opGhostTimeLookup=buildGhostLookupGeneric(opBestGhost)}allTimeGhost=getTrackGhost(TRACKS[selTrack].name)||[];allTimeGhostPlaying=allTimeGhost.length>1;allTimeGhostFrame=0;allTimeGhostLookup=allTimeGhostPlaying?buildGhostLookupGeneric(allTimeGhost):null}
+function showGarage(){if(typeof _mobileIsRacing!=='undefined')_mobileIsRacing=false;mRun=false;document.getElementById('menuScreen').classList.add('hide');document.getElementById('garageScreen').classList.remove('hide');initGarage();startLobbyMusic();drawTrackPreview();checkRankUp();if(mpMode==='join'&&mpConn){document.getElementById('startBtn').textContent='WAITING FOR HOST...';document.getElementById('startBtn').style.pointerEvents='none';document.getElementById('startBtn').style.opacity='0.5'}else{document.getElementById('startBtn').textContent='RACE';document.getElementById('startBtn').style.pointerEvents='';document.getElementById('startBtn').style.opacity=''}vcShowSearchPanel(!!fbUser)}
+function backToMenu(){if(typeof _mobileIsRacing!=='undefined')_mobileIsRacing=false;racing=false;gRun=false;document.getElementById('hudScreen').classList.add('hide');document.getElementById('garageScreen').classList.add('hide');document.getElementById('menuScreen').classList.remove('hide');mRun=true;initMenu();startLobbyMusic();vcShowSearchPanel(false)}
+function startDrive(){if(typeof _mobileIsRacing!=='undefined'){_mobileIsRacing=true;_tiltBase=null;if(typeof _enableTilt==='function')_enableTilt();if(typeof _unlockEngineSounds==='function')_unlockEngineSounds()}var _cl=document.getElementById('camLbl');if(_cl)_cl.textContent=camN[camM];if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}fadeLobbyMusic();gRun=false;document.getElementById('garageScreen').classList.add('hide');document.getElementById('hudScreen').classList.remove('hide');vcShowSearchPanel(false);applyHUD();initRace();resetCar();racing=true;raceStartedAt=performance.now();if(!isMobile)audioStarted=false;mpSpectating=false;mpFinishCountdown=0;mpMyRaceTime=0;mpOpRaceTime=0;prevEngineActive=false;[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;s.currentTime=0;});clk.getDelta();opPos=null;opPrevPos=null;opGhostFrame=0;lastMpSend=0;opSpd=0;opLapT=-1;opLapTRcvAt=0;resetNuke();resetBlackout();resetMissiles();missileReadyAt=0;closePit();recentlyPitted=false;resetTiresForRace();fuelLaps=fuelLoad;endRaceStart=0;endFastestLap=Infinity;cleanupAI();cancelQualifying();if(raceMode==='endurance'){startQualifying()}else{setOpponentSolid(true)}/* TT = free practice — no 5-light start */if(pendingLightsDelay===null)pendingLightsDelay=1000+Math.random()*4000;if(mpMode==='host'&&mpSocket){mpSend({t:'start',weather:selWeather,track:selTrack,lightsDelay:pendingLightsDelay,laps:END_LAPS,mode:raceMode,battle:battleMode?1:0})}if(opBestGhost.length>1&&tPts){opGhostTimeLookup=buildGhostLookupGeneric(opBestGhost)}allTimeGhost=getTrackGhost(TRACKS[selTrack].name)||[];allTimeGhostPlaying=allTimeGhost.length>1;allTimeGhostFrame=0;allTimeGhostLookup=allTimeGhostPlaying?buildGhostLookupGeneric(allTimeGhost):null}
 
 // ── Gradient sky dome + sun disc + night stars ───────────────────────────────
 function _shade(hex,f){
@@ -5210,6 +5252,221 @@ function openMobileMenu(){
 function closeMobileMenu(){
   var p=document.getElementById('mobileMenuPopup');if(p)p.classList.remove('show');
 }
+
+// ── Voice Chat Search & Invite System ────────────────────────────────────────
+var _vcPresenceRef=null,_vcInviteListener=null,_vcInviteDoc=null,_vcPendingInvite=null;
+var _vcSearchTimer=null,_vcNotifyTimer=null;
+
+function vcUpdatePresence(online){
+  if(!fbUser||!fbDb)return;
+  var ref=fbDb.collection('users').doc(fbUser.uid);
+  _vcPresenceRef=ref;
+  var data={name:getPlayerName(),nameLower:getPlayerName().toLowerCase(),online:!!online,uid:fbUser.uid,lastSeen:firebase.firestore.FieldValue.serverTimestamp()};
+  ref.set(data,{merge:true}).catch(function(){});
+}
+
+function vcStartPresence(){
+  if(!fbUser)return;
+  vcUpdatePresence(true);
+  vcListenInvites();
+}
+
+function vcStopPresence(){
+  if(_vcPresenceRef){
+    _vcPresenceRef.update({online:false}).catch(function(){});
+  }
+  if(_vcInviteListener){_vcInviteListener();_vcInviteListener=null}
+}
+
+function vcListenInvites(){
+  if(!fbUser||!fbDb)return;
+  if(_vcInviteListener){_vcInviteListener();_vcInviteListener=null}
+  _vcInviteListener=fbDb.collection('vcInvites').doc(fbUser.uid).onSnapshot(function(snap){
+    if(!snap.exists)return;
+    var d=snap.data();
+    if(!d||d.status!=='pending')return;
+    if(d.at&&d.at.toMillis&&(Date.now()-d.at.toMillis()>30000))return;
+    _vcPendingInvite=d;
+    vcShowInvitePopup(d);
+  });
+}
+
+function vcShowInvitePopup(d){
+  var el=document.getElementById('vcInvitePopup');if(!el)return;
+  document.getElementById('vciFromName').textContent=(d.fromName||'PLAYER').toUpperCase();
+  el.classList.add('show');
+}
+
+function vcHideInvitePopup(){
+  var el=document.getElementById('vcInvitePopup');if(el)el.classList.remove('show');
+}
+
+function vcAcceptInvite(){
+  vcHideInvitePopup();
+  if(!_vcPendingInvite||!fbUser||!fbDb)return;
+  var roomCode=genCode();
+  fbDb.collection('vcInvites').doc(fbUser.uid).update({status:'accepted',roomCode:roomCode}).catch(function(){});
+  vcJoinVoiceRoom(roomCode,'join');
+  _vcPendingInvite=null;
+}
+
+function vcDeclineInvite(){
+  vcHideInvitePopup();
+  if(!_vcPendingInvite||!fbUser||!fbDb)return;
+  fbDb.collection('vcInvites').doc(fbUser.uid).update({status:'declined'}).catch(function(){});
+  _vcPendingInvite=null;
+}
+
+function vcSendInvite(targetUid,targetName){
+  if(!fbUser||!fbDb)return;
+  fbDb.collection('users').doc(targetUid).get().then(function(snap){
+    if(!snap.exists){vcShowNotify(targetName+' NOT FOUND',true);return}
+    var u=snap.data();
+    if(!u.online){vcShowNotify(targetName+' IS OFFLINE',true);return}
+    var inviteData={fromUid:fbUser.uid,fromName:getPlayerName(),status:'pending',at:firebase.firestore.FieldValue.serverTimestamp()};
+    fbDb.collection('vcInvites').doc(targetUid).set(inviteData).then(function(){
+      vcShowNotify('INVITE SENT TO '+targetName.toUpperCase());
+      vcWatchInviteResponse(targetUid,targetName);
+    }).catch(function(){vcShowNotify('FAILED TO SEND INVITE',true)});
+  }).catch(function(){vcShowNotify('COULD NOT CHECK STATUS',true)});
+}
+
+function vcWatchInviteResponse(targetUid,targetName){
+  var unsub=fbDb.collection('vcInvites').doc(targetUid).onSnapshot(function(snap){
+    if(!snap.exists)return;
+    var d=snap.data();
+    if(!d)return;
+    if(d.status==='accepted'){
+      unsub();
+      vcShowNotify(targetName.toUpperCase()+' ACCEPTED!');
+      if(d.roomCode)vcJoinVoiceRoom(d.roomCode,'host');
+      fbDb.collection('vcInvites').doc(targetUid).delete().catch(function(){});
+    }else if(d.status==='declined'){
+      unsub();
+      vcShowNotify(targetName.toUpperCase()+' DECLINED',true);
+      fbDb.collection('vcInvites').doc(targetUid).delete().catch(function(){});
+    }
+  });
+  setTimeout(function(){unsub()},35000);
+}
+
+function vcJoinVoiceRoom(code,role){
+  ensureVoiceMic(function(stream){
+    if(!stream)return;
+    mpCleanup();
+    mpCode=code;mpMode=role;mpSlot=role==='host'?'host':'joiner';
+    var ws=mpOpen(code,role);
+    if(!ws){mpMode=null;mpSlot='';return}
+    mpSocket=ws;
+    ws.onopen=function(){vcShowNotify('VOICE CHAT CONNECTED')};
+    ws.onmessage=function(ev){
+      var d2;try{d2=JSON.parse(ev.data)}catch(e){return}
+      if(!d2)return;
+      if(d2.type==='welcome'){
+        if(d2.id)mpMyId=d2.id;
+        mpConn={open:true};
+        mpSendHello();
+        return;
+      }
+      if(d2.type==='peerJoined'){mpSendHello();return}
+      if(d2.type==='peerLeft'){
+        voiceDisconnect(d2.id);removePeer(d2.id);
+        if(peerCount===0){vcShowNotify('VOICE CHAT ENDED');mpCleanup();mpMode=null;mpConn=null}
+        return;
+      }
+      if(d2.t==='hello'){
+        mpConn={open:true};
+        var hp2=ensurePeer(d2.from,d2.name,d2.col);
+        voiceConnectTo(hp2.id);
+        return;
+      }
+      if(d2.t==='voiceOffer'||d2.t==='voiceAnswer'||d2.t==='iceCand'||d2.t==='voiceState'){handleVoiceSignal(d2);return}
+    };
+    ws.onerror=function(){vcShowNotify('CONNECTION ERROR',true)};
+    ws.onclose=function(){
+      cleanupVoice();
+      if(mpConn)vcShowNotify('VOICE CHAT ENDED');
+      mpSocket=null;mpMode=null;mpConn=null;
+    };
+  });
+}
+
+function vcSearchUsers(query){
+  var results=document.getElementById('vcSearchResults');if(!results)return;
+  if(!query||query.length<1||!fbDb){results.classList.remove('show');return}
+  var q=query.toLowerCase();
+  results.innerHTML='<div class="vcs-loading">SEARCHING...</div>';
+  results.classList.add('show');
+  fbDb.collection('users').where('nameLower','>=',q).where('nameLower','<=',q+'').limit(10).get()
+    .then(function(snap){
+      var items=[];
+      snap.forEach(function(doc){
+        var d=doc.data();
+        if(fbUser&&doc.id===fbUser.uid)return;
+        items.push({uid:doc.id,name:d.name||'PLAYER',online:!!d.online});
+      });
+      if(!items.length){results.innerHTML='<div class="vcs-empty">NO PLAYERS FOUND</div>';return}
+      var h='';
+      items.forEach(function(it){
+        h+='<div class="vcs-item" onclick="vcOnSelectUser(\''+it.uid+'\',\''+it.name.replace(/'/g,"\\'")+'\')">';
+        h+='<span class="vcs-name">'+it.name+'</span>';
+        h+='<span class="vcs-status '+(it.online?'online':'offline')+'">'+(it.online?'ONLINE':'OFFLINE')+'</span>';
+        h+='</div>';
+      });
+      results.innerHTML=h;
+    }).catch(function(){results.innerHTML='<div class="vcs-empty">SEARCH ERROR</div>'});
+}
+
+function vcOnSelectUser(uid,name){
+  document.getElementById('vcSearchInput').value='';
+  document.getElementById('vcSearchResults').classList.remove('show');
+  vcSendInvite(uid,name);
+}
+
+function vcShowNotify(msg,isErr){
+  var el=document.getElementById('vcNotify');if(!el)return;
+  el.textContent=msg;
+  el.className=isErr?'show declined':'show';
+  if(_vcNotifyTimer)clearTimeout(_vcNotifyTimer);
+  _vcNotifyTimer=setTimeout(function(){el.className=''},4000);
+}
+
+function vcShowSearchPanel(show){
+  var el=document.getElementById('vcSearchPanel');
+  if(el)el.style.display=show?'':'none';
+}
+
+(function(){
+  var inp=document.getElementById('vcSearchInput');
+  if(!inp)return;
+  inp.addEventListener('input',function(){
+    if(_vcSearchTimer)clearTimeout(_vcSearchTimer);
+    var val=inp.value.trim();
+    _vcSearchTimer=setTimeout(function(){vcSearchUsers(val)},250);
+  });
+  inp.addEventListener('focus',function(){
+    if(inp.value.trim().length>0)vcSearchUsers(inp.value.trim());
+  });
+  document.addEventListener('click',function(e){
+    var panel=document.getElementById('vcSearchPanel');
+    if(panel&&!panel.contains(e.target)){
+      document.getElementById('vcSearchResults').classList.remove('show');
+    }
+  });
+})();
+
+if(fbAuth){
+  fbAuth.onAuthStateChanged(function(user){
+    if(user)vcStartPresence();
+    else vcStopPresence();
+  });
+}
+window.addEventListener('beforeunload',function(){vcStopPresence()});
+document.addEventListener('visibilitychange',function(){
+  if(!fbUser)return;
+  if(document.visibilityState==='hidden')vcUpdatePresence(false);
+  else vcUpdatePresence(true);
+});
 
 applyCarSponsors();
 initMenu();
