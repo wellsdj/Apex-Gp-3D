@@ -966,9 +966,8 @@ var hudShow={spd:true,lap:true,map:true,grip:true,ghost:true,line:true,opponent:
 var buildingSpdTimer=0;
 // Car customisation
 var _saved=JSON.parse(localStorage.getItem('apexgp_custom')||'{}');
-var STRIPE_STYLES=['NONE','CENTER','TWIN','BOLD'];
-var carBodyColor=_saved.body||0xdd1111,stripeStyle=(typeof _saved.stripeStyle==='number'?_saved.stripeStyle:(_saved.stripe?1:0)),stripeColorVal=_saved.stripeCol||0xffffff,carImageTexture=null;
-var accentColor=_saved.accent||0x16181c,helmetColor=_saved.helmet||0xffffff,rimColor=_saved.rim||0xcccccc;
+var carBodyColor=_saved.body||0xdd1111,carImageTexture=null;
+var accentColor=_saved.accent||0x16181c,rimColor=_saved.rim||0xcccccc;
 var carNumber=(_saved.num!=null?String(_saved.num):'1').replace(/[^0-9]/g,'')||'1';
 var numColor=_saved.numCol||0xffffff;
 var bodyFinish=(_saved.finish!=null?_saved.finish:68);
@@ -1118,7 +1117,6 @@ function gRemoveOpCar(){
 }
 
 // ── Real F1 2022 model (OBJ, baked to game scale) ───────────────────────────
-var carModelSel='f1'; // F1 2022 is the only car now
 var F1M={ready:false,groups:null,loading:false};
 // wheel objects in the OBJ → baked centers (front wheels steer)
 var F1_WHEELS={
@@ -1369,8 +1367,8 @@ function rebuildShowcaseCars(){
   if(typeof mCar!=='undefined'&&mCar&&mCar.parent){var mp=mCar.parent;mp.remove(mCar);mCar=bldCar(carBodyColor,false);mp.add(mCar)}
 }
 function bldCar(col,isGhost){
-  if(carModelSel==='f1'&&F1M.ready)return bldCarF1(col,isGhost);
-  return bldCarClassic(col,isGhost);
+  if(!F1M.ready)return null;
+  return bldCarF1(col,isGhost);
 }
 loadF1Model();
 // ── F1-style single seater ──────────────────────────────────────────────────
@@ -1509,163 +1507,6 @@ function _decalPosUpdate(e){
   decalOffY=Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));
   refreshLivery();saveCustom();
 }
-function bldCarClassic(col,isGhost){
-var op=isGhost?.3:1;
-var g=new THREE.Group();
-function M(c,r,mt){return new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:mt,transparent:isGhost,opacity:op})}
-var _bfR=.9-(.7*(bodyFinish/100)),_bfM=.15+(.7*(bodyFinish/100));
-var _sc=new THREE.Color(col);var _sh={};_sc.getHSL(_sh);_sc.setHSL(_sh.h,_sh.s*(bodySaturation/100),_sh.l);
-var rd=M(_sc,_bfR,_bfM),ac=M(isGhost?col:accentColor,.4,.6),dk=M(0x0e0f12,.5,.4),cb=M(0x1d2026,.45,.55);
-var hm=M(isGhost?col:helmetColor,.22,.35),rim=M(isGhost?0x888888:rimColor,.28,.85),tire=M(0x141414,.92,.1);
-g.bodyMat=rd;g.accentMat=ac;g.helmetMat=hm;g.rimMat=rim;
-function mb(geo,mat,x,y,z){var m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=!isGhost;g.add(m);return m}
-// floor plank
-mb(new THREE.BoxGeometry(1.45,.06,5.0),dk,0,.06,.1);
-// nose cone
-var nG=new THREE.CylinderGeometry(.09,.30,1.9,10);nG.rotateX(Math.PI/2);
-var ns=new THREE.Mesh(nG,rd);ns.position.set(0,.30,2.45);ns.scale.y=.6;ns.castShadow=!isGhost;g.add(ns);
-// chassis taper + cockpit tub
-mb(new THREE.BoxGeometry(.62,.32,1.7),rd,0,.30,1.05);
-mb(new THREE.BoxGeometry(.95,.42,1.7),rd,0,.32,-.15);
-mb(new THREE.BoxGeometry(.5,.05,.85),dk,0,.545,.02);
-// sidepods (damage hooks g.sp)
-g.sp=[];
-for(var sx=-1;sx<=1;sx+=2){
-  g.sp.push(mb(new THREE.BoxGeometry(.55,.32,1.9),rd,sx*.74,.27,-.5));
-  mb(new THREE.BoxGeometry(.50,.22,.06),dk,sx*.74,.30,.46);
-}
-// engine cover, airbox, shark fin
-mb(new THREE.BoxGeometry(.42,.32,1.9),rd,0,.46,-1.25);
-mb(new THREE.BoxGeometry(.30,.26,.6),rd,0,.62,-.62);
-mb(new THREE.BoxGeometry(.16,.10,.06),dk,0,.66,-.31);
-mb(new THREE.BoxGeometry(.04,.40,1.25),ac,0,.72,-1.62);
-// halo
-var halo=new THREE.Mesh(new THREE.TorusGeometry(.33,.035,8,22),ac);
-halo.position.set(0,.58,-.02);halo.rotation.x=-Math.PI/2;halo.castShadow=!isGhost;g.add(halo);
-var hpy=new THREE.Mesh(new THREE.CylinderGeometry(.028,.045,.32,8),ac);hpy.position.set(0,.46,.30);hpy.rotation.x=.45;g.add(hpy);
-// driver helmet + visor + headrest
-var hd=new THREE.Mesh(new THREE.SphereGeometry(.165,14,12),hm);hd.position.set(0,.56,-.18);hd.castShadow=!isGhost;g.add(hd);g.helmetMesh=hd;
-mb(new THREE.BoxGeometry(.20,.085,.05),M(0x0a0c18,.12,.9),0,.575,-.03);
-mb(new THREE.BoxGeometry(.44,.13,.30),dk,0,.51,-.42);
-// mirrors + bargeboards
-for(sx=-1;sx<=1;sx+=2){mb(new THREE.BoxGeometry(.10,.06,.03),ac,sx*.55,.48,.62);mb(new THREE.BoxGeometry(.025,.22,.5),ac,sx*.66,.16,.85)}
-// front wing (g.fw, flap as child) + endplates (g.fwE)
-var fw=mb(new THREE.BoxGeometry(2.05,.05,.55),ac,0,.05,3.05);
-var ffl=new THREE.Mesh(new THREE.BoxGeometry(1.95,.035,.30),ac);ffl.position.set(0,.075,-.26);ffl.rotation.x=-.36;ffl.castShadow=!isGhost;fw.add(ffl);
-g.fw=fw;g.fwE=[];
-for(sx=-1;sx<=1;sx+=2)g.fwE.push(mb(new THREE.BoxGeometry(.04,.22,.58),ac,sx*1.05,.10,3.05));
-// rear wing (g.rw, flap as child) + endplates (g.rwS)
-var rw=mb(new THREE.BoxGeometry(1.5,.05,.40),ac,0,.86,-2.35);
-var rfl=new THREE.Mesh(new THREE.BoxGeometry(1.5,.04,.26),ac);rfl.position.set(0,.11,-.14);rfl.rotation.x=.42;rfl.castShadow=!isGhost;rw.add(rfl);
-g.rw=rw;g.rwS=[];
-for(sx=-1;sx<=1;sx+=2)g.rwS.push(mb(new THREE.BoxGeometry(.04,.46,.52),ac,sx*.76,.74,-2.35));
-mb(new THREE.CylinderGeometry(.03,.03,.36,6),cb,0,.66,-2.18);
-// beam wing + diffuser
-mb(new THREE.BoxGeometry(1.15,.05,.30),cb,0,.48,-2.42);
-var dif=mb(new THREE.BoxGeometry(1.2,.14,.45),dk,0,.12,-2.32);dif.rotation.x=.3;
-// rain light (g.tl)
-g.tl=mb(new THREE.BoxGeometry(.10,.20,.05),new THREE.MeshStandardMaterial({color:0xff2222,emissive:0xff0000,emissiveIntensity:.2,transparent:isGhost,opacity:op}),0,.62,-2.40);
-// suspension wishbones
-function arm(x1,y1,z1,x2,y2,z2){
-  var dx=x2-x1,dy=y2-y1,dz=z2-z1,len=Math.sqrt(dx*dx+dy*dy+dz*dz);
-  var m=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,len,5),cb);
-  m.position.set((x1+x2)/2,(y1+y2)/2,(z1+z2)/2);
-  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(dx/len,dy/len,dz/len));
-  g.add(m);
-}
-for(sx=-1;sx<=1;sx+=2){
-  arm(sx*.30,.38,1.85,sx*.92,.12,2.0);arm(sx*.30,.14,1.85,sx*.92,.06,2.0);
-  arm(sx*.22,.40,-1.65,sx*.92,.16,-1.8);arm(sx*.22,.14,-1.65,sx*.92,.08,-1.8);
-}
-// exposed wheels — spin groups (g.wheels) + front steering pivots (g.steerL/R)
-function mkWheel(rad,wid){
-  var w=new THREE.Group();
-  var tg=new THREE.CylinderGeometry(rad,rad,wid,18);tg.rotateZ(Math.PI/2);
-  var t=new THREE.Mesh(tg,tire);t.castShadow=!isGhost;w.add(t);
-  var rg=new THREE.CylinderGeometry(rad*.56,rad*.56,wid+.02,14);rg.rotateZ(Math.PI/2);
-  w.add(new THREE.Mesh(rg,rim));
-  for(var k=0;k<3;k++){var spk=new THREE.Mesh(new THREE.BoxGeometry(wid+.04,rad*1.02,rad*.15),rim);spk.rotation.x=k*Math.PI/3;w.add(spk)}
-  var hub=new THREE.Mesh(new THREE.CylinderGeometry(rad*.15,rad*.15,wid+.08,8),dk);hub.rotation.z=Math.PI/2;w.add(hub);
-  return w;
-}
-g.wheels=[];
-var FRAD=.38,RRAD=.42;
-for(sx=-1;sx<=1;sx+=2){
-  var piv=new THREE.Group();piv.position.set(sx*1.02,FRAD-.30,2.0);
-  var fwh=mkWheel(FRAD,.34);piv.add(fwh);g.add(piv);g.wheels.push(fwh);
-  if(sx<0)g.steerL=piv;else g.steerR=piv;
-  var rwh=mkWheel(RRAD,.44);rwh.position.set(sx*1.02,RRAD-.30,-1.8);g.add(rwh);g.wheels.push(rwh);
-}
-g.liveryDecals=[];g.podDecals=[];
-{
-  var livMat=new THREE.MeshStandardMaterial({transparent:true,depthWrite:true,side:THREE.DoubleSide,opacity:0,map:null,roughness:.32,metalness:.72,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
-  for(var sxd=-1;sxd<=1;sxd+=2){
-    var ld=new THREE.Mesh(new THREE.PlaneGeometry(5.0,.50),livMat.clone());
-    ld.rotation.y=sxd*Math.PI/2;ld.position.set(sxd*.98,.31,-.10);ld.renderOrder=1;g.add(ld);g.liveryDecals.push(ld);
-  }
-  updateDecalVisibility(g);
-  // race number — nose + shark fin sides
-  g.numTex=mkNumberTexture(carNumber,numColor);
-  var numMat=new THREE.MeshStandardMaterial({map:g.numTex,transparent:true,depthWrite:false,side:THREE.DoubleSide,roughness:.32,metalness:.72,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
-  g.numMeshes=[];
-  var n1=new THREE.Mesh(new THREE.PlaneGeometry(.42,.42),numMat);n1.rotation.x=-Math.PI/2;n1.rotation.z=Math.PI;n1.position.set(0,.43,2.05);g.add(n1);g.numMeshes.push(n1);
-  var nf=new THREE.Mesh(new THREE.PlaneGeometry(.34,.34),numMat.clone());nf.position.set(0,.25,3.32);g.add(nf);g.numMeshes.push(nf);
-  for(sx=-1;sx<=1;sx+=2){var n2=new THREE.Mesh(new THREE.PlaneGeometry(.36,.36),numMat.clone());n2.rotation.y=sx*Math.PI/2;n2.position.set(sx*.025,.72,-1.62);g.add(n2);g.numMeshes.push(n2)}
-}
-// headlights (kept API: g.hlMeshes / g.headlights / g.carGlow / g.hlOn)
-var hlMat=new THREE.MeshStandardMaterial({color:0xffffee,emissive:0xffffcc,emissiveIntensity:1,transparent:isGhost,opacity:op});
-var hl1=new THREE.Mesh(new THREE.CircleGeometry(.09,8),hlMat);hl1.position.set(-.45,.13,3.34);g.add(hl1);
-var hl2=new THREE.Mesh(new THREE.CircleGeometry(.09,8),hlMat);hl2.position.set(.45,.13,3.34);g.add(hl2);
-g.hlMeshes=[hl1,hl2];
-if(!isGhost){
-  var sl1=new THREE.SpotLight(0xfff8e0,5,200,Math.PI*.32,.5,1);sl1.position.set(-.45,.4,3.4);
-  var st1=new THREE.Object3D();st1.position.set(-.45,-2,25);g.add(st1);sl1.target=st1;g.add(sl1);
-  var sl2=new THREE.SpotLight(0xfff8e0,5,200,Math.PI*.32,.5,1);sl2.position.set(.45,.4,3.4);
-  var st2=new THREE.Object3D();st2.position.set(.45,-2,25);g.add(st2);sl2.target=st2;g.add(sl2);
-  var carGlow=new THREE.PointLight(0xffddbb,.8,15,2);carGlow.position.set(0,1.2,0);g.add(carGlow);g.carGlow=carGlow;carGlow.visible=false;
-  g.headlights=[sl1,sl2];g.hlOn=false;
-  sl1.visible=false;sl2.visible=false;hl1.material=hl1.material.clone();hl2.material=hl2.material.clone();
-  hl1.material.emissiveIntensity=0.1;hl2.material.emissiveIntensity=0.1;
-}
-// stripes (kept API: g.stripeMat / g.stripeMeshes) — painted onto the bodywork
-var sMat=new THREE.MeshStandardMaterial({color:stripeColorVal,roughness:.3,metalness:.5,transparent:isGhost,opacity:op,side:THREE.DoubleSide});
-g.stripeMat=sMat;g.stripeMeshes=[];
-// deck surfaces the paint follows: nose+chassis, engine cover, airbox
-var _DECKS=[
-  {prof:[[3.30,.362],[1.62,.480],[1.52,.468],[.78,.468],[.74,.540],[.46,.540]],half:.30,taper:function(z){return z>2.2?Math.max(.05,.09+(3.3-z)*.14):.31}},
-  {prof:[[-.95,.628],[-2.16,.628]],half:.20},
-  {prof:[[-.36,.756],[-.88,.756]],half:.14}
-];
-function _paintStripe(style,w,xo){
-  for(var dki=0;dki<_DECKS.length;dki++){
-    var dk2=_DECKS[dki],half=dk2.half,x0=xo,wd=Math.min(w,half*2);
-    if(Math.abs(x0)-wd/2>half)continue;            // entirely off this deck
-    if(x0+wd/2>half)x0=half-wd/2;                  // hug the edge instead
-    if(x0-wd/2<-half)x0=-half+wd/2;
-    var v=[],ix=[];
-    for(var i=0;i<dk2.prof.length;i++){
-      var z=dk2.prof[i][0],y=dk2.prof[i][1]+.006,hw=wd/2;
-      if(dk2.taper)hw=Math.min(hw,dk2.taper(z));
-      v.push(x0-hw,y,z,x0+hw,y,z);
-      if(i<dk2.prof.length-1){var a2=i*2;ix.push(a2,a2+1,a2+2,a2+1,a2+3,a2+2)}
-    }
-    var ge=new THREE.BufferGeometry();
-    ge.setAttribute('position',new THREE.Float32BufferAttribute(v,3));
-    ge.setIndex(ix);ge.computeVertexNormals();
-    var m=new THREE.Mesh(ge,sMat);
-    m.visible=!isGhost&&style===stripeStyle;
-    g.add(m);g.stripeMeshes.push({s:style,m:m});
-  }
-}
-_paintStripe(1,.14,0);
-_paintStripe(2,.09,-.17);_paintStripe(2,.09,.17);
-_paintStripe(3,.36,0);
-g.patternMeshes=[];
-var patMat=new THREE.MeshStandardMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,opacity:0,map:null,roughness:.32,metalness:.72,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
-for(var psx=-1;psx<=1;psx+=2){var pm=new THREE.Mesh(new THREE.PlaneGeometry(5.0,.55),patMat.clone());pm.rotation.y=psx*Math.PI/2;pm.position.set(psx*.97,.38,-.10);pm.renderOrder=2;pm.visible=false;g.add(pm);g.patternMeshes.push(pm)}
-var pmTop=new THREE.Mesh(new THREE.PlaneGeometry(.55,4.5),patMat.clone());pmTop.rotation.x=-Math.PI/2;pmTop.position.set(0,.49,.5);pmTop.renderOrder=2;pmTop.visible=false;g.add(pmTop);g.patternMeshes.push(pmTop);
-_paintPattern(g);
-return g}
 // Wheel animation: spin with travelled distance, steer fronts with yaw change
 var WHEEL_RAD=0.41;
 function wheelFollow(g){
@@ -3141,11 +2982,6 @@ function allCustomCars(){return [gCar,car,mCar]}
 function applyAccentColor(hexStr){
   accentColor=parseInt(hexStr.replace('#',''),16);
   allCustomCars().forEach(function(c){if(c&&c.accentMat)c.accentMat.color.setHex(accentColor)});
-  saveCustom();
-}
-function applyHelmetColor(hexStr){
-  helmetColor=parseInt(hexStr.replace('#',''),16);
-  allCustomCars().forEach(function(c){if(c&&c.helmetMat)c.helmetMat.color.setHex(helmetColor)});
   saveCustom();
 }
 function applyRimColor(hexStr){
@@ -4903,12 +4739,6 @@ function applyCarColor(hexStr){
   _applySatToBody();
   saveCustom();
 }
-function cycleStripeStyle(dir){
-  stripeStyle=(stripeStyle+dir+STRIPE_STYLES.length)%STRIPE_STYLES.length;
-  var lbl=document.getElementById('stripeStyleLbl');if(lbl)lbl.textContent=STRIPE_STYLES[stripeStyle];
-  allCustomCars().forEach(function(c){if(!c||!c.stripeMeshes)return;c.stripeMeshes.forEach(function(s){s.m.visible=(s.s===stripeStyle)})});
-  saveCustom();
-}
 function removeCarImage(){
   _carImgRaw=null;carImageTexture=null;carImageData=null;
   refreshLivery();
@@ -4917,11 +4747,6 @@ function removeCarImage(){
   saveCustom();
   var lbl=document.getElementById('imgUploadLbl');if(lbl)lbl.childNodes[0].textContent='UPLOAD';
   var rb=document.getElementById('imgRemoveBtn');if(rb)rb.style.display='none';
-}
-function applyStripeColor(hexStr){
-  stripeColorVal=parseInt(hexStr.replace('#',''),16);
-  allCustomCars().forEach(function(c){if(c&&c.stripeMat)c.stripeMat.color.setHex(stripeColorVal)});
-  saveCustom();
 }
 function handleCarImage(evt){
   var file=evt.target.files[0];if(!file)return;
