@@ -377,7 +377,7 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 /* ── Gamepad / Controller ── */
 #gpCursor{position:fixed;width:24px;height:24px;border-radius:50%;border:2px solid rgba(100,180,255,.9);background:rgba(100,180,255,.25);box-shadow:0 0 12px rgba(100,180,255,.4);z-index:9000;pointer-events:none;display:none;transform:translate(-50%,-50%);transition:width .1s,height .1s}
 #gpCursor.click{width:18px;height:18px;background:rgba(100,180,255,.6)}
-#gpConnBtn{position:absolute;top:18px;left:18px;z-index:10;font-family:'Orbitron';font-size:9px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,.7);background:rgba(20,25,40,.7);border:1px solid rgba(100,140,255,.3);border-radius:8px;padding:8px 14px;cursor:pointer;pointer-events:all;display:none}
+#gpConnBtn{position:absolute;top:18px;left:18px;z-index:20;font-family:'Orbitron';font-size:9px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,.7);background:rgba(20,25,40,.7);border:1px solid rgba(100,140,255,.3);border-radius:8px;padding:8px 14px;cursor:pointer;pointer-events:all;display:block}
 #gpConnBtn:hover{border-color:rgba(100,180,255,.6);color:#fff}
 #gpConnBtn.connected{color:#3cff8c;border-color:rgba(60,255,140,.4)}
 #gpQuickMenu{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,10,20,.96);border:2px solid rgba(100,180,255,.5);border-radius:16px;padding:20px 28px;display:none;z-index:800;font-family:'Orbitron';min-width:280px;backdrop-filter:blur(12px)}
@@ -3136,7 +3136,7 @@ function applyPattern(id){
   saveCustom();
 }
 function _paintPattern(g){
-  if(!g||!g.patternMeshes)return;
+  if(!g||!g.patternMeshes||typeof LIVERY_PATTERNS==='undefined'||!LIVERY_PATTERNS)return;
   var pat=null;
   for(var i=0;i<LIVERY_PATTERNS.length;i++){if(LIVERY_PATTERNS[i].id===liveryPattern){pat=LIVERY_PATTERNS[i];break}}
   if(!pat||!pat.fn){g.patternMeshes.forEach(function(m){m.visible=false});return}
@@ -5541,7 +5541,7 @@ function gpPoll(){
 }
 
 var _gpBtn=document.getElementById('gpConnBtn');
-if(_gpBtn&&!isMobile)_gpBtn.style.display='block';
+if(_gpBtn)_gpBtn.style.display='block';
 
 applyCarSponsors();
 initMenu();
