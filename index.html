@@ -720,8 +720,8 @@ body.mobile #spdOutlineSvg{display:none}
       <button class="sett-acct-btn" onclick="closeSettings();openControls()">EDIT</button>
     </div>
     <div class="sett-row">
-      <span class="sett-lbl">STEERING MODE</span>
-      <button class="sett-acct-btn" id="settSteerModeBtn" onclick="cycleSteerMode()" title="How you steer on a phone">TILT (GYRO)</button>
+      <span class="sett-lbl">GYRO STEERING</span>
+      <button class="sett-acct-btn" id="settSteerModeBtn" onclick="enableGyro()" title="Tilt your phone like a steering wheel to steer">TILT (GYRO)</button>
     </div>
     <div class="sett-row">
       <span class="sett-lbl" id="settAcctLbl">ACCOUNT</span>
@@ -1841,7 +1841,6 @@ var GRASS={albedo:null,normal:null,ready:false};
 (function loadGrass(){var img=new Image();img.onload=function(){
   var a=document.createElement('canvas');a.width=img.width;a.height=img.height;a.getContext('2d').drawImage(img,0,0);
   var at=new THREE.CanvasTexture(a);at.wrapS=at.wrapT=THREE.RepeatWrapping;at.anisotropy=8;at.encoding=THREE.sRGBEncoding;
-  try{GRASS.normal=buildNormalMap(a,1.3)}catch(e){}
   GRASS.albedo=at;GRASS.ready=true;
 };img.src='models/tex/grass.jpg';})();
 // 3D guardrail barrier (single mesh/material) — baked to game scale, tiled
@@ -2039,7 +2038,7 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
   var grassC=grassCOverride||TRACKS[selTrack].grass,grassHex='#'+grassC.toString(16).padStart(6,'0');
   if(GRASS.ready&&selWeather.indexOf('snow')<0){
     var _ogt=GRASS.albedo.clone();_ogt.needsUpdate=true;_ogt.wrapS=_ogt.wrapT=THREE.RepeatWrapping;_ogt.repeat.set(1,1);
-    var ggm1=buildGroundGrid(CX,CZ,2600,90,new THREE.MeshLambertMaterial({map:_ogt}),-0.15);ggm1.renderOrder=0;scene.add(ggm1); // far ground rolls with the track, well below play surface
+    var ggm1=buildGroundGrid(CX,CZ,2600,48,new THREE.MeshLambertMaterial({map:_ogt}),-0.15);ggm1.renderOrder=0;scene.add(ggm1); // far ground rolls with the track, well below play surface
   }else{var gndOuter=new THREE.Mesh(new THREE.PlaneGeometry(2600,2600),new THREE.MeshLambertMaterial({color:grassC}));gndOuter.rotation.x=-Math.PI/2;gndOuter.position.y=-0.5;gndOuter.renderOrder=0;scene.add(gndOuter)}
   var cvs3=document.createElement('canvas');cvs3.width=2048;cvs3.height=2048;var cx3=cvs3.getContext('2d');cx3.fillStyle=grassHex;cx3.fillRect(0,0,2048,2048);
   // Mowed-stripe bands + grass noise for a groomed circuit look
@@ -2052,10 +2051,12 @@ function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new
   if(selWeather==='snow'||selWeather==='snow_heavy'){var snCnt=selWeather==='snow_heavy'?120:80;cx3.globalAlpha=selWeather==='snow_heavy'?.7:.55;cx3.fillStyle='#e8eef2';for(var sni=0;sni<snCnt;sni++){var snx=Math.random()*2048,sny=Math.random()*2048,snr=30+Math.random()*80;cx3.beginPath();cx3.arc(snx,sny,snr,0,Math.PI*2);cx3.fill()}cx3.globalAlpha=1}
   if(GRASS.ready&&selWeather.indexOf('snow')<0){
     var _ga=GRASS.albedo.clone();_ga.needsUpdate=true;_ga.wrapS=_ga.wrapT=THREE.RepeatWrapping;_ga.repeat.set(1,1);
-    var _gMat=new THREE.MeshStandardMaterial({map:_ga,roughness:1,metalness:0,envMapIntensity:.15});
-    if(GRASS.normal){var _gn=GRASS.normal.clone();_gn.needsUpdate=true;_gn.wrapS=_gn.wrapT=THREE.RepeatWrapping;_gn.repeat.set(1,1);_gMat.normalMap=_gn;_gMat.normalScale=new THREE.Vector2(.5,.5)}
-    var ggm2=buildGroundGrid(CX,CZ,W_SIZE,110,_gMat,-0.15);ggm2.renderOrder=0;scene.add(ggm2); // displaced heightfield, well below the road edge
-  }else{var _gndTex=new THREE.CanvasTexture(cvs3);_gndTex.encoding=THREE.sRGBEncoding;var ggm3=buildGroundGrid(CX,CZ,W_SIZE,110,new THREE.MeshLambertMaterial({map:_gndTex}),-0.15);ggm3.renderOrder=0;scene.add(ggm3)}
+    // Flat, uniform lighting: no normal map (its fake bumps caught the sun
+    // differently as the camera moved → shimmering "moving grass"), no env
+    // reflections, and Lambert shading so the whole field lights evenly.
+    var _gMat=new THREE.MeshLambertMaterial({map:_ga});
+    var ggm2=buildGroundGrid(CX,CZ,W_SIZE,56,_gMat,-0.15);ggm2.renderOrder=0;scene.add(ggm2); // heightfield follows terrain, well below the road edge
+  }else{var _gndTex=new THREE.CanvasTexture(cvs3);_gndTex.encoding=THREE.sRGBEncoding;var ggm3=buildGroundGrid(CX,CZ,W_SIZE,56,new THREE.MeshLambertMaterial({map:_gndTex}),-0.15);ggm3.renderOrder=0;scene.add(ggm3)}
   // ── 3D asphalt ribbon (the actual road surface) ──
   var _asTex=mkAsphaltTexture(selWeather);
   var _rv=[],_ruv=[],_ri=[],_rLen=0;
@@ -3446,20 +3447,22 @@ function toggleSettSfx(){sfxEnabled=!sfxEnabled;document.getElementById('settSfx
 // Steering mode selector (mobile). For now only TILT (GYRO) — tilt the phone
 // like a steering wheel. Placeholder for future modes; cycling is a no-op while
 // only one mode exists.
-var STEER_MODES=['TILT (GYRO)','ANALOG PAD'];
-var _steerModeSaved=localStorage.getItem('steerMode');
-var _steerModeIdx=_steerModeSaved===null?1:(parseInt(_steerModeSaved)||0);
-function cycleSteerMode(){
-  _steerModeIdx=(_steerModeIdx+1)%STEER_MODES.length;
-  localStorage.setItem('steerMode',_steerModeIdx);
-  var b=document.getElementById('settSteerModeBtn');if(b)b.textContent=STEER_MODES[_steerModeIdx];
-  _applySteerMode();
+var STEER_MODES=['TILT (GYRO)'];
+var _steerModeIdx=0;            // tilt/gyro is the only mobile steering mode
+// The settings button now just (re)enables gyro motion access. iOS requires
+// the permission request to happen inside a user gesture; tapping this button
+// is one, so it's a reliable fallback if the auto-request was dismissed.
+function cycleSteerMode(){enableGyro();}
+function enableGyro(){
+  if(typeof _enableTilt==='function')_enableTilt();
+  var b=document.getElementById('settSteerModeBtn');
+  if(b)b.textContent=_tiltGranted?'GYRO: ON':'TAP TO ENABLE';
 }
 function _applySteerMode(){
   if(!isMobile)return;
-  document.body.classList.toggle('steer-joystick',_steerModeIdx===1);
+  document.body.classList.remove('steer-joystick');   // never show the joystick
 }
-if(isMobile){var _smb=document.getElementById('settSteerModeBtn');if(_smb)_smb.textContent=STEER_MODES[_steerModeIdx];_applySteerMode();}
+if(isMobile){var _smb=document.getElementById('settSteerModeBtn');if(_smb)_smb.textContent='TILT (GYRO)';_applySteerMode();}
 function _qualityPref(){try{return localStorage.getItem('apexgp_quality')||'auto'}catch(e){return'auto'}}
 function updateQualityLbl(){var b=document.getElementById('settQualityBtn');if(!b)return;var cur=_qualityPref();b.textContent=cur==='auto'?'AUTO · '+PERF.tier.toUpperCase():cur.toUpperCase()}
 function cycleQuality(){
@@ -5227,7 +5230,7 @@ function _onTilt(e){
 // the full-screen control zones would swallow with stopPropagation).
 function _enableTilt(){
   if(_tiltListenerAttached)return;
-  function attach(){if(_tiltListenerAttached)return;_tiltListenerAttached=true;_tiltGranted=true;window.addEventListener('devicemotion',_onTilt,true)}
+  function attach(){if(_tiltListenerAttached)return;_tiltListenerAttached=true;_tiltGranted=true;window.addEventListener('devicemotion',_onTilt,true);var b=document.getElementById('settSteerModeBtn');if(b)b.textContent='GYRO: ON'}
   var DME=window.DeviceMotionEvent;
   if(DME&&typeof DME.requestPermission==='function'){
     try{DME.requestPermission().then(function(st){if(st==='granted')attach()}).catch(function(){})}catch(_){}
