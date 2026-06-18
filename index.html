@@ -3936,9 +3936,10 @@ function cancelMissileAim(){
   if(missileMode==='aim'){missileMode=null;mpSend({t:'mwarn',on:0})}
   var ov=document.getElementById('missileAim');if(ov)ov.classList.remove('show');
 }
-function missileAimClick(e){
+function missileAimClick(e){_fireMissileAtScreen(e.clientX,e.clientY)}
+function _fireMissileAtScreen(cxp,cyp){
   if(missileMode!=='aim'||!cam)return;
-  var nx=(e.clientX/innerWidth)*2-1,ny=-(e.clientY/innerHeight)*2+1;
+  var nx=(cxp/innerWidth)*2-1,ny=-(cyp/innerHeight)*2+1;
   var v=new THREE.Vector3(nx,ny,.5).unproject(cam);
   var o=cam.position,d=v.sub(o).normalize();
   if(Math.abs(d.y)<1e-5)return;
@@ -5540,19 +5541,45 @@ function gpPollMenu(){
     var target=document.elementFromPoint(GP.curX,GP.curY);
     if(target){target.click();target.focus&&target.focus()}
   }
-  if(gpBtnJust(1)){
-    var modals=document.querySelectorAll('.show');
-    modals.forEach(function(m){if(m.id==='gpQuickMenu'||m.id==='authModal'||m.id==='controlsModal'||m.id==='reviewModal'||m.id==='lbModal'){m.classList.remove('show')}});
-    var sm=document.getElementById('settingsModal');if(sm&&!sm.classList.contains('hide'))closeSettings();
-  }
+  if(gpBtnJust(1))gpMenuBack();
   GP.prevBtns=[];
   for(var bi=0;bi<gp.buttons.length;bi++)GP.prevBtns[bi]=gp.buttons[bi].pressed;
+}
+// Circle (B/○) in menus = back a step: close the top-most open overlay,
+// step back from the join panel, or fall back garage → home menu.
+function gpMenuBack(){
+  function vis(id){var m=document.getElementById(id);return m&&!m.classList.contains('hide')&&(m.classList.contains('show')||id==='settingsModal')}
+  if(vis('mpKeyboard')){mpKbClose();return}
+  if(vis('sponsorPopup')){if(typeof closeSponsorPopup==='function')closeSponsorPopup();else document.getElementById('sponsorPopup').classList.remove('show');return}
+  if(vis('customModal')){closeCustom();return}
+  if(vis('lbModal')){if(typeof closeLeaderboard==='function')closeLeaderboard();else document.getElementById('lbModal').classList.remove('show');return}
+  if(vis('reviewModal')){if(typeof closeReviewMenu==='function')closeReviewMenu();else document.getElementById('reviewModal').classList.remove('show');return}
+  if(vis('controlsModal')){document.getElementById('controlsModal').classList.remove('show');return}
+  if(vis('authModal')){document.getElementById('authModal').classList.remove('show');return}
+  var sm=document.getElementById('settingsModal');if(sm&&!sm.classList.contains('hide')){closeSettings();return}
+  var mj=document.getElementById('mpJoining');if(mj&&!mj.classList.contains('hide')){cancelJoin();return}
+  // nothing open on the garage screen → step back to the home/title menu
+  var gs=document.getElementById('garageScreen');
+  if(gs&&!gs.classList.contains('hide')&&typeof backToMenu==='function')backToMenu();
 }
 
 function gpPollRace(){
   if(!GP.connected)return;
   var gp=navigator.getGamepads?navigator.getGamepads()[GP.idx]:null;
   if(!gp)return;
+  // ── Missile aiming: stick moves a fast cursor, A fires, B cancels ──
+  if(missileMode==='aim'){
+    KY._gpGasVal=0;KY._gpBrakeVal=0;KY._gpSteerVal=0;KY[' ']=false;
+    gpShowCursor();
+    var _max=window.innerWidth,_may=window.innerHeight,_aspd=15;
+    GP.curX=Math.max(0,Math.min(_max,GP.curX+gpAxis(0)*_aspd));
+    GP.curY=Math.max(0,Math.min(_may,GP.curY+gpAxis(1)*_aspd));
+    var _ac=document.getElementById('gpCursor');if(_ac){_ac.style.left=GP.curX+'px';_ac.style.top=GP.curY+'px'}
+    if(gpBtnJust(0)){if(_ac){_ac.classList.add('click');setTimeout(function(){if(_ac)_ac.classList.remove('click')},100)}_fireMissileAtScreen(GP.curX,GP.curY)}
+    if(gpBtnJust(1)){cancelMissileAim();gpHideCursor()}
+    GP.prevBtns=[];for(var _ab=0;_ab<gp.buttons.length;_ab++)GP.prevBtns[_ab]=gp.buttons[_ab].pressed;
+    return;
+  }
   gpHideCursor();
   var rt=gpTrigger(7),lt=gpTrigger(6);
   var lx=gpAxis(0),ly=gpAxis(1);
@@ -5570,6 +5597,12 @@ function gpPollRace(){
     if(gpBtnJust(8)){if(mpConn&&racePhase==='race')respawnInPlace();else resetCar()}
     if(gpBtnJust(4))toggleHeadlights();
     if(gpBtnJust(5)){if(mpConn&&racePhase==='race')respawnInPlace();else resetCar()}
+    // Circle (B/○): leave pit → arm missiles (MP+battle) → exit to garage (solo)
+    if(gpBtnJust(1)){
+      if(pitOpen){leavePit();}
+      else if(battleMode&&mpConn&&racePhase==='race'){startMissileAim();if(missileMode==='aim'){GP.curX=window.innerWidth/2;GP.curY=window.innerHeight/2;gpShowCursor()}}
+      else if(!mpConn){gpExitToGarage();}
+    }
   }
   // Options (☰) opens the menu hub
   if(gpBtnJust(9)){
@@ -5598,6 +5631,13 @@ function gpPollRace(){
   }
   GP.prevBtns=[];
   for(var bi=0;bi<gp.buttons.length;bi++)GP.prevBtns[bi]=gp.buttons[bi].pressed;
+}
+function gpExitToGarage(){
+  GP.qmOpen=false;gpToggleQuickMenu();GP.hubOpen=false;gpToggleHub();
+  if(missileMode==='aim')cancelMissileAim();gpHideCursor();
+  racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();
+  [sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null}
+  document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar();
 }
 function gpToggleHub(){
   var el=document.getElementById('gpHub');
@@ -5636,7 +5676,7 @@ function gpSelectQM(){
   else if(action==='voice')toggleVoiceChat();
   else if(action==='fullscreen')toggleFullscreen();
   else if(action==='restart'){if(mpConn&&racePhase==='race')respawnInPlace();else resetCar()}
-  else if(action==='quit'){GP.qmOpen=false;gpToggleQuickMenu();racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()}
+  else if(action==='quit'){gpExitToGarage()}
   else if(action==='close'){GP.qmOpen=false;gpToggleQuickMenu()}
 }
 
