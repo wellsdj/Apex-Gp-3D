@@ -2971,8 +2971,9 @@ function resetCar(){
   if(pitOpen)closePit();
   lapN=0;lapSt=performance.now();curLT=0;prevSFDot=null;prevCpDot=null;
   curGhost=[];ghostFrame=0;allTimeGhostFrame=0;opGhostFrame=0;
+  curGear=0;buildingSpdTimer=4;ab=false;
+  KY[' ']=false;KY._gpGasVal=0;KY._gpBrakeVal=0;
   var lc=document.getElementById('lapCnt');if(lc)lc.textContent='LAP 1';
-  curGear=0;buildingSpdTimer=4;
   var bs=document.getElementById('buildSpd');if(bs)bs.classList.add('show');
 }
 function cycleCam(){
