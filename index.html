@@ -5485,10 +5485,14 @@ function gpPollRace(){
   if(!gp)return;
   gpHideCursor();
   var rt=gpTrigger(7),lt=gpTrigger(6);
-  var lx=gpAxis(0);
-  KY._gpGasVal=rt>0.05?rt:0;
-  KY._gpBrakeVal=lt>0.05?lt:0;
-  KY._gpSteerVal=lx;
+  var lx=gpAxis(0),ly=gpAxis(1);
+  var gas=rt>0.05?rt:0;
+  var brk=lt>0.05?lt:0;
+  if(ly<-0.05)gas=Math.max(gas,-ly);
+  if(ly>0.05)brk=Math.max(brk,ly);
+  KY._gpGasVal=gas;
+  KY._gpBrakeVal=brk;
+  KY._gpSteerVal=-lx;
   if(gpBtnDown(0))KY[' ']=true;
   if(gpBtnJust(2))cycleCam();
   if(gpBtnJust(3)){GP.qmOpen=!GP.qmOpen;GP.qmSel=0;gpToggleQuickMenu()}
@@ -5498,8 +5502,8 @@ function gpPollRace(){
   var trigHud=document.getElementById('gpTriggerHUD');
   if(trigHud)trigHud.style.display='flex';
   var gf=document.getElementById('gpGasFill'),bf=document.getElementById('gpBrakeFill');
-  if(gf)gf.style.width=(rt*100)+'%';
-  if(bf)bf.style.width=(lt*100)+'%';
+  if(gf)gf.style.width=(gas*100)+'%';
+  if(bf)bf.style.width=(brk*100)+'%';
   if(GP.qmOpen){
     if(gpBtnJust(12)){GP.qmSel=Math.max(0,GP.qmSel-1);gpHighlightQM()}
     if(gpBtnJust(13)){var items=document.querySelectorAll('.gp-qm-item');GP.qmSel=Math.min(items.length-1,GP.qmSel+1);gpHighlightQM()}
