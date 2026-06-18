@@ -5493,9 +5493,9 @@ function gpPollRace(){
   KY._gpGasVal=gas;
   KY._gpBrakeVal=brk;
   KY._gpSteerVal=-lx;
-  if(gpBtnDown(0))KY[' ']=true;
-  if(gpBtnJust(2))cycleCam();
-  if(gpBtnJust(3)){GP.qmOpen=!GP.qmOpen;GP.qmSel=0;gpToggleQuickMenu()}
+  if(gpBtnDown(2))KY[' ']=true;
+  if(gpBtnJust(3))cycleCam();
+  if(gpBtnJust(9)){GP.qmOpen=!GP.qmOpen;GP.qmSel=0;gpToggleQuickMenu()}
   if(gpBtnJust(8)){if(mpConn&&racePhase==='race')respawnInPlace();else resetCar()}
   if(gpBtnJust(4))toggleHeadlights();
   if(gpBtnJust(5)){if(mpConn&&racePhase==='race')respawnInPlace();else resetCar()}
