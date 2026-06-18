@@ -2903,7 +2903,7 @@ function respawnInPlace(){
   var ct=document.getElementById('crashTxt');if(ct)ct.style.opacity=0;
 }
 function resetCar(){
-  // Place well before SF line so you build up speed (~150m back), far from barriers
+  if(!sd||!sd.length||!tPts||!tPts.length)return;
   var pi=(sfIdx-600+tPts.length)%tPts.length;
   carNearIdx=pi;
   P.set(sd[pi].c.x,(sd[pi].c.y||0)+.8,sd[pi].c.z);V.set(0,0,0);
@@ -2911,13 +2911,14 @@ function resetCar(){
   flipCrashActive=false;flipUpsideTime=0;raceFadeTimer=0;wallCrashActive=false;wallCrashTimer=0;cpHit=0;resetDamage();
   var fo=document.getElementById('flipOverlay');if(fo){fo.style.opacity=0;fo.style.display='none'}
   var co=document.getElementById('crashOverlay');if(co){co.style.opacity=0;co.style.display='none'}
-  // DON'T reset lap times - preserve best/last
+  var ft=document.getElementById('flipTxt');if(ft)ft.style.opacity=0;
+  var ct=document.getElementById('crashTxt');if(ct)ct.style.opacity=0;
+  if(pitOpen)closePit();
   lapN=0;lapSt=performance.now();curLT=0;prevSFDot=null;prevCpDot=null;
   curGhost=[];ghostFrame=0;allTimeGhostFrame=0;opGhostFrame=0;
-  // Keep bestLT, lastLT, bestGhost, ghostPlaying intact
-  D('lapCnt').textContent='LAP 1';
+  var lc=document.getElementById('lapCnt');if(lc)lc.textContent='LAP 1';
   curGear=0;buildingSpdTimer=4;
-  document.getElementById('buildSpd').classList.add('show');
+  var bs=document.getElementById('buildSpd');if(bs)bs.classList.add('show');
 }
 function cycleCam(){
   camM=(camM+1)%4;
@@ -5592,16 +5593,16 @@ function gpPollRace(){
   KY._gpGasVal=gas;
   KY._gpBrakeVal=brk;
   KY._gpSteerVal=menuUp?0:Math.max(-1,Math.min(1,-lx*(_gpSteerSens/100)));
-  if(!menuUp){
+  // Circle (B/○) to leave pit works regardless of menu state
+  if(gpBtnJust(1)&&pitOpen){leavePit();}
+  else if(!menuUp){
     if(gpBtnDown(2))KY[' ']=true;
     if(gpBtnJust(3))cycleCam();
     if(gpBtnJust(8)){if(mpConn&&racePhase==='race')respawnInPlace();else resetCar()}
     if(gpBtnJust(4))toggleHeadlights();
     if(gpBtnJust(5)){if(mpConn&&racePhase==='race')respawnInPlace();else resetCar()}
-    // Circle (B/○): leave pit → arm missiles (MP+battle) → exit to garage (solo)
     if(gpBtnJust(1)){
-      if(pitOpen){leavePit();}
-      else if(battleMode&&mpConn&&racePhase==='race'){startMissileAim();if(missileMode==='aim'){GP.curX=window.innerWidth/2;GP.curY=window.innerHeight/2;gpShowCursor()}}
+      if(battleMode&&mpConn&&racePhase==='race'){startMissileAim();if(missileMode==='aim'){GP.curX=window.innerWidth/2;GP.curY=window.innerHeight/2;gpShowCursor()}}
       else if(!mpConn){gpExitToGarage();}
     }
   }
