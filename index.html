@@ -672,11 +672,6 @@ body.mobile #spdOutlineSvg{display:none}
       <div class="custom-row"><span class="custom-lbl">WINGS</span><input type="color" class="cpick" id="accentColorPick" value="#16181c" oninput="applyAccentColor(this.value)"></div>
       <div class="custom-row"><span class="custom-lbl">RIMS</span><input type="color" class="cpick" id="rimColorPick" value="#cccccc" oninput="applyRimColor(this.value)"></div>
     </div>
-    <div class="custom-sec">Stripes</div>
-    <div class="custom-controls">
-      <div class="custom-row"><span class="custom-lbl">STYLE</span><div class="stripe-cyc"><button class="cyc-arr" onclick="cycleStripeStyle(-1)">&#9664;</button><span class="cyc-lbl" id="stripeStyleLbl">CENTER</span><button class="cyc-arr" onclick="cycleStripeStyle(1)">&#9654;</button></div></div>
-      <div class="custom-row"><span class="custom-lbl">COLOUR</span><input type="color" class="cpick" id="stripeColorPick" value="#ffffff" oninput="applyStripeColor(this.value)"></div>
-    </div>
     <div class="custom-sec">Finish</div>
     <div class="custom-controls">
       <div class="custom-row"><span class="custom-lbl">MATTE / GLOSSY</span><input type="range" class="cust-slider" id="finishSlider" min="0" max="100" value="68" oninput="applyFinish(this.value)"><span class="cust-val" id="finishVal">GLOSSY</span></div>
@@ -684,13 +679,6 @@ body.mobile #spdOutlineSvg{display:none}
     </div>
     <div class="custom-sec">Livery Patterns</div>
     <div class="pattern-row" id="patternRow"></div>
-    <div class="custom-sec">Race Number</div>
-    <div class="custom-controls">
-      <div class="custom-row"><span class="custom-lbl">NUMBER</span><input type="text" class="num-input" id="carNumInput" maxlength="2" value="1" oninput="setCarNumber(this.value)"></div>
-      <div class="custom-row"><span class="custom-lbl">NUM COLOUR</span><input type="color" class="cpick" id="numColorPick" value="#ffffff" oninput="applyNumColor(this.value)"></div>
-    </div>
-    <div class="custom-sec">Sponsors</div>
-    <div class="spons-grid" id="sponsGrid"></div>
   </div>
 </div>
 <div id="sponsPopBg" onclick="closeSponsorPopup()"></div>
@@ -5604,6 +5592,12 @@ function gpPollMenu(){
     if(target){target.click();target.focus&&target.focus()}
   }
   if(gpBtnJust(1))gpMenuBack();
+  var cm=document.getElementById('customModal'),cb=cm?cm.querySelector('.custom-box'):null;
+  if(cb&&!cm.classList.contains('hide')&&cm.classList.contains('show')){
+    var ry=gpAxis(3);
+    if(ry>0.2){cb.scrollTop+=40;}
+    else if(ry<-0.2){cb.scrollTop-=40;}
+  }
   GP.prevBtns=[];
   for(var bi=0;bi<gp.buttons.length;bi++)GP.prevBtns[bi]=gp.buttons[bi].pressed;
 }
