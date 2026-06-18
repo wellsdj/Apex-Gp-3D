@@ -2821,6 +2821,7 @@ function fmt(ms){if(!isFinite(ms)||ms===0)return'--:--.---';return String(Math.f
 var cS={p:new THREE.Vector3(0,5,-10),l:new THREE.Vector3()};
 var _camTp=new THREE.Vector3(),_camTl=new THREE.Vector3(),_camFwd=new THREE.Vector3();
 var lookBack=false;
+KY._gpLookX=0;KY._gpLookY=0;
 function doCam(dt){if(mpSpectating&&opCar&&opPos){doSpectCam(dt);return}if(missileMode&&racing){
     var _mvh=trackViewR*1.95+80;
     _camTp.set(tCX,_mvh,tCZ+_mvh*.22);
@@ -2832,7 +2833,26 @@ function doCam(dt){if(mpSpectating&&opCar&&opPos){doSpectCam(dt);return}if(missi
     return;
   }
   if(scene&&scene.fog){scene.fog.near=300;scene.fog.far=1200}
-  var fwd=_camFwd.set(Math.sin(A),0,Math.cos(A)),cpx=car.position.x,cpy=car.position.y,cpz=car.position.z;lookBack=!!(KY['b']||KY['enter']);if(lookBack){var d=7+SPD*.01,h=3.5+SPD*.006;_camTp.set(cpx+fwd.x*d,cpy+h,cpz+fwd.z*d);_camTl.set(cpx-fwd.x*30,cpy,cpz-fwd.z*30)}else if(camM===0){var d=9+SPD*.016,h=4.5+SPD*.009;_camTp.set(cpx-fwd.x*d,cpy+h,cpz-fwd.z*d);_camTl.set(cpx+fwd.x*12,cpy,cpz+fwd.z*12)}else if(camM===1){_camTp.set(cpx+fwd.x*1.5,cpy+1.5,cpz+fwd.z*1.5);_camTl.set(cpx+fwd.x*60,cpy,cpz+fwd.z*60)}else if(camM===2){_camTp.set(cpx-fwd.x*30,cpy+55,cpz-fwd.z*30);_camTl.set(cpx,cpy,cpz)}else{var ccy=Math.cos(camCustom.pitch),cca=A+Math.PI+camCustom.yaw;_camTp.set(cpx+Math.sin(cca)*camCustom.dist*ccy,cpy+1.1+Math.sin(camCustom.pitch)*camCustom.dist,cpz+Math.cos(cca)*camCustom.dist*ccy);_camTl.set(cpx+fwd.x*5,cpy+.8,cpz+fwd.z*5)}if(lookBack){cS.p.copy(_camTp);cS.l.copy(_camTl)}else{var lf=1-Math.exp(-(camM===1?18:5.5)*dt);cS.p.lerp(_camTp,lf);cS.l.lerp(_camTl,lf)}cam.position.copy(cS.p);
+  var fwd=_camFwd.set(Math.sin(A),0,Math.cos(A)),cpx=car.position.x,cpy=car.position.y,cpz=car.position.z;lookBack=!!(KY['b']||KY['enter']);
+  var _rlx=KY._gpLookX||0,_rly=KY._gpLookY||0;
+  var _rlMag=Math.sqrt(_rlx*_rlx+_rly*_rly);
+  var _gpLooking=_rlMag>0.15;
+  if(_gpLooking||lookBack){
+    var _lyaw=0;
+    if(_gpLooking){_lyaw=_rlx*Math.PI*0.85;if(_rly>0.3)_lyaw+=(_rly-0.3)*Math.PI*1.4*(_rlx>=0?1:-1)}
+    if(lookBack)_lyaw=Math.PI;
+    var _la=A+_lyaw;
+    var _lfwd_x=Math.sin(_la),_lfwd_z=Math.cos(_la);
+    var d=7+SPD*.01,h=3.5+SPD*.006;
+    _camTp.set(cpx-_lfwd_x*d,cpy+h,cpz-_lfwd_z*d);
+    _camTl.set(cpx+_lfwd_x*30,cpy,cpz+_lfwd_z*30);
+    if(lookBack||_rlMag>0.8){cS.p.copy(_camTp);cS.l.copy(_camTl)}
+    else{var lf2=1-Math.exp(-8*dt);cS.p.lerp(_camTp,lf2);cS.l.lerp(_camTl,lf2)}
+  }else if(camM===0){var d=9+SPD*.016,h=4.5+SPD*.009;_camTp.set(cpx-fwd.x*d,cpy+h,cpz-fwd.z*d);_camTl.set(cpx+fwd.x*12,cpy,cpz+fwd.z*12);var lf=1-Math.exp(-5.5*dt);cS.p.lerp(_camTp,lf);cS.l.lerp(_camTl,lf)
+  }else if(camM===1){_camTp.set(cpx+fwd.x*1.5,cpy+1.5,cpz+fwd.z*1.5);_camTl.set(cpx+fwd.x*60,cpy,cpz+fwd.z*60);var lf=1-Math.exp(-18*dt);cS.p.lerp(_camTp,lf);cS.l.lerp(_camTl,lf)
+  }else if(camM===2){_camTp.set(cpx-fwd.x*30,cpy+55,cpz-fwd.z*30);_camTl.set(cpx,cpy,cpz);var lf=1-Math.exp(-5.5*dt);cS.p.lerp(_camTp,lf);cS.l.lerp(_camTl,lf)
+  }else{var ccy=Math.cos(camCustom.pitch),cca=A+Math.PI+camCustom.yaw;_camTp.set(cpx+Math.sin(cca)*camCustom.dist*ccy,cpy+1.1+Math.sin(camCustom.pitch)*camCustom.dist,cpz+Math.cos(cca)*camCustom.dist*ccy);_camTl.set(cpx+fwd.x*5,cpy+.8,cpz+fwd.z*5);var lf=1-Math.exp(-5.5*dt);cS.p.lerp(_camTp,lf);cS.l.lerp(_camTl,lf)
+  }cam.position.copy(cS.p);
   // Curb shake — very subtle, fast buzz while a wheel is on the kerb
   if(onCurb&&SPD>8){curbShakeT+=dt*240;var shk=Math.min(1,(SPD-8)/70)*0.011;var _cv=Math.sin(curbShakeT*60)*shk+Math.sin(curbShakeT*97)*shk*0.5;cam.position.y+=_cv;cam.position.x+=Math.sin(curbShakeT*73)*shk*0.35}else{curbShakeT*=0.8}
   cam.lookAt(cS.l)}
@@ -5631,6 +5651,8 @@ function gpPollRace(){
   KY._gpGasVal=gas;
   KY._gpBrakeVal=brk;
   KY._gpSteerVal=menuUp?0:Math.max(-1,Math.min(1,-lx*(_gpSteerSens/100)));
+  var rx=gpAxis(2),ry=gpAxis(3);
+  KY._gpLookX=rx;KY._gpLookY=ry;
   // Circle (B/○) to leave pit works regardless of menu state
   if(gpBtnJust(1)&&pitOpen){leavePit();}
   else if(!menuUp){
@@ -5721,11 +5743,11 @@ function gpSelectQM(){
 }
 
 function gpPoll(){
-  if(!GP.connected){KY._gpGasVal=0;KY._gpBrakeVal=0;KY._gpSteerVal=0;return}
+  if(!GP.connected){KY._gpGasVal=0;KY._gpBrakeVal=0;KY._gpSteerVal=0;KY._gpLookX=0;KY._gpLookY=0;return}
   // Auto-exit cursor mode once the settings panel is closed by any means
   if(GP.cursorMode){var sm=document.getElementById('settingsModal');if(!sm||sm.classList.contains('hide')){GP.cursorMode=false;gpHideCursor()}}
   if(racing&&!GP.cursorMode){gpPollRace()}
-  else{KY._gpGasVal=0;KY._gpBrakeVal=0;KY._gpSteerVal=0;gpPollMenu();var th=document.getElementById('gpTriggerHUD');if(th)th.style.display='none'}
+  else{KY._gpGasVal=0;KY._gpBrakeVal=0;KY._gpSteerVal=0;KY._gpLookX=0;KY._gpLookY=0;gpPollMenu();var th=document.getElementById('gpTriggerHUD');if(th)th.style.display='none'}
 }
 
 var _gpBtn=document.getElementById('gpConnBtn');
