@@ -3393,9 +3393,9 @@ function enableGyro(){
 }
 function _applySteerMode(){
   if(!isMobile)return;
-  document.body.classList.remove('steer-joystick');   // never show the joystick
+  document.body.classList.add('steer-joystick');
 }
-if(isMobile){var _smb=document.getElementById('settSteerModeBtn');if(_smb)_smb.textContent='TILT (GYRO)';_applySteerMode();}
+if(isMobile){_applySteerMode();}
 function _qualityPref(){try{return localStorage.getItem('apexgp_quality')||'auto'}catch(e){return'auto'}}
 function updateQualityLbl(){var b=document.getElementById('settQualityBtn');if(!b)return;var cur=_qualityPref();b.textContent=cur==='auto'?'AUTO · '+PERF.tier.toUpperCase():cur.toUpperCase()}
 function cycleQuality(){
@@ -5307,7 +5307,7 @@ function openMobileMenu(){
   var sb=document.getElementById('shieldBtn');
   var mmb=document.getElementById('mmMissileBtn');
   var msb=document.getElementById('mmShieldBtn');
-  if(mmb)mmb.style.display=(mb&&mb.style.display!=='none')?'':'none';
+  if(mmb)mmb.style.display='none';
   if(msb)msb.style.display=(sb&&sb.style.display!=='none')?'':'none';
 }
 function closeMobileMenu(){
