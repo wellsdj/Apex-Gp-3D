@@ -393,12 +393,13 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .gp-hub-btn.gp-hover{background:rgba(100,180,255,.3);border-color:rgba(100,180,255,.7);box-shadow:0 0 18px rgba(100,180,255,.3);transform:scale(1.04)}
 .gp-hub-ico{font-size:34px;margin-bottom:10px;line-height:1}
 .gp-hub-lbl{font-size:12px;font-weight:700;letter-spacing:2px;color:#fff}
-#mpKeyboard{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,12,24,.97);border:2px solid rgba(60,200,255,.45);border-radius:16px;padding:22px 26px;display:none;z-index:820;font-family:'Orbitron';width:min(92vw,440px);box-shadow:0 0 50px rgba(0,80,200,.4)}
+#mpKeyboard{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,12,24,.97);border:2px solid rgba(60,200,255,.45);border-radius:16px;padding:22px 26px;display:none;z-index:820;font-family:'Orbitron';width:min(94vw,480px);box-shadow:0 0 50px rgba(0,80,200,.4)}
 #mpKeyboard.show{display:block}
 .mpkb-title{font-size:11px;letter-spacing:3px;color:rgba(120,210,255,.8);text-align:center;margin-bottom:12px}
 .mpkb-display{font-size:30px;font-weight:900;letter-spacing:10px;color:#fff;text-align:center;margin-bottom:16px;min-height:34px}
-.mpkb-keys{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-bottom:14px}
-.mpkb-key{padding:11px 0;border-radius:6px;background:rgba(60,90,160,.25);border:1px solid rgba(100,140,255,.2);color:#fff;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .1s}
+.mpkb-keys{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;align-items:center}
+.mpkb-row{display:flex;gap:5px;justify-content:center}
+.mpkb-key{padding:10px 0;width:36px;border-radius:6px;background:rgba(60,90,160,.25);border:1px solid rgba(100,140,255,.2);color:#fff;font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:all .1s}
 .mpkb-key:hover{background:rgba(100,180,255,.4);border-color:rgba(120,200,255,.7)}
 .mpkb-actions{display:flex;gap:8px;justify-content:center}
 .mpkb-act{flex:1;padding:11px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-family:'Orbitron';font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer}
@@ -3750,8 +3751,8 @@ function createParty(){
 }
 function showJoinUI(){mpShowUI('mpJoining');document.getElementById('mpCodeInput').value='';document.getElementById('mpJoinStatus').textContent='';document.getElementById('mpCodeInput').focus();if(typeof GP!=='undefined'&&GP.connected)mpKbOpen()}
 // On-screen keyboard so controller users can enter a party code with the cursor
-var MPKB_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-function mpKbBuild(){var k=document.getElementById('mpKbKeys');if(!k||k._built)return;var h='';for(var i=0;i<MPKB_CHARS.length;i++){h+='<div class="mpkb-key" onclick="mpKbKey(\''+MPKB_CHARS[i]+'\')">'+MPKB_CHARS[i]+'</div>'}k.innerHTML=h;k._built=true}
+var MPKB_ROWS=['1234567890','QWERTYUIOP','ASDFGHJKL','ZXCVBNM'];
+function mpKbBuild(){var k=document.getElementById('mpKbKeys');if(!k||k._built)return;var h='';for(var r=0;r<MPKB_ROWS.length;r++){h+='<div class="mpkb-row">';for(var c=0;c<MPKB_ROWS[r].length;c++){var ch=MPKB_ROWS[r][c];h+='<div class="mpkb-key" onclick="mpKbKey(\''+ch+'\')">'+ch+'</div>'}h+='</div>'}k.innerHTML=h;k._built=true}
 function _mpKbSync(){var inp=document.getElementById('mpCodeInput'),d=document.getElementById('mpKbDisplay');if(inp&&d){var v=inp.value.toUpperCase();d.textContent=v+'_____'.slice(v.length)}}
 function mpKbOpen(){mpKbBuild();_mpKbSync();document.getElementById('mpKeyboard').classList.add('show')}
 function mpKbClose(){var e=document.getElementById('mpKeyboard');if(e)e.classList.remove('show')}
