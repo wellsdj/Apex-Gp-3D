@@ -161,6 +161,9 @@
 #customModal{position:fixed;top:0;right:0;height:100%;width:355px;z-index:600;background:linear-gradient(195deg,rgba(6,14,32,.93) 0%,rgba(3,6,16,.95) 100%);border-left:1px solid rgba(60,200,255,.35);box-shadow:-20px 0 60px rgba(0,40,90,.45);backdrop-filter:blur(14px);pointer-events:all;transform:translateX(105%);transition:transform .32s cubic-bezier(.22,1,.3,1);display:flex;flex-direction:column}
 #customModal.show{transform:translateX(0)}
 .custom-box{position:relative;padding:28px 26px;overflow-y:auto;flex:1;pointer-events:all}
+#resetDefaultBtn{display:block;width:100%;margin-top:22px;padding:13px;font-family:'Orbitron';font-size:12px;font-weight:900;letter-spacing:2px;color:#fff;background:#cc0000;border:2px solid #000;border-radius:8px;cursor:pointer;text-transform:uppercase;transition:background .15s}
+#resetDefaultBtn:hover{background:#ff1a1a}
+#resetDefaultBtn:active{background:#990000}
 .custom-box::-webkit-scrollbar{width:5px}.custom-box::-webkit-scrollbar-thumb{background:rgba(60,200,255,.3);border-radius:3px}
 .custom-title{font-family:'Orbitron';font-size:16px;font-weight:900;color:#fff;letter-spacing:4px;margin-bottom:6px;text-transform:uppercase;text-shadow:0 0 18px rgba(0,200,255,.5)}
 .custom-sub{font-family:'Rajdhani';font-size:12px;color:rgba(120,210,255,.5);letter-spacing:1px;margin-bottom:22px}
@@ -679,6 +682,7 @@ body.mobile #spdOutlineSvg{display:none}
     </div>
     <div class="custom-sec">Livery Patterns</div>
     <div class="pattern-row" id="patternRow"></div>
+    <button id="resetDefaultBtn" onclick="resetCustomDefault()">RESET TO DEFAULT</button>
   </div>
 </div>
 <div id="sponsPopBg" onclick="closeSponsorPopup()"></div>
@@ -2958,15 +2962,21 @@ function buildPresetRow(){
   });
 }
 function applyPreset(p){
-  applyCarColor(_hex(p.b));applyAccentColor(_hex(p.a));applyStripeColor(_hex(p.s));applyHelmetColor(_hex(p.h));
-  if(stripeStyle===0)cycleStripeStyle(1);
+  applyCarColor(_hex(p.b));applyAccentColor(_hex(p.a));
+  syncCustomUI();
+}
+function resetCustomDefault(){
+  applyCarColor('#dd1111');     // red body
+  applyAccentColor('#16181c');  // black wings
+  applyRimColor('#cccccc');
+  applyFinish(68);
+  applySaturation(100);
+  applyPattern('none');
   syncCustomUI();
 }
 function syncCustomUI(){
-  var ids={carColorPick:carBodyColor,accentColorPick:accentColor,rimColorPick:rimColor,stripeColorPick:stripeColorVal,numColorPick:numColor};
+  var ids={carColorPick:carBodyColor,accentColorPick:accentColor,rimColorPick:rimColor};
   Object.keys(ids).forEach(function(k){var el=document.getElementById(k);if(el)el.value=_hex(ids[k])});
-  var lbl=document.getElementById('stripeStyleLbl');if(lbl)lbl.textContent=STRIPE_STYLES[stripeStyle];
-  var ni=document.getElementById('carNumInput');if(ni)ni.value=carNumber;
   var fs=document.getElementById('finishSlider');if(fs)fs.value=bodyFinish;
   var fv=document.getElementById('finishVal');if(fv)fv.textContent=bodyFinish<33?'MATTE':(bodyFinish<66?'SATIN':'GLOSSY');
   var ss=document.getElementById('satSlider');if(ss)ss.value=bodySaturation;
