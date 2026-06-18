@@ -1065,6 +1065,7 @@ var t0=performance.now();
 (function a(){if(!mRun)return;requestAnimationFrame(a);if(typeof gpPoll==='function')gpPoll();var t=(performance.now()-t0)*.001;mCar.rotation.y=t*.32;mC.position.set(Math.sin(t*.07)*7.5,2.4+Math.sin(t*.13)*.35,7.2);mC.lookAt(0,.42,0);mR.render(mS,mC)})()}
 
 // ── Garage: orbitable neon showroom ─────────────────────────────────────────
+var gOpCar=null,gOpLabel=null,gOpPlat=null,gOpRing=null;
 var gOrb={yaw:.85,pitch:.32,dist:8.6,lastInput:0,drag:false,px:0,py:0,bound:false};
 function _gApplyCam(){
   var cy2=Math.cos(gOrb.pitch),ty=.45+Math.sin(gOrb.pitch)*gOrb.dist;
@@ -1089,10 +1090,43 @@ var plat=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.4,.05,64),new THREE.Mes
 var ring=new THREE.Mesh(new THREE.RingGeometry(3.15,3.5,64),new THREE.MeshBasicMaterial({color:0x00d0ff,transparent:true,opacity:.35,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.03;gS.add(ring);
 var ring2=new THREE.Mesh(new THREE.RingGeometry(.5,.55,64),new THREE.MeshBasicMaterial({color:0x7a5cff,transparent:true,opacity:.22,side:THREE.DoubleSide}));ring2.rotation.x=-Math.PI/2;ring2.position.y=.03;gS.add(ring2);
 gCar=bldCar(carBodyColor,false);gS.add(gCar);
+gOpCar=null;gOpLabel=null;gOpPlat=null;gOpRing=null;
+if(mpConn&&primaryPeerId&&peers[primaryPeerId]){
+  var pp=peers[primaryPeerId];
+  if(pp._garStyle)gBuildOpCar(pp._garStyle);
+  else gBuildOpCar({col:pp.col,name:pp.name});
+}
 _gBindOrbit(document.getElementById('garageScreen'));gOrb.lastInput=0;
 gRun=true;(function a(){if(!gRun)return;requestAnimationFrame(a);if(typeof gpPoll==='function')gpPoll();
 if(!gOrb.drag&&performance.now()-gOrb.lastInput>2600)gOrb.yaw+=.0035;
 _gApplyCam();gR.render(gS,gC)})()}
+
+function gBuildOpCar(d){
+  if(!gS)return;
+  gRemoveOpCar();
+  var OPX=4.5;
+  var _sBody=carBodyColor,_sAcc=accentColor,_sRim=rimColor,_sFin=bodyFinish,_sSat=bodySaturation,_sNum=carNumber,_sNumC=numColor,_sSp=sponsorPlacements;
+  carBodyColor=d.col||0x44ff88;accentColor=d.acc||0x0088ff;rimColor=d.rim||0xddaa44;
+  bodyFinish=(d.fin!=null?d.fin:68);bodySaturation=(d.sat!=null?d.sat:100);
+  carNumber=d.num||'1';numColor=d.numCol||0xffffff;sponsorPlacements=d.sponsors||{pod_l:null,pod_r:null};
+  gOpCar=bldCar(carBodyColor,false);
+  carBodyColor=_sBody;accentColor=_sAcc;rimColor=_sRim;bodyFinish=_sFin;bodySaturation=_sSat;carNumber=_sNum;numColor=_sNumC;sponsorPlacements=_sSp;
+  gOpCar.position.set(OPX,0,0);
+  gS.add(gOpCar);
+  gOpPlat=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.4,.05,64),new THREE.MeshStandardMaterial({color:0x0b0f1c,roughness:.22,metalness:.8}));
+  gOpPlat.position.set(OPX,0,0);gS.add(gOpPlat);
+  gOpRing=new THREE.Mesh(new THREE.RingGeometry(3.15,3.5,64),new THREE.MeshBasicMaterial({color:0x44ff88,transparent:true,opacity:.35,side:THREE.DoubleSide}));
+  gOpRing.rotation.x=-Math.PI/2;gOpRing.position.set(OPX,.03,0);gS.add(gOpRing);
+  var name=d.name||'OPPONENT';
+  gOpLabel=mkNameSprite(name);
+  gOpLabel.position.set(OPX,2.2,0);gS.add(gOpLabel);
+}
+function gRemoveOpCar(){
+  if(gOpCar&&gS){gS.remove(gOpCar);gOpCar=null}
+  if(gOpLabel&&gS){gS.remove(gOpLabel);gOpLabel=null}
+  if(gOpPlat&&gS){gS.remove(gOpPlat);gOpPlat=null}
+  if(gOpRing&&gS){gS.remove(gOpRing);gOpRing=null}
+}
 
 // ── Real F1 2022 model (OBJ, baked to game scale) ───────────────────────────
 var carModelSel='f1'; // F1 2022 is the only car now
@@ -3602,6 +3636,7 @@ function rebuildPeerCars(){
 function removePeer(id){
   var p=peers[id];if(!p)return;
   if(p.car&&scene)try{scene.remove(p.car)}catch(e){}
+  if(id===primaryPeerId&&typeof gRemoveOpCar==='function')gRemoveOpCar();
   delete peers[id];peerCount--;
   if(primaryPeerId===id){
     primaryPeerId=null;
@@ -3670,7 +3705,7 @@ function mpOpen(code,role){
 function mpSendHello(){
   var myGhost=getTrackGhost(TRACKS[selTrack].name)||[];
   var myBest=getTrackBest(TRACKS[selTrack].name);
-  mpSend({t:'hello',name:getPlayerName(),ghost:myGhost.length>200?[]:myGhost,best:myBest,col:carBodyColor,num:carNumber,sponsors:sponsorPlacements});
+  mpSend({t:'hello',name:getPlayerName(),ghost:myGhost.length>200?[]:myGhost,best:myBest,col:carBodyColor,num:carNumber,sponsors:sponsorPlacements,acc:accentColor,rim:rimColor,fin:bodyFinish,sat:bodySaturation,numCol:numColor});
 }
 function createParty(){
   ensureVoiceMic(function(){});
@@ -3772,10 +3807,12 @@ function handleMpMessage(raw){
     if(!primaryPeerId)primaryPeerId=hp.id;
     voiceConnectTo(hp.id);
     if(d.sponsors&&hp.car){hp.car._sponsorData=d.sponsors;updateDecalVisibility(hp.car)}
+    hp._garStyle={col:d.col,acc:d.acc,rim:d.rim,fin:d.fin,sat:d.sat,num:d.num,numCol:d.numCol,sponsors:d.sponsors,name:d.name};
     if(hp.id===primaryPeerId){
       if(d.name)qualiOpName=d.name;
       if(d.ghost&&d.ghost.length>0){opBestGhost=d.ghost;opGhostPlaying=false}
     }
+    if(gRun&&gS)gBuildOpCar(hp._garStyle);
     setupConnUI();
     return;
   }
@@ -4502,6 +4539,7 @@ function cancelJoin(){mpKbClose();mpShowUI('mpButtons');mpCleanup();mpMode=null;
 function onMpDisconnect(){
   cleanupVoice();
   clearAllPeers();
+  if(typeof gRemoveOpCar==='function')gRemoveOpCar();
   if(opCar)opCar.visible=false;
   if(opBestCar)opBestCar.visible=false;
   opPos=null;opPrevPos=null;opGhostPlaying=false;
