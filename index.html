@@ -386,6 +386,13 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .gp-qm-item{padding:10px 16px;margin:4px 0;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;cursor:pointer;background:rgba(60,90,160,.2);border:1px solid rgba(100,140,255,.15);transition:all .1s}
 .gp-qm-item.gp-hover{background:rgba(100,180,255,.3);border-color:rgba(100,180,255,.6);box-shadow:0 0 12px rgba(100,180,255,.2)}
 .gp-qm-hint{font-size:8px;color:rgba(255,255,255,.35);text-align:center;margin-top:10px;letter-spacing:1.5px}
+#gpHub{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,10,20,.96);border:2px solid rgba(100,180,255,.5);border-radius:16px;padding:22px 30px;display:none;z-index:801;font-family:'Orbitron';backdrop-filter:blur(12px)}
+#gpHub.show{display:block}
+.gp-hub-row{display:flex;gap:18px;margin:6px 0 4px}
+.gp-hub-btn{width:150px;padding:26px 14px;border-radius:12px;background:rgba(60,90,160,.2);border:2px solid rgba(100,140,255,.15);text-align:center;cursor:pointer;transition:all .12s}
+.gp-hub-btn.gp-hover{background:rgba(100,180,255,.3);border-color:rgba(100,180,255,.7);box-shadow:0 0 18px rgba(100,180,255,.3);transform:scale(1.04)}
+.gp-hub-ico{font-size:34px;margin-bottom:10px;line-height:1}
+.gp-hub-lbl{font-size:12px;font-weight:700;letter-spacing:2px;color:#fff}
 #gpTriggerHUD{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:none;z-index:200;pointer-events:none;font-family:'Orbitron'}
 .gp-trig{display:inline-block;width:60px;text-align:center;margin:0 20px}
 .gp-trig-label{font-size:7px;letter-spacing:2px;color:rgba(255,255,255,.4);margin-bottom:4px}
@@ -612,6 +619,7 @@ body.mobile #spdOutlineSvg{display:none}
 <div id="reviewModal"><div class="rv-box"><button class="ctrl-close" onclick="closeReviewMenu()">&#10005;</button><div class="rv-title">REVIEW BEST LAP</div><div id="reviewList"></div><div class="rv-hint">Click a track to watch your fastest lap. Esc to exit.</div></div></div>
 <div id="reviewIndicator">▶ REVIEWING BEST LAP — C CAMERA · ESC EXIT</div>
 <div id="gpCursor"></div>
+<div id="gpHub"><div class="gp-qm-title">MENU</div><div class="gp-hub-row"><div class="gp-hub-btn" data-gp-hub="settings"><div class="gp-hub-ico">⚙</div><div class="gp-hub-lbl">SETTINGS</div></div><div class="gp-hub-btn" data-gp-hub="buttons"><div class="gp-hub-ico">🎮</div><div class="gp-hub-lbl">BUTTON MENU</div></div></div><div class="gp-qm-hint">STICK LEFT/RIGHT · A SELECT · B CLOSE</div></div>
 <div id="gpQuickMenu"><div class="gp-qm-title">QUICK MENU</div><div class="gp-qm-item" data-gp-action="camera">CAMERA</div><div class="gp-qm-item" data-gp-action="ghost">GHOST</div><div class="gp-qm-item" data-gp-action="sound">SOUND</div><div class="gp-qm-item" data-gp-action="headlights">HEADLIGHTS</div><div class="gp-qm-item" data-gp-action="voice">VOICE MODE</div><div class="gp-qm-item" data-gp-action="fullscreen">FULLSCREEN</div><div class="gp-qm-item" data-gp-action="restart">RESTART</div><div class="gp-qm-item" data-gp-action="quit">BACK TO GARAGE</div><div class="gp-qm-item" data-gp-action="close">CLOSE</div><div class="gp-qm-hint">D-PAD UP/DOWN · A SELECT · B CLOSE</div></div>
 <div id="gpTriggerHUD"><div class="gp-trig"><div class="gp-trig-label">LT BRAKE</div><div class="gp-trig-bar"><div class="gp-trig-fill brake" id="gpBrakeFill"></div></div></div><div class="gp-trig"><div class="gp-trig-label">RT GAS</div><div class="gp-trig-bar"><div class="gp-trig-fill gas" id="gpGasFill"></div></div></div></div>
 <div id="voicePopup"><div class="vc-title">🎙 VOICE CHAT</div><div class="vc-state" id="vcState">MIC ON</div><div id="vcPeers"></div><div class="vc-vol-lbl">VOLUME</div><input type="range" class="vc-vol" id="vcVol" min="0" max="100" value="80" oninput="setVoiceVolume(this.value/100)"><div class="vc-hint">PRESS V TO TOGGLE</div></div>
@@ -722,6 +730,13 @@ body.mobile #spdOutlineSvg{display:none}
     <div class="sett-row">
       <span class="sett-lbl">GYRO STEERING</span>
       <button class="sett-acct-btn" id="settSteerModeBtn" onclick="enableGyro()" title="Tilt your phone like a steering wheel to steer">TILT (GYRO)</button>
+    </div>
+    <div class="sett-row">
+      <span class="sett-lbl">CONTROLLER SENS</span>
+      <div class="sett-controls">
+        <input type="range" class="sett-slider" id="settGpSens" min="30" max="150" value="100" oninput="setGpSens(this.value)">
+        <span id="settGpSensVal" style="font-family:'Orbitron';font-size:9px;color:rgba(150,215,255,.7);min-width:34px">100%</span>
+      </div>
     </div>
     <div class="sett-row">
       <span class="sett-lbl" id="settAcctLbl">ACCOUNT</span>
@@ -3440,7 +3455,7 @@ document.addEventListener('keydown',function(e){
   rebindAction=null;refreshControlsUI();
   e.preventDefault();e.stopImmediatePropagation();
 },true);
-function openSettings(){document.getElementById('settingsModal').classList.remove('hide');updateQualityLbl();}
+function openSettings(){document.getElementById('settingsModal').classList.remove('hide');updateQualityLbl();var gs=document.getElementById('settGpSens'),gv=document.getElementById('settGpSensVal');if(gs)gs.value=_gpSteerSens;if(gv)gv.textContent=_gpSteerSens+'%';}
 function closeSettings(){document.getElementById('settingsModal').classList.add('hide');}
 function toggleSettMusic(){musicEnabled=!musicEnabled;document.getElementById('settMusicTog').classList.toggle('on',musicEnabled);if(musicEnabled){startLobbyMusic();}else{if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}sndLobby.pause();lobbyPlaying=false;}}
 function toggleSettSfx(){sfxEnabled=!sfxEnabled;document.getElementById('settSfxTog').classList.toggle('on',sfxEnabled);if(!sfxEnabled)[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});}
@@ -5381,8 +5396,11 @@ var GP={
   connected:false,idx:-1,id:'',
   curX:window.innerWidth/2,curY:window.innerHeight/2,
   prevBtns:[],qmOpen:false,qmSel:0,
+  hubOpen:false,hubSel:0,_hubStick:false,cursorMode:false,
   deadzone:0.15,cursorSpeed:12
 };
+var _gpSteerSens=parseInt(localStorage.getItem('gpSens'))||100;
+function setGpSens(v){_gpSteerSens=parseInt(v);localStorage.setItem('gpSens',_gpSteerSens);var l=document.getElementById('settGpSensVal');if(l)l.textContent=_gpSteerSens+'%';}
 
 function gpConnect(){
   var btn=document.getElementById('gpConnBtn');
@@ -5476,7 +5494,8 @@ function gpPollMenu(){
   }
   if(gpBtnJust(1)){
     var modals=document.querySelectorAll('.show');
-    modals.forEach(function(m){if(m.id==='gpQuickMenu'||m.id==='settingsModal'||m.id==='authModal'||m.id==='controlsModal'||m.id==='reviewModal'||m.id==='lbModal'){m.classList.remove('show')}});
+    modals.forEach(function(m){if(m.id==='gpQuickMenu'||m.id==='authModal'||m.id==='controlsModal'||m.id==='reviewModal'||m.id==='lbModal'){m.classList.remove('show')}});
+    var sm=document.getElementById('settingsModal');if(sm&&!sm.classList.contains('hide'))closeSettings();
   }
   GP.prevBtns=[];
   for(var bi=0;bi<gp.buttons.length;bi++)GP.prevBtns[bi]=gp.buttons[bi].pressed;
@@ -5489,25 +5508,41 @@ function gpPollRace(){
   gpHideCursor();
   var rt=gpTrigger(7),lt=gpTrigger(6);
   var lx=gpAxis(0),ly=gpAxis(1);
-  var gas=rt>0.05?rt:0;
-  var brk=lt>0.05?lt:0;
-  if(ly<-0.05)gas=Math.max(gas,-ly);
-  if(ly>0.05)brk=Math.max(brk,ly);
+  var menuUp=GP.qmOpen||GP.hubOpen;
+  var gas=menuUp?0:(rt>0.05?rt:0);
+  var brk=menuUp?0:(lt>0.05?lt:0);
+  if(!menuUp&&ly<-0.05)gas=Math.max(gas,-ly);
+  if(!menuUp&&ly>0.05)brk=Math.max(brk,ly);
   KY._gpGasVal=gas;
   KY._gpBrakeVal=brk;
-  KY._gpSteerVal=-lx;
-  if(gpBtnDown(2))KY[' ']=true;
-  if(gpBtnJust(3))cycleCam();
-  if(gpBtnJust(9)){GP.qmOpen=!GP.qmOpen;GP.qmSel=0;gpToggleQuickMenu()}
-  if(gpBtnJust(8)){if(mpConn&&racePhase==='race')respawnInPlace();else resetCar()}
-  if(gpBtnJust(4))toggleHeadlights();
-  if(gpBtnJust(5)){if(mpConn&&racePhase==='race')respawnInPlace();else resetCar()}
+  KY._gpSteerVal=menuUp?0:Math.max(-1,Math.min(1,-lx*(_gpSteerSens/100)));
+  if(!menuUp){
+    if(gpBtnDown(2))KY[' ']=true;
+    if(gpBtnJust(3))cycleCam();
+    if(gpBtnJust(8)){if(mpConn&&racePhase==='race')respawnInPlace();else resetCar()}
+    if(gpBtnJust(4))toggleHeadlights();
+    if(gpBtnJust(5)){if(mpConn&&racePhase==='race')respawnInPlace();else resetCar()}
+  }
+  // Options (☰) opens the menu hub
+  if(gpBtnJust(9)){
+    if(GP.qmOpen){GP.qmOpen=false;gpToggleQuickMenu()}
+    else if(GP.hubOpen){GP.hubOpen=false;gpToggleHub()}
+    else{GP.hubOpen=true;GP.hubSel=0;gpToggleHub()}
+  }
   var trigHud=document.getElementById('gpTriggerHUD');
-  if(trigHud)trigHud.style.display='flex';
+  if(trigHud)trigHud.style.display=menuUp?'none':'flex';
   var gf=document.getElementById('gpGasFill'),bf=document.getElementById('gpBrakeFill');
   if(gf)gf.style.width=(gas*100)+'%';
   if(bf)bf.style.width=(brk*100)+'%';
-  if(GP.qmOpen){
+  if(GP.hubOpen){
+    if(lx<-0.5&&!GP._hubStick){GP.hubSel=0;GP._hubStick=true;gpHighlightHub()}
+    else if(lx>0.5&&!GP._hubStick){GP.hubSel=1;GP._hubStick=true;gpHighlightHub()}
+    else if(Math.abs(lx)<0.3)GP._hubStick=false;
+    if(gpBtnJust(14)){GP.hubSel=0;gpHighlightHub()}
+    if(gpBtnJust(15)){GP.hubSel=1;gpHighlightHub()}
+    if(gpBtnJust(0))gpSelectHub();
+    if(gpBtnJust(1)){GP.hubOpen=false;gpToggleHub()}
+  }else if(GP.qmOpen){
     if(gpBtnJust(12)){GP.qmSel=Math.max(0,GP.qmSel-1);gpHighlightQM()}
     if(gpBtnJust(13)){var items=document.querySelectorAll('.gp-qm-item');GP.qmSel=Math.min(items.length-1,GP.qmSel+1);gpHighlightQM()}
     if(gpBtnJust(0))gpSelectQM();
@@ -5515,6 +5550,21 @@ function gpPollRace(){
   }
   GP.prevBtns=[];
   for(var bi=0;bi<gp.buttons.length;bi++)GP.prevBtns[bi]=gp.buttons[bi].pressed;
+}
+function gpToggleHub(){
+  var el=document.getElementById('gpHub');
+  if(!el)return;
+  if(GP.hubOpen){el.classList.add('show');gpHighlightHub()}
+  else el.classList.remove('show');
+}
+function gpHighlightHub(){
+  var items=document.querySelectorAll('#gpHub .gp-hub-btn');
+  items.forEach(function(it,i){it.classList.toggle('gp-hover',i===GP.hubSel)});
+}
+function gpSelectHub(){
+  GP.hubOpen=false;gpToggleHub();
+  if(GP.hubSel===0){GP.cursorMode=true;openSettings();gpShowCursor()}
+  else{GP.qmOpen=true;GP.qmSel=0;gpToggleQuickMenu()}
 }
 
 function gpToggleQuickMenu(){
@@ -5544,8 +5594,10 @@ function gpSelectQM(){
 
 function gpPoll(){
   if(!GP.connected){KY._gpGasVal=0;KY._gpBrakeVal=0;KY._gpSteerVal=0;return}
-  if(racing){gpPollRace()}
-  else{gpPollMenu();KY._gpGasVal=0;KY._gpBrakeVal=0;KY._gpSteerVal=0;var th=document.getElementById('gpTriggerHUD');if(th)th.style.display='none'}
+  // Auto-exit cursor mode once the settings panel is closed by any means
+  if(GP.cursorMode){var sm=document.getElementById('settingsModal');if(!sm||sm.classList.contains('hide')){GP.cursorMode=false;gpHideCursor()}}
+  if(racing&&!GP.cursorMode){gpPollRace()}
+  else{KY._gpGasVal=0;KY._gpBrakeVal=0;KY._gpSteerVal=0;gpPollMenu();var th=document.getElementById('gpTriggerHUD');if(th)th.style.display='none'}
 }
 
 var _gpBtn=document.getElementById('gpConnBtn');
