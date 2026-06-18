@@ -192,6 +192,13 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .tog-sm{font-family:'Orbitron';font-size:8px;letter-spacing:1px;padding:6px 12px;border-radius:5px;cursor:pointer;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);text-transform:uppercase}
 .tog-sm:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.8)}
 .tog-sm.on{background:rgba(255,100,0,.15);color:#ff7722;border-color:rgba(255,120,0,.4)}
+.cust-slider{-webkit-appearance:none;appearance:none;width:120px;height:3px;border-radius:2px;background:rgba(255,255,255,.15);outline:none;cursor:pointer;pointer-events:all}
+.cust-slider::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#00aadd;cursor:pointer}
+.cust-val{font-family:'Orbitron';font-size:8px;color:rgba(150,215,255,.7);min-width:38px;text-align:right}
+.pattern-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.pat-chip{width:50px;height:32px;border-radius:5px;cursor:pointer;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-family:'Orbitron';font-size:6.5px;letter-spacing:.5px;color:rgba(255,255,255,.6);transition:all .15s;text-transform:uppercase}
+.pat-chip:hover{border-color:rgba(60,200,255,.5);background:rgba(0,100,200,.15);color:#fff}
+.pat-chip.sel{border-color:rgba(60,255,140,.55);background:rgba(0,100,50,.25);color:#3cff8c;box-shadow:0 0 8px rgba(60,255,140,.2)}
 .img-upload-lbl{font-family:'Orbitron';font-size:8px;letter-spacing:1px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);padding:6px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;overflow:hidden;max-width:100px;text-overflow:ellipsis;text-transform:uppercase;transition:all .2s}
 .img-upload-lbl:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.35);color:#fff}
 /* Sponsor grid in custom panel */
@@ -648,9 +655,17 @@ body.mobile #spdOutlineSvg{display:none}
       <div class="custom-row"><span class="custom-lbl">STYLE</span><div class="stripe-cyc"><button class="cyc-arr" onclick="cycleStripeStyle(-1)">&#9664;</button><span class="cyc-lbl" id="stripeStyleLbl">CENTER</span><button class="cyc-arr" onclick="cycleStripeStyle(1)">&#9654;</button></div></div>
       <div class="custom-row"><span class="custom-lbl">COLOUR</span><input type="color" class="cpick" id="stripeColorPick" value="#ffffff" oninput="applyStripeColor(this.value)"></div>
     </div>
+    <div class="custom-sec">Finish</div>
+    <div class="custom-controls">
+      <div class="custom-row"><span class="custom-lbl">MATTE / GLOSSY</span><input type="range" class="cust-slider" id="finishSlider" min="0" max="100" value="68" oninput="applyFinish(this.value)"><span class="cust-val" id="finishVal">GLOSSY</span></div>
+      <div class="custom-row"><span class="custom-lbl">SATURATION</span><input type="range" class="cust-slider" id="satSlider" min="0" max="100" value="100" oninput="applySaturation(this.value)"><span class="cust-val" id="satVal">100%</span></div>
+    </div>
+    <div class="custom-sec">Livery Patterns</div>
+    <div class="pattern-row" id="patternRow"></div>
     <div class="custom-sec">Race Number</div>
     <div class="custom-controls">
       <div class="custom-row"><span class="custom-lbl">NUMBER</span><input type="text" class="num-input" id="carNumInput" maxlength="2" value="1" oninput="setCarNumber(this.value)"></div>
+      <div class="custom-row"><span class="custom-lbl">NUM COLOUR</span><input type="color" class="cpick" id="numColorPick" value="#ffffff" oninput="applyNumColor(this.value)"></div>
     </div>
     <div class="custom-sec">Sponsors</div>
     <div class="spons-grid" id="sponsGrid"></div>
@@ -938,6 +953,10 @@ var STRIPE_STYLES=['NONE','CENTER','TWIN','BOLD'];
 var carBodyColor=_saved.body||0xdd1111,stripeStyle=(typeof _saved.stripeStyle==='number'?_saved.stripeStyle:(_saved.stripe?1:0)),stripeColorVal=_saved.stripeCol||0xffffff,carImageTexture=null;
 var accentColor=_saved.accent||0x16181c,helmetColor=_saved.helmet||0xffffff,rimColor=_saved.rim||0xcccccc;
 var carNumber=(_saved.num!=null?String(_saved.num):'1').replace(/[^0-9]/g,'')||'1';
+var numColor=_saved.numCol||0xffffff;
+var bodyFinish=(_saved.finish!=null?_saved.finish:68);
+var bodySaturation=(_saved.sat!=null?_saved.sat:100);
+var liveryPattern=_saved.pattern||'none';
 var carImageData=null;
 var decalSpots={pods:true,nose:false,wing:false};
 var decalSz=0.45,decalOffX=0.5,decalOffY=0.5;
@@ -1215,7 +1234,9 @@ function bldCarF1(col,isGhost){
   var op=isGhost?.3:1;
   var g=new THREE.Group();
   function M(c,r,mt){return new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:mt,transparent:isGhost,opacity:op,side:THREE.DoubleSide})}
-  var body=M(col,.32,.72),acc=M(isGhost?col:accentColor,.4,.6),carbon=M(0x111317,.48,.45),dark=M(0x0a0b0e,.62,.3);
+  var _bfRf=.9-(.7*(bodyFinish/100)),_bfMf=.15+(.7*(bodyFinish/100));
+  var _scf=new THREE.Color(col);var _shf={};_scf.getHSL(_shf);_scf.setHSL(_shf.h,_shf.s*(bodySaturation/100),_shf.l);
+  var body=M(_scf,_bfRf,_bfMf),acc=M(isGhost?col:accentColor,.4,.6),carbon=M(0x111317,.48,.45),dark=M(0x0a0b0e,.62,.3);
   var tyre=M(0x141414,.92,.1),rim=M(isGhost?0x888888:rimColor,.28,.85);
   var rainMat=new THREE.MeshStandardMaterial({color:0xff2222,emissive:0xff0000,emissiveIntensity:.2,transparent:isGhost,opacity:op,side:THREE.DoubleSide});
   g.bodyMat=body;g.accentMat=acc;g.rimMat=rim;
@@ -1280,6 +1301,15 @@ function bldCarF1(col,isGhost){
     }
     updateDecalVisibility(g);
   }
+  g.numTex=mkNumberTexture(carNumber,numColor);
+  var numMatF=new THREE.MeshStandardMaterial({map:g.numTex,transparent:true,depthWrite:false,side:THREE.DoubleSide,roughness:.32,metalness:.72,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+  g.numMeshes=[];
+  var nf1=new THREE.Mesh(new THREE.PlaneGeometry(.35,.35),numMatF);nf1.rotation.x=-Math.PI/2;nf1.rotation.z=Math.PI;nf1.position.set(0,.42,1.8);g.add(nf1);g.numMeshes.push(nf1);
+  var nf2=new THREE.Mesh(new THREE.PlaneGeometry(.30,.30),numMatF.clone());nf2.position.set(0,.28,3.2);g.add(nf2);g.numMeshes.push(nf2);
+  g.patternMeshes=[];
+  var patMatF=new THREE.MeshStandardMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,opacity:0,map:null,roughness:.32,metalness:.72,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+  for(var psxf=-1;psxf<=1;psxf+=2){var pmf=new THREE.Mesh(new THREE.PlaneGeometry(3.4,.55),patMatF.clone());pmf.rotation.y=psxf*Math.PI/2;pmf.position.set(psxf*.87,.45,.20);pmf.renderOrder=2;pmf.visible=false;g.add(pmf);g.patternMeshes.push(pmf)}
+  _paintPattern(g);
   return g;
 }
 function toggleCarModel(){}
@@ -1293,12 +1323,12 @@ function bldCar(col,isGhost){
 }
 loadF1Model();
 // ── F1-style single seater ──────────────────────────────────────────────────
-function mkNumberTexture(num){
+function mkNumberTexture(num,col){
   var cv=document.createElement('canvas');cv.width=128;cv.height=128;
   var x=cv.getContext('2d');x.clearRect(0,0,128,128);
   x.font='900 86px Orbitron, Arial Black, sans-serif';x.textAlign='center';x.textBaseline='middle';
   x.lineWidth=10;x.strokeStyle='rgba(0,0,0,.85)';x.strokeText(num,64,70);
-  x.fillStyle='#ffffff';x.fillText(num,64,70);
+  x.fillStyle=col?_hex(col):'#ffffff';x.fillText(num,64,70);
   var t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t;
 }
 function updateDecalVisibility(g){
@@ -1432,7 +1462,9 @@ function bldCarClassic(col,isGhost){
 var op=isGhost?.3:1;
 var g=new THREE.Group();
 function M(c,r,mt){return new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:mt,transparent:isGhost,opacity:op})}
-var rd=M(col,.32,.72),ac=M(isGhost?col:accentColor,.4,.6),dk=M(0x0e0f12,.5,.4),cb=M(0x1d2026,.45,.55);
+var _bfR=.9-(.7*(bodyFinish/100)),_bfM=.15+(.7*(bodyFinish/100));
+var _sc=new THREE.Color(col);var _sh={};_sc.getHSL(_sh);_sc.setHSL(_sh.h,_sh.s*(bodySaturation/100),_sh.l);
+var rd=M(_sc,_bfR,_bfM),ac=M(isGhost?col:accentColor,.4,.6),dk=M(0x0e0f12,.5,.4),cb=M(0x1d2026,.45,.55);
 var hm=M(isGhost?col:helmetColor,.22,.35),rim=M(isGhost?0x888888:rimColor,.28,.85),tire=M(0x141414,.92,.1);
 g.bodyMat=rd;g.accentMat=ac;g.helmetMat=hm;g.rimMat=rim;
 function mb(geo,mat,x,y,z){var m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=!isGhost;g.add(m);return m}
@@ -1522,11 +1554,12 @@ g.liveryDecals=[];g.podDecals=[];
   }
   updateDecalVisibility(g);
   // race number — nose + shark fin sides
-  g.numTex=mkNumberTexture(carNumber);
-  var numMat=new THREE.MeshBasicMaterial({map:g.numTex,transparent:true,depthWrite:false,side:THREE.DoubleSide});
+  g.numTex=mkNumberTexture(carNumber,numColor);
+  var numMat=new THREE.MeshStandardMaterial({map:g.numTex,transparent:true,depthWrite:false,side:THREE.DoubleSide,roughness:.32,metalness:.72,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
   g.numMeshes=[];
   var n1=new THREE.Mesh(new THREE.PlaneGeometry(.42,.42),numMat);n1.rotation.x=-Math.PI/2;n1.rotation.z=Math.PI;n1.position.set(0,.43,2.05);g.add(n1);g.numMeshes.push(n1);
-  for(sx=-1;sx<=1;sx+=2){var n2=new THREE.Mesh(new THREE.PlaneGeometry(.36,.36),numMat);n2.rotation.y=sx*Math.PI/2;n2.position.set(sx*.025,.72,-1.62);g.add(n2);g.numMeshes.push(n2)}
+  var nf=new THREE.Mesh(new THREE.PlaneGeometry(.34,.34),numMat.clone());nf.position.set(0,.25,3.32);g.add(nf);g.numMeshes.push(nf);
+  for(sx=-1;sx<=1;sx+=2){var n2=new THREE.Mesh(new THREE.PlaneGeometry(.36,.36),numMat.clone());n2.rotation.y=sx*Math.PI/2;n2.position.set(sx*.025,.72,-1.62);g.add(n2);g.numMeshes.push(n2)}
 }
 // headlights (kept API: g.hlMeshes / g.headlights / g.carGlow / g.hlOn)
 var hlMat=new THREE.MeshStandardMaterial({color:0xffffee,emissive:0xffffcc,emissiveIntensity:1,transparent:isGhost,opacity:op});
@@ -1576,6 +1609,11 @@ function _paintStripe(style,w,xo){
 _paintStripe(1,.14,0);
 _paintStripe(2,.09,-.17);_paintStripe(2,.09,.17);
 _paintStripe(3,.36,0);
+g.patternMeshes=[];
+var patMat=new THREE.MeshStandardMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,opacity:0,map:null,roughness:.32,metalness:.72,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+for(var psx=-1;psx<=1;psx+=2){var pm=new THREE.Mesh(new THREE.PlaneGeometry(5.0,.55),patMat.clone());pm.rotation.y=psx*Math.PI/2;pm.position.set(psx*.97,.38,-.10);pm.renderOrder=2;pm.visible=false;g.add(pm);g.patternMeshes.push(pm)}
+var pmTop=new THREE.Mesh(new THREE.PlaneGeometry(.55,4.5),patMat.clone());pmTop.rotation.x=-Math.PI/2;pmTop.position.set(0,.49,.5);pmTop.renderOrder=2;pmTop.visible=false;g.add(pmTop);g.patternMeshes.push(pmTop);
+_paintPattern(g);
 return g}
 // Wheel animation: spin with travelled distance, steer fronts with yaw change
 var WHEEL_RAD=0.41;
@@ -3009,14 +3047,19 @@ function applyPreset(p){
   syncCustomUI();
 }
 function syncCustomUI(){
-  var ids={carColorPick:carBodyColor,accentColorPick:accentColor,rimColorPick:rimColor,stripeColorPick:stripeColorVal};
+  var ids={carColorPick:carBodyColor,accentColorPick:accentColor,rimColorPick:rimColor,stripeColorPick:stripeColorVal,numColorPick:numColor};
   Object.keys(ids).forEach(function(k){var el=document.getElementById(k);if(el)el.value=_hex(ids[k])});
   var lbl=document.getElementById('stripeStyleLbl');if(lbl)lbl.textContent=STRIPE_STYLES[stripeStyle];
   var ni=document.getElementById('carNumInput');if(ni)ni.value=carNumber;
+  var fs=document.getElementById('finishSlider');if(fs)fs.value=bodyFinish;
+  var fv=document.getElementById('finishVal');if(fv)fv.textContent=bodyFinish<33?'MATTE':(bodyFinish<66?'SATIN':'GLOSSY');
+  var ss=document.getElementById('satSlider');if(ss)ss.value=bodySaturation;
+  var sv=document.getElementById('satVal');if(sv)sv.textContent=bodySaturation+'%';
+  buildPatternRow();
 }
 function openCustom(){
   document.getElementById('customModal').classList.add('show');
-  buildPresetRow();syncCustomUI();renderSponsorGrid();
+  buildPresetRow();syncCustomUI();renderSponsorGrid();buildPatternRow();
 }
 function closeCustom(){document.getElementById('customModal').classList.remove('show');}
 function allCustomCars(){return [gCar,car,mCar]}
@@ -3039,13 +3082,82 @@ function setCarNumber(v){
   var n=String(v).replace(/[^0-9]/g,'').slice(0,2);
   if(!n)n='1';
   carNumber=n;
+  _refreshNumbers();
+  saveCustom();
+}
+function _refreshNumbers(){
   allCustomCars().forEach(function(c){
     if(!c||!c.numTex)return;
-    var nt=mkNumberTexture(carNumber);
+    var nt=mkNumberTexture(carNumber,numColor);
     c.numMeshes.forEach(function(m){m.material.map=nt;m.material.needsUpdate=true});
     c.numTex=nt;
   });
+}
+function applyNumColor(hexStr){
+  numColor=parseInt(hexStr.replace('#',''),16);
+  _refreshNumbers();
   saveCustom();
+}
+function applyFinish(v){
+  bodyFinish=parseInt(v);
+  var rough=.9-(.7*(bodyFinish/100));
+  var metal=.15+(.7*(bodyFinish/100));
+  allCustomCars().forEach(function(c){if(c&&c.bodyMat){c.bodyMat.roughness=rough;c.bodyMat.metalness=metal;c.bodyMat.needsUpdate=true}});
+  var lbl=document.getElementById('finishVal');
+  if(lbl)lbl.textContent=bodyFinish<33?'MATTE':(bodyFinish<66?'SATIN':'GLOSSY');
+  saveCustom();
+}
+function applySaturation(v){
+  bodySaturation=parseInt(v);
+  _applySatToBody();
+  var lbl=document.getElementById('satVal');if(lbl)lbl.textContent=bodySaturation+'%';
+  saveCustom();
+}
+function _applySatToBody(){
+  var c=new THREE.Color(carBodyColor);
+  var hsl={};c.getHSL(hsl);
+  c.setHSL(hsl.h,hsl.s*(bodySaturation/100),hsl.l);
+  allCustomCars().forEach(function(cc){if(cc&&cc.bodyMat)cc.bodyMat.color.copy(c)});
+}
+var LIVERY_PATTERNS=[
+  {id:'none',name:'None'},
+  {id:'racing',name:'Racing',fn:function(g,ctx,W,H){ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(0,H*.35,W,H*.3)}},
+  {id:'split',name:'Split',fn:function(g,ctx,W,H){ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,0,W/2,H)}},
+  {id:'arrow',name:'Arrow',fn:function(g,ctx,W,H){ctx.fillStyle='rgba(255,255,255,.2)';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W*.6,H/2);ctx.lineTo(0,H);ctx.closePath();ctx.fill()}},
+  {id:'gradient',name:'Fade',fn:function(g,ctx,W,H){var gr=ctx.createLinearGradient(0,0,W,0);gr.addColorStop(0,'rgba(0,0,0,.3)');gr.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,W,H)}},
+  {id:'diagonal',name:'Diag',fn:function(g,ctx,W,H){ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=H*.12;for(var i=-4;i<8;i++){ctx.beginPath();ctx.moveTo(i*W/4,0);ctx.lineTo(i*W/4+W/3,H);ctx.stroke()}}},
+  {id:'checker',name:'Check',fn:function(g,ctx,W,H){ctx.fillStyle='rgba(0,0,0,.18)';var sz=H/3;for(var r=0;r<3;r++)for(var c=0;c<Math.ceil(W/sz);c++){if((r+c)%2===0)ctx.fillRect(c*sz,r*sz,sz,sz)}}},
+  {id:'flames',name:'Flames',fn:function(g,ctx,W,H){ctx.fillStyle='rgba(255,100,0,.2)';for(var i=0;i<6;i++){var bx=W*.08+i*(W*.15);ctx.beginPath();ctx.moveTo(bx,H);ctx.quadraticCurveTo(bx+W*.04,H*.2,bx+W*.08,H);ctx.fill()}}}
+];
+function applyPattern(id){
+  liveryPattern=id;
+  allCustomCars().forEach(function(c){if(c)_paintPattern(c)});
+  _updatePatternUI();
+  saveCustom();
+}
+function _paintPattern(g){
+  if(!g||!g.patternMeshes)return;
+  var pat=null;
+  for(var i=0;i<LIVERY_PATTERNS.length;i++){if(LIVERY_PATTERNS[i].id===liveryPattern){pat=LIVERY_PATTERNS[i];break}}
+  if(!pat||!pat.fn){g.patternMeshes.forEach(function(m){m.visible=false});return}
+  var cv=document.createElement('canvas');cv.width=256;cv.height=64;
+  var ctx=cv.getContext('2d');ctx.clearRect(0,0,256,64);
+  pat.fn(g,ctx,256,64);
+  var tex=new THREE.CanvasTexture(cv);
+  g.patternMeshes.forEach(function(m){m.material.map=tex;m.material.opacity=1;m.material.needsUpdate=true;m.visible=true});
+}
+function _updatePatternUI(){
+  var chips=document.querySelectorAll('.pat-chip');
+  chips.forEach(function(ch){ch.classList.toggle('sel',ch.dataset.pat===liveryPattern)});
+}
+function buildPatternRow(){
+  var row=document.getElementById('patternRow');if(!row)return;
+  var h='';
+  for(var i=0;i<LIVERY_PATTERNS.length;i++){
+    var p=LIVERY_PATTERNS[i];
+    h+='<div class="pat-chip'+(p.id===liveryPattern?' sel':'')+'" data-pat="'+p.id+'" onclick="applyPattern(\''+p.id+'\')">'+p.name+'</div>';
+  }
+  row.innerHTML=h;
 }
 function toggleDecalSpot(k){
   decalSpots[k]=!decalSpots[k];
@@ -4671,10 +4783,10 @@ function resetSetup(){
 document.addEventListener('click',function(e){if(e.target.id==='setupModal')closeSetup()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('setupModal').classList.contains('show')){closeSetup();e.stopImmediatePropagation()}},true);
 // ---- Car styling ----
-function saveCustom(){try{localStorage.setItem('apexgp_custom',JSON.stringify({body:carBodyColor,stripeStyle:stripeStyle,stripeCol:stripeColorVal,accent:accentColor,helmet:helmetColor,rim:rimColor,num:carNumber,sponsors:sponsorPlacements}))}catch(e){}scheduleCloudSave()}
+function saveCustom(){try{localStorage.setItem('apexgp_custom',JSON.stringify({body:carBodyColor,stripeStyle:stripeStyle,stripeCol:stripeColorVal,accent:accentColor,helmet:helmetColor,rim:rimColor,num:carNumber,numCol:numColor,finish:bodyFinish,sat:bodySaturation,pattern:liveryPattern,sponsors:sponsorPlacements}))}catch(e){}scheduleCloudSave()}
 function applyCarColor(hexStr){
   carBodyColor=parseInt(hexStr.replace('#',''),16);
-  allCustomCars().forEach(function(c){if(c&&c.bodyMat)c.bodyMat.color.setHex(carBodyColor)});
+  _applySatToBody();
   saveCustom();
 }
 function cycleStripeStyle(dir){
@@ -4877,19 +4989,26 @@ function _applyCustomData(c){
   carBodyColor=c.body||0xdd1111;stripeStyle=(typeof c.stripeStyle==='number')?Math.min(c.stripeStyle,STRIPE_STYLES.length-1):(c.stripe?1:0);stripeColorVal=c.stripeCol||0xffffff;
   accentColor=c.accent||0x16181c;helmetColor=c.helmet||0xffffff;rimColor=c.rim||0xcccccc;
   if(c.num!=null)carNumber=String(c.num).replace(/[^0-9]/g,'')||'1';
+  numColor=c.numCol||0xffffff;
+  bodyFinish=(c.finish!=null?c.finish:68);
+  bodySaturation=(c.sat!=null?c.sat:100);
+  liveryPattern=c.pattern||'none';
   if(c.sponsors)sponsorPlacements=c.sponsors;
   applyCarSponsors();
   try{localStorage.setItem('apexgp_custom',JSON.stringify(c))}catch(e){}
+  var _bfR2=.9-(.7*(bodyFinish/100)),_bfM2=.15+(.7*(bodyFinish/100));
   allCustomCars().forEach(function(cc){
     if(!cc)return;
-    if(cc.bodyMat)cc.bodyMat.color.setHex(carBodyColor);
+    if(cc.bodyMat){cc.bodyMat.color.setHex(carBodyColor);cc.bodyMat.roughness=_bfR2;cc.bodyMat.metalness=_bfM2;cc.bodyMat.needsUpdate=true}
     if(cc.accentMat)cc.accentMat.color.setHex(accentColor);
     if(cc.helmetMat)cc.helmetMat.color.setHex(helmetColor);
     if(cc.rimMat)cc.rimMat.color.setHex(rimColor);
     if(cc.stripeMat)cc.stripeMat.color.setHex(stripeColorVal);
     if(cc.stripeMeshes)cc.stripeMeshes.forEach(function(sm){sm.m.visible=(sm.s===stripeStyle)});
     updateDecalVisibility(cc);
+    _paintPattern(cc);
   });
+  _applySatToBody();
   setCarNumber(carNumber);
   if(typeof syncCustomUI==='function')syncCustomUI();
 }
