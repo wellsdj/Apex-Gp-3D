@@ -5521,10 +5521,11 @@ function gpPollMenu(){
   var gp=navigator.getGamepads?navigator.getGamepads()[GP.idx]:null;
   if(!gp)return;
   var lx=gpAxis(0),ly=gpAxis(1);
+  var _kb=document.getElementById('mpKeyboard'),_spd=(_kb&&_kb.classList.contains('show'))?GP.cursorSpeed*0.5:GP.cursorSpeed;
   if(Math.abs(lx)>0||Math.abs(ly)>0){
     gpShowCursor();
-    GP.curX=Math.max(0,Math.min(window.innerWidth,GP.curX+lx*GP.cursorSpeed));
-    GP.curY=Math.max(0,Math.min(window.innerHeight,GP.curY+ly*GP.cursorSpeed));
+    GP.curX=Math.max(0,Math.min(window.innerWidth,GP.curX+lx*_spd));
+    GP.curY=Math.max(0,Math.min(window.innerHeight,GP.curY+ly*_spd));
     var cur=document.getElementById('gpCursor');
     if(cur){cur.style.left=GP.curX+'px';cur.style.top=GP.curY+'px'}
     var el=document.elementFromPoint(GP.curX,GP.curY);
