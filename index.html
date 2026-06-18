@@ -393,6 +393,18 @@ input[type=color].cpick{width:30px;height:30px;border:1px solid rgba(255,255,255
 .gp-hub-btn.gp-hover{background:rgba(100,180,255,.3);border-color:rgba(100,180,255,.7);box-shadow:0 0 18px rgba(100,180,255,.3);transform:scale(1.04)}
 .gp-hub-ico{font-size:34px;margin-bottom:10px;line-height:1}
 .gp-hub-lbl{font-size:12px;font-weight:700;letter-spacing:2px;color:#fff}
+#mpKeyboard{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,12,24,.97);border:2px solid rgba(60,200,255,.45);border-radius:16px;padding:22px 26px;display:none;z-index:820;font-family:'Orbitron';width:min(92vw,440px);box-shadow:0 0 50px rgba(0,80,200,.4)}
+#mpKeyboard.show{display:block}
+.mpkb-title{font-size:11px;letter-spacing:3px;color:rgba(120,210,255,.8);text-align:center;margin-bottom:12px}
+.mpkb-display{font-size:30px;font-weight:900;letter-spacing:10px;color:#fff;text-align:center;margin-bottom:16px;min-height:34px}
+.mpkb-keys{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-bottom:14px}
+.mpkb-key{padding:11px 0;border-radius:6px;background:rgba(60,90,160,.25);border:1px solid rgba(100,140,255,.2);color:#fff;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .1s}
+.mpkb-key:hover{background:rgba(100,180,255,.4);border-color:rgba(120,200,255,.7)}
+.mpkb-actions{display:flex;gap:8px;justify-content:center}
+.mpkb-act{flex:1;padding:11px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-family:'Orbitron';font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer}
+.mpkb-act.join{background:rgba(0,180,90,.3);border-color:rgba(60,255,140,.5);color:#3cff8c}
+.mpkb-act.cancel{background:rgba(255,60,60,.18);border-color:rgba(255,90,90,.4)}
+.mpkb-act:hover{filter:brightness(1.25)}
 #gpTriggerHUD{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:none;z-index:200;pointer-events:none;font-family:'Orbitron'}
 .gp-trig{display:inline-block;width:60px;text-align:center;margin:0 20px}
 .gp-trig-label{font-size:7px;letter-spacing:2px;color:rgba(255,255,255,.4);margin-bottom:4px}
@@ -619,6 +631,7 @@ body.mobile #spdOutlineSvg{display:none}
 <div id="reviewModal"><div class="rv-box"><button class="ctrl-close" onclick="closeReviewMenu()">&#10005;</button><div class="rv-title">REVIEW BEST LAP</div><div id="reviewList"></div><div class="rv-hint">Click a track to watch your fastest lap. Esc to exit.</div></div></div>
 <div id="reviewIndicator">▶ REVIEWING BEST LAP — C CAMERA · ESC EXIT</div>
 <div id="gpCursor"></div>
+<div id="mpKeyboard"><div class="mpkb-title">ENTER PARTY CODE</div><div class="mpkb-display" id="mpKbDisplay">_____</div><div class="mpkb-keys" id="mpKbKeys"></div><div class="mpkb-actions"><button class="mpkb-act" onclick="mpKbDel()">⌫ DELETE</button><button class="mpkb-act join" onclick="mpKbJoin()">JOIN</button><button class="mpkb-act cancel" onclick="mpKbClose()">CANCEL</button></div></div>
 <div id="gpHub"><div class="gp-qm-title">MENU</div><div class="gp-hub-row"><div class="gp-hub-btn" data-gp-hub="settings"><div class="gp-hub-ico">⚙</div><div class="gp-hub-lbl">SETTINGS</div></div><div class="gp-hub-btn" data-gp-hub="buttons"><div class="gp-hub-ico">🎮</div><div class="gp-hub-lbl">BUTTON MENU</div></div></div><div class="gp-qm-hint">STICK LEFT/RIGHT · A SELECT · B CLOSE</div></div>
 <div id="gpQuickMenu"><div class="gp-qm-title">QUICK MENU</div><div class="gp-qm-item" data-gp-action="camera">CAMERA</div><div class="gp-qm-item" data-gp-action="ghost">GHOST</div><div class="gp-qm-item" data-gp-action="sound">SOUND</div><div class="gp-qm-item" data-gp-action="headlights">HEADLIGHTS</div><div class="gp-qm-item" data-gp-action="voice">VOICE MODE</div><div class="gp-qm-item" data-gp-action="fullscreen">FULLSCREEN</div><div class="gp-qm-item" data-gp-action="restart">RESTART</div><div class="gp-qm-item" data-gp-action="quit">BACK TO GARAGE</div><div class="gp-qm-item" data-gp-action="close">CLOSE</div><div class="gp-qm-hint">D-PAD UP/DOWN · A SELECT · B CLOSE</div></div>
 <div id="gpTriggerHUD"><div class="gp-trig"><div class="gp-trig-label">LT BRAKE</div><div class="gp-trig-bar"><div class="gp-trig-fill brake" id="gpBrakeFill"></div></div></div><div class="gp-trig"><div class="gp-trig-label">RT GAS</div><div class="gp-trig-bar"><div class="gp-trig-fill gas" id="gpGasFill"></div></div></div></div>
@@ -2938,7 +2951,8 @@ function playCrash(strength){
 var sndTarget='',sndTarget2='',sndTargetHeld=0,preBrakeTimer=0;
 var prevEngineActive=false,prevCoastActive=false;
 // ── Lobby music & click SFX ────────────────────────────────────────────────
-var musicEnabled=true,sfxEnabled=true,musicVolume=0.6,sfxVolume=0.8;
+var _setSaved={};try{_setSaved=JSON.parse(localStorage.getItem('apexgp_settings')||'{}')}catch(e){}
+var musicEnabled=_setSaved.music!==false,sfxEnabled=_setSaved.sfx!==false,musicVolume=(_setSaved.musicVol!=null?_setSaved.musicVol:0.6),sfxVolume=(_setSaved.sfxVol!=null?_setSaved.sfxVol:0.8);
 var lobbyPlaying=false,lobbyFadeId=null;
 var sndClick=new Audio('click.mp3');
 // Lobby playlist — shuffled: a random track each cycle, then plays through the
@@ -3455,10 +3469,33 @@ document.addEventListener('keydown',function(e){
   rebindAction=null;refreshControlsUI();
   e.preventDefault();e.stopImmediatePropagation();
 },true);
-function openSettings(){document.getElementById('settingsModal').classList.remove('hide');updateQualityLbl();var gs=document.getElementById('settGpSens'),gv=document.getElementById('settGpSensVal');if(gs)gs.value=_gpSteerSens;if(gv)gv.textContent=_gpSteerSens+'%';}
+function openSettings(){document.getElementById('settingsModal').classList.remove('hide');updateQualityLbl();_syncSettingsUI();}
 function closeSettings(){document.getElementById('settingsModal').classList.add('hide');}
-function toggleSettMusic(){musicEnabled=!musicEnabled;document.getElementById('settMusicTog').classList.toggle('on',musicEnabled);if(musicEnabled){startLobbyMusic();}else{if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}sndLobby.pause();lobbyPlaying=false;}}
-function toggleSettSfx(){sfxEnabled=!sfxEnabled;document.getElementById('settSfxTog').classList.toggle('on',sfxEnabled);if(!sfxEnabled)[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});}
+function toggleSettMusic(){musicEnabled=!musicEnabled;document.getElementById('settMusicTog').classList.toggle('on',musicEnabled);if(musicEnabled){startLobbyMusic();}else{if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}sndLobby.pause();lobbyPlaying=false;}saveSettings();}
+function toggleSettSfx(){sfxEnabled=!sfxEnabled;document.getElementById('settSfxTog').classList.toggle('on',sfxEnabled);if(!sfxEnabled)[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});saveSettings();}
+// Persist all settings to localStorage + the signed-in account (cloud)
+function saveSettings(){try{localStorage.setItem('apexgp_settings',JSON.stringify(_gatherSettings()))}catch(e){}if(typeof scheduleCloudSave==='function')scheduleCloudSave();}
+function _gatherSettings(){return{music:musicEnabled,sfx:sfxEnabled,musicVol:musicVolume,sfxVol:sfxVolume,gpSens:(typeof _gpSteerSens!=='undefined'?_gpSteerSens:100),steerSens:(typeof _steerSens!=='undefined'?_steerSens:70),quality:_qualityPref()};}
+function _applySettings(s){
+  if(!s)return;
+  if(s.music!=null)musicEnabled=s.music!==false;
+  if(s.sfx!=null)sfxEnabled=s.sfx!==false;
+  if(s.musicVol!=null)musicVolume=s.musicVol;
+  if(s.sfxVol!=null)sfxVolume=s.sfxVol;
+  if(s.gpSens!=null)_gpSteerSens=parseInt(s.gpSens);
+  if(s.steerSens!=null)_steerSens=parseInt(s.steerSens);
+  if(s.quality!=null){try{localStorage.setItem('apexgp_quality',s.quality)}catch(e){}}
+  try{localStorage.setItem('apexgp_settings',JSON.stringify(_gatherSettings()))}catch(e){}
+  if(lobbyPlaying&&musicEnabled)sndLobby.volume=musicVolume;
+  _syncSettingsUI();
+}
+function _syncSettingsUI(){
+  var mt=document.getElementById('settMusicTog');if(mt)mt.classList.toggle('on',musicEnabled);
+  var st=document.getElementById('settSfxTog');if(st)st.classList.toggle('on',sfxEnabled);
+  var mv=document.getElementById('settMusicVol');if(mv)mv.value=Math.round(musicVolume*100);
+  var sv=document.getElementById('settSfxVol');if(sv)sv.value=Math.round(sfxVolume*100);
+  var gs=document.getElementById('settGpSens'),gv=document.getElementById('settGpSensVal');if(gs&&typeof _gpSteerSens!=='undefined'){gs.value=_gpSteerSens;if(gv)gv.textContent=_gpSteerSens+'%';}
+}
 // Steering mode selector (mobile). For now only TILT (GYRO) — tilt the phone
 // like a steering wheel. Placeholder for future modes; cycling is a no-op while
 // only one mode exists.
@@ -3490,8 +3527,8 @@ function cycleQuality(){
   builtTrack=-1; // force a scene rebuild so tree count / particles pick up the new tier next race
   updateQualityLbl();
 }
-function setMusicVol(v){musicVolume=v/100;if(lobbyPlaying&&musicEnabled)sndLobby.volume=musicVolume;}
-function setSfxVol(v){sfxVolume=v/100;}
+function setMusicVol(v){musicVolume=v/100;if(lobbyPlaying&&musicEnabled)sndLobby.volume=musicVolume;saveSettings();}
+function setSfxVol(v){sfxVolume=v/100;saveSettings();}
 // ── Multiplayer (PartyKit WebSockets) ───────────────────────────────────────
 // PARTYKIT_HOST is filled in after `npx partykit deploy`. Format: "<project>.<user>.partykit.dev"
 var PARTYKIT_HOST='apex-gp-3d.wellsdj.partykit.dev';
@@ -3655,7 +3692,16 @@ function createParty(){
     }
   };
 }
-function showJoinUI(){mpShowUI('mpJoining');document.getElementById('mpCodeInput').value='';document.getElementById('mpJoinStatus').textContent='';document.getElementById('mpCodeInput').focus()}
+function showJoinUI(){mpShowUI('mpJoining');document.getElementById('mpCodeInput').value='';document.getElementById('mpJoinStatus').textContent='';document.getElementById('mpCodeInput').focus();if(typeof GP!=='undefined'&&GP.connected)mpKbOpen()}
+// On-screen keyboard so controller users can enter a party code with the cursor
+var MPKB_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function mpKbBuild(){var k=document.getElementById('mpKbKeys');if(!k||k._built)return;var h='';for(var i=0;i<MPKB_CHARS.length;i++){h+='<div class="mpkb-key" onclick="mpKbKey(\''+MPKB_CHARS[i]+'\')">'+MPKB_CHARS[i]+'</div>'}k.innerHTML=h;k._built=true}
+function _mpKbSync(){var inp=document.getElementById('mpCodeInput'),d=document.getElementById('mpKbDisplay');if(inp&&d){var v=inp.value.toUpperCase();d.textContent=v+'_____'.slice(v.length)}}
+function mpKbOpen(){mpKbBuild();_mpKbSync();document.getElementById('mpKeyboard').classList.add('show')}
+function mpKbClose(){var e=document.getElementById('mpKeyboard');if(e)e.classList.remove('show')}
+function mpKbKey(ch){var inp=document.getElementById('mpCodeInput');if(inp&&inp.value.length<5){inp.value=(inp.value+ch).toUpperCase();_mpKbSync()}}
+function mpKbDel(){var inp=document.getElementById('mpCodeInput');if(inp){inp.value=inp.value.slice(0,-1);_mpKbSync()}}
+function mpKbJoin(){var inp=document.getElementById('mpCodeInput');if(inp&&inp.value.trim().length!==5){var s=document.getElementById('mpJoinStatus');if(s)s.textContent='Enter 5-char code';return}mpKbClose();joinParty()}
 function joinParty(){
   var code=document.getElementById('mpCodeInput').value.trim().toUpperCase();
   if(code.length!==5){document.getElementById('mpJoinStatus').textContent='Enter 5-char code';return}
@@ -4450,7 +4496,7 @@ function setupConnUI(){
     if(st)st.textContent='✓ '+(qualiOpName||'Player')+' joined — share code or RACE';
   }
 }
-function cancelJoin(){mpShowUI('mpButtons');mpCleanup();mpMode=null;mpConn=null}
+function cancelJoin(){mpKbClose();mpShowUI('mpButtons');mpCleanup();mpMode=null;mpConn=null}
 function onMpDisconnect(){
   cleanupVoice();
   clearAllPeers();
@@ -4988,7 +5034,7 @@ function updateAcctUI(){
   if(rb)rb.style.display=fbUser?'flex':'none';
 }
 function _gatherSaveData(){
-  var data={laps:totalLaps,bests:getTrackBests(),custom:{body:carBodyColor,stripeStyle:stripeStyle,stripeCol:stripeColorVal,accent:accentColor,helmet:helmetColor,rim:rimColor,num:carNumber,decals:decalSpots,img:carImageData||null,decalSz:decalSz,decalOffX:decalOffX,decalOffY:decalOffY},setup:{df:setupDf,bb:setupBb},ghosts:{}};
+  var data={laps:totalLaps,bests:getTrackBests(),custom:{body:carBodyColor,stripeStyle:stripeStyle,stripeCol:stripeColorVal,accent:accentColor,helmet:helmetColor,rim:rimColor,num:carNumber,decals:decalSpots,img:carImageData||null,decalSz:decalSz,decalOffX:decalOffX,decalOffY:decalOffY},setup:{df:setupDf,bb:setupBb},settings:_gatherSettings(),ghosts:{}};
   TRACKS.forEach(function(t){var g=getTrackGhost(t.name);if(g)data.ghosts[t.name]=g});
   return data;
 }
@@ -5001,6 +5047,7 @@ function _applySaveData(data){
     localStorage.setItem('apexgp_setup',JSON.stringify(data.setup));
   }
   if(data.ghosts){Object.keys(data.ghosts).forEach(function(k){try{localStorage.setItem('apexgp_ghost_'+k,JSON.stringify(data.ghosts[k]))}catch(e){}})}
+  if(data.settings)_applySettings(data.settings);
   updateRankUI();
 }
 function _applyCustomData(c){
@@ -5077,6 +5124,7 @@ function cloudMergeLoad(){
       localStorage.setItem('apexgp_laps',totalLaps);
       // prefer cloud customisation only if this device has none yet
       if(cloud.custom&&!localStorage.getItem('apexgp_custom'))_applyCustomData(cloud.custom);
+      if(cloud.settings&&!localStorage.getItem('apexgp_settings'))_applySettings(cloud.settings);
       if(cloud.setup&&!localStorage.getItem('apexgp_setup')){
         setupDf=cloud.setup.df!=null?cloud.setup.df:5;setupBb=cloud.setup.bb!=null?cloud.setup.bb:5;
         localStorage.setItem('apexgp_setup',JSON.stringify(cloud.setup));
@@ -5096,7 +5144,7 @@ function cloudSave(silent){
   if(!fbUser||!fbDb){if(!silent)authShowMsg('Not signed in',true);return}
   var data=_gatherSaveData();
   // Ghost data can be huge — store without ghosts in main doc, ghosts in subcollection
-  var mainData={laps:data.laps,bests:data.bests,custom:data.custom,setup:data.setup,savedAt:firebase.firestore.FieldValue.serverTimestamp()};
+  var mainData={laps:data.laps,bests:data.bests,custom:data.custom,setup:data.setup,settings:data.settings,savedAt:firebase.firestore.FieldValue.serverTimestamp()};
   var ref=fbDb.collection('saves').doc(fbUser.uid);
   ref.set(mainData).then(function(){
     // Save ghosts as separate docs to avoid Firestore 1MB doc limit
@@ -5400,7 +5448,7 @@ var GP={
   deadzone:0.15,cursorSpeed:12
 };
 var _gpSteerSens=parseInt(localStorage.getItem('gpSens'))||100;
-function setGpSens(v){_gpSteerSens=parseInt(v);localStorage.setItem('gpSens',_gpSteerSens);var l=document.getElementById('settGpSensVal');if(l)l.textContent=_gpSteerSens+'%';}
+function setGpSens(v){_gpSteerSens=parseInt(v);localStorage.setItem('gpSens',_gpSteerSens);var l=document.getElementById('settGpSensVal');if(l)l.textContent=_gpSteerSens+'%';if(typeof saveSettings==='function')saveSettings();}
 
 function gpConnect(){
   var btn=document.getElementById('gpConnBtn');
@@ -5604,6 +5652,7 @@ var _gpBtn=document.getElementById('gpConnBtn');
 if(_gpBtn)_gpBtn.style.display='block';
 
 applyCarSponsors();
+if(typeof _syncSettingsUI==='function')_syncSettingsUI();
 initMenu();
 </script>
 </body>
