@@ -828,7 +828,6 @@ if(!localStorage.getItem('apexgp_reset_st1')){['SUNSET CIRCUIT','T-BONE'].forEac
 if(!localStorage.getItem('apexgp_reset_serp1')){try{var b=JSON.parse(localStorage.getItem('apexgp_bests'))||{};delete b['SERPENTE'];localStorage.setItem('apexgp_bests',JSON.stringify(b))}catch(e){}localStorage.removeItem('apexgp_ghost_SERPENTE');localStorage.setItem('apexgp_reset_pending_serp1','1');localStorage.setItem('apexgp_reset_serp1','1')}
 var TRACKS=[
 {name:"SUNSET CIRCUIT",flat:true,sky:0xf08030,fog:0xd0703a,ambI:.45,sunI:.8,sunC:0xffaa55,hemiSky:0xffaa66,hemiGnd:0x443322,grass:0x3a6a2a,sf:[200,0],wp:[[10,0],[60,0],[100,0],[200,0],[300,0],[400,0],[440,10],[465,35],[475,65],[475,130],[475,190],[468,218],[445,240],[420,248],[360,250],[300,250],[272,255],[255,272],[250,295],[250,330],[255,358],[272,375],[295,382],[360,385],[420,385],[448,390],[468,410],[475,435],[475,480],[468,510],[445,535],[418,545],[340,545],[240,545],[140,545],[10,545],[-18,538],[-38,515],[-45,488],[-45,400],[-45,300],[-45,200],[-45,55],[-41,34],[-29,16],[-11,4]],pit:{roadX1:90,roadX2:310,roadZ1:14,roadZ2:17,dividerX1:110,dividerX2:290,dividerZ:13.5,laneAABB:{x1:80,x2:320,z1:13.4,z2:17.5},boxAABB:{x1:195,x2:208,z1:14.4,z2:16.6},speedLimit:70}},
-{name:"SUNSET CIRCUIT II",tiles:true,flat:true,sky:0xf08030,fog:0xd0703a,ambI:.45,sunI:.8,sunC:0xffaa55,hemiSky:0xffaa66,hemiGnd:0x443322,grass:0x3a6a2a,sf:[0,37.7],wp:[[0,0],[0,37.7],[0,75.4],[0,113],[0,150.7],[-0.6,155.6],[-2.5,160.1],[-5.5,164],[-9.4,167],[-14,168.9],[-18.8,169.6],[18.8,169.6],[56.5,169.6],[61.4,168.9],[65.9,167],[69.8,164],[72.8,160.1],[74.7,155.6],[75.4,150.7],[75.4,188.4],[75.4,226.1],[75.4,263.8],[75.4,301.4],[76,306.3],[77.9,310.9],[80.9,314.8],[84.8,317.8],[89.3,319.6],[94.2,320.3],[56.5,320.3],[18.8,320.3],[-18.8,320.3],[-56.5,320.3],[-94.2,320.3],[-131.9,320.3],[-136.8,320.9],[-141.3,322.8],[-145.2,325.8],[-148.2,329.7],[-150.1,334.3],[-150.7,339.1],[-150.7,301.4],[-150.7,263.8],[-150.7,226.1],[-150.7,188.4],[-150.1,183.5],[-148.2,179],[-145.2,175.1],[-141.3,172.1],[-136.8,170.2],[-131.9,169.6],[-169.6,169.6],[-207.2,169.6],[-212.1,170.2],[-216.7,172.1],[-220.6,175.1],[-223.6,179],[-225.4,183.5],[-226.1,188.4],[-226.1,150.7],[-226.1,113],[-226.1,75.4],[-226.1,37.7],[-226.7,32.8],[-228.6,28.3],[-231.6,24.4],[-235.5,21.4],[-240.1,19.5],[-244.9,18.8],[-207.2,18.8],[-169.6,18.8],[-131.9,18.8],[-94.2,18.8],[-56.5,18.8],[-18.8,18.8],[-14,18.2],[-9.4,16.3],[-5.5,13.3],[-2.5,9.4],[-0.6,4.9]]},
 {name:"T-BONE",sky:0x87ceeb,fog:0x87ceeb,ambI:.55,sunI:.9,sunC:0xffffff,hemiSky:0x88aadd,hemiGnd:0x446633,grass:0x3a7a3a,sf:[250,0],wp:[[30,55],[35,25],[55,5],[90,0],[170,0],[250,0],[330,0],[410,0],[445,5],[465,25],[470,55],[470,80],[465,100],[445,115],[410,120],[365,120],[338,125],[322,145],[320,200],[320,280],[320,360],[318,410],[305,445],[280,465],[250,470],[220,465],[195,445],[182,410],[180,360],[180,280],[180,200],[178,145],[162,125],[135,120],[90,120],[55,115],[35,100],[30,80]],pit:{roadX1:130,roadX2:370,roadZ1:14,roadZ2:17,dividerX1:150,dividerX2:350,dividerZ:13.5,laneAABB:{x1:120,x2:380,z1:13.4,z2:17.5},boxAABB:{x1:243,x2:256,z1:14.4,z2:16.6},speedLimit:70}},
 {name:"THE BOOT",sky:0x6a7a8a,fog:0x5a6a78,ambI:.35,sunI:.5,sunC:0xcccccc,hemiSky:0x667788,hemiGnd:0x334433,grass:0x2d5a2d,sf:[125,0],wp:[[0,0],[125,0],[210,0],[210,310],[455,310],[455,510],[0,510]],pit:{roadX1:180,roadX2:360,roadZ1:537,roadZ2:540,dividerX1:200,dividerX2:340,dividerZ:541,laneAABB:{x1:170,x2:370,z1:535,z2:541.5},boxAABB:{x1:265,x2:278,z1:537.4,z2:539.6},speedLimit:70}},
 {name:"DRAGON'S TAIL",noCurbs:true,sky:0x4a3a6a,fog:0x3a2e54,ambI:.4,sunI:.7,sunC:0xff88cc,hemiSky:0x6a5a9a,hemiGnd:0x2a2238,grass:0x2d5a3a,sf:[148,82],wp:[[86,82],[107,82],[127,82],[148,82],[168,82],[189,82],[209,82],[230,82],[246,80],[261,72],[275,64],[292,61],[322,61],[338,58],[352,51],[367,43],[383,40],[405,40],[426,40],[448,40],[470,40],[491,40],[513,40],[534,40],[556,40],[578,40],[599,40],[618,42],[636,47],[652,56],[667,71],[675,91],[675,111],[667,131],[652,146],[636,155],[618,160],[599,162],[577,162],[555,162],[533,162],[511,165],[490,174],[473,188],[455,202],[435,210],[412,213],[390,216],[369,225],[352,239],[334,253],[314,262],[291,265],[271,265],[251,265],[231,265],[209,260],[191,246],[173,234],[152,229],[130,229],[108,229],[86,229],[63,223],[46,206],[40,183],[40,156],[40,128],[46,105],[63,89]],pit:{roadX1:100,roadX2:215,roadZ1:96,roadZ2:99,dividerX1:115,dividerX2:200,dividerZ:95.5,laneAABB:{x1:90,x2:220,z1:95.4,z2:99.5},boxAABB:{x1:142,x2:155,z1:96.4,z2:98.6},speedLimit:70}},
@@ -1207,11 +1206,10 @@ function loadTrackGLB(filename){
             // foliage / fence grille: cut out the texture's alpha so it isn't a slab
             m.alphaTest=0.4;m.transparent=true;m.depthWrite=true;m.needsUpdate=true;
           }else if(m.color){
+            // this GLB ships road/terrain/kerbs as flat white — give them colour
             if(/road/i.test(nm))m.color.setHex(0x33363b);
             else if(/kerb/i.test(nm))m.color.setHex(0x2f8a72);
             else if(/terrain/i.test(nm))m.color.setHex(0x4f7a39);
-            else if(/grass/i.test(nm)){m.color.setHex(TRACKS[selTrack]?TRACKS[selTrack].grass:0x3a6a2a)}
-            else if(/grey/i.test(nm))m.color.setHex(0xdddddd);
             else if(/metal|trim|rail/i.test(nm)){m.color.setHex(0x8b9098);m.metalness=0.6;m.roughness=0.5;}
             else if(/banner/i.test(nm))m.color.setHex(0xb22222);
             if(m.roughness!==undefined&&m.roughness<0.4)m.roughness=0.85;
@@ -1852,8 +1850,6 @@ function buildRacingLine(){
   scene.add(racingLineMesh);
 }
 function mkTrack(grassCOverride){
-  // Tracks rendered from tiled road models (Kenney kit) laid along the spline
-  if(TRACKS[selTrack].tiles){mkTrackTiles(grassCOverride);return;}
   // Tracks with a 3D model: build the drivable path + ground synchronously
   // (physics/resetCar need tPts & sd immediately) and stream in the visual
   // model in the background, auto-fitted to the track footprint.
@@ -1904,70 +1900,6 @@ function mkRoadRibbon(){
   _rg.setIndex(_ri);_rg.computeVertexNormals();
   var roadMesh=new THREE.Mesh(_rg,new THREE.MeshStandardMaterial({map:_asTex,roughness:.95,metalness:.05}));
   roadMesh.receiveShadow=true;scene.add(roadMesh);return roadMesh;
-}
-// ── Tile-based track (Kenney road kit) with port-snapping ──
-// Each piece is defined by its EXIT in a normalised frame where the piece
-// ENTERS at the origin travelling +Z. Walking the sequence chains exit→entry
-// so pieces snap together perfectly every time. The same walk drives both the
-// 3D model placement and the centreline waypoints (see TRACKS[].wp), so the
-// physics path and the visuals are guaranteed to match.
-var TILE_S=26/0.69; // 1 tile unit → world units (asphalt width = TW)
-//                    out (tile units)  turn(rad)   model file              mirrorX
-var TILE_PIECES={
-  S: {out:[0,1],   turn:0,            file:'roadStraight.glb',     mirror:false},
-  L: {out:[0,2],   turn:0,            file:'roadStraightLong.glb', mirror:false},
-  C: {out:[-0.5,0.5], turn:Math.PI/2, file:'roadCornerSmall.glb',  mirror:false}, // left
-  CM:{out:[0.5,0.5],  turn:-Math.PI/2,file:'roadCornerSmall.glb',  mirror:true}   // right
-};
-var TILE_SEQ=['L','L','C','L','CM','L','L','CM','L','L','L','CM','L','L','C','L','CM','L','L','CM','L','L','L','CM'];
-function mkTrackTiles(grassCOverride){
-  var pts=WP.map(function(p){return new THREE.Vector3(p[0],0,p[1])});
-  spl=new THREE.CatmullRomCurve3(pts,true,'catmullrom',.5);tPts=spl.getPoints(2400);
-  sd=[];for(var i=0;i<tPts.length;i++){var t=i/tPts.length,tn=spl.getTangent(t).normalize();sd.push({c:spl.getPoint(t),t:tn,n:new THREE.Vector3(-tn.z,0,tn.x)})}
-  _buildGroundH();
-  trackLenM=0;for(var _tl=1;_tl<=tPts.length;_tl++){var _pa=tPts[_tl-1],_pb=tPts[_tl%tPts.length];trackLenM+=Math.sqrt((_pb.x-_pa.x)*(_pb.x-_pa.x)+(_pb.z-_pa.z)*(_pb.z-_pa.z))}trackLenM=Math.max(500,trackLenM);
-  var sfRef=TRACKS[selTrack].sf,bd=Infinity;for(var i2=0;i2<tPts.length;i2++){var d2=Math.pow(tPts[i2].x-sfRef[0],2)+Math.pow(tPts[i2].z-sfRef[1],2);if(d2<bd){bd=d2;sfIdx=i2}}
-  var tx1=Infinity,tx2=-Infinity,tz1=Infinity,tz2=-Infinity;for(var ib=0;ib<tPts.length;ib++){tx1=Math.min(tx1,tPts[ib].x);tx2=Math.max(tx2,tPts[ib].x);tz1=Math.min(tz1,tPts[ib].z);tz2=Math.max(tz2,tPts[ib].z)}
-  var PAD=60,CX=(tx1+tx2)/2,CZ=(tz1+tz2)/2,W_SIZE=Math.max(tx2-tx1,tz2-tz1)+PAD*2;tCX=CX;tCZ=CZ;trackViewR=Math.max(tx2-tx1,tz2-tz1)/2+40;
-  _buildColGrid();builtTrack=selTrack;builtWeather=selWeather;PIT=null;_pitPrevSL=0;
-  var cv2=[];for(var ci=0;ci<sd.length;ci++){var pa2=sd[(ci-5+sd.length)%sd.length],na2=sd[(ci+5)%sd.length];cv2.push(new THREE.Vector3().subVectors(na2.t,pa2.t).length())}
-  trackCurv=[];for(var ck=0;ck<cv2.length;ck++){var ss=0,cc=0;for(var jj=-15;jj<=15;jj++){ss+=cv2[(ck+jj+cv2.length)%cv2.length];cc++}trackCurv.push(ss/cc)}
-  var _cs=trackCurv.slice().sort(function(a,b){return a-b});curbCurvThresh=Math.max(.03,_cs[Math.floor(_cs.length*.72)]);flatCurvThresh=Math.max(.012,_cs[Math.floor(_cs.length*.5)]);
-  var grassC=grassCOverride||TRACKS[selTrack].grass;
-  if(GRASS.ready&&selWeather.indexOf('snow')<0){
-    var _ga=GRASS.albedo.clone();_ga.needsUpdate=true;_ga.wrapS=_ga.wrapT=THREE.RepeatWrapping;_ga.repeat.set(1,1);
-    scene.add(buildGroundGrid(CX,CZ,W_SIZE,56,new THREE.MeshLambertMaterial({map:_ga}),-0.15));
-  }else{var gnd=new THREE.Mesh(new THREE.PlaneGeometry(W_SIZE,W_SIZE),new THREE.MeshLambertMaterial({color:grassC}));gnd.rotation.x=-Math.PI/2;gnd.position.set(CX,-0.5,CZ);scene.add(gnd)}
-  mkStartLine();buildRacingLine();
-  // Load the 3 unique road models, then snap the tile chain together
-  var files=['roadStraight.glb','roadStraightLong.glb','roadCornerSmall.glb'],models={},loaded=0;
-  files.forEach(function(fn){
-    loadTrackGLB(fn).then(function(root){models[fn]=root;if(++loaded===files.length)_placeTiles(models)})
-      .catch(function(e){console.error('tile load failed:',fn,e)});
-  });
-}
-// Wrap a road-model clone so that in its local frame the piece ENTERS at the
-// origin travelling +Z, scaled to world units (and mirrored for right corners).
-// Build order (point flows bottom→top): translate entry→origin, rotate dir→+Z,
-// then scale/mirror.
-function _tileTemplate(glb,mirror){
-  var S=TILE_S;
-  var trans=new THREE.Object3D();trans.position.set(-0.15,0,0.65);trans.add(glb); // entry (0.15,0,-0.65)→origin
-  var rot=new THREE.Object3D();rot.rotation.y=Math.PI;rot.add(trans);             // entry dir (0,0,-1)→+Z
-  var scl=new THREE.Object3D();scl.scale.set(mirror?-S:S,S,S);scl.add(rot);
-  return scl;
-}
-function _placeTiles(models){
-  var S=TILE_S,tileY=0.5-0.01*S; // model top sits at road height 0.5
-  var tmpl={};for(var k in TILE_PIECES){tmpl[k]=_tileTemplate(models[TILE_PIECES[k].file].clone(),TILE_PIECES[k].mirror)}
-  var cx=0,cz=0,th=0;
-  TILE_SEQ.forEach(function(type){
-    var d=TILE_PIECES[type];
-    var w=new THREE.Object3D();w.position.set(cx*S,tileY,cz*S);w.rotation.y=th;w.add(tmpl[type].clone());scene.add(w);
-    // advance cursor: rotate piece exit by current heading, add; then turn
-    var c=Math.cos(th),s=Math.sin(th);
-    cx+=d.out[0]*c+d.out[1]*s;cz+=-d.out[0]*s+d.out[1]*c;th+=d.turn;
-  });
 }
 // Checkered start/finish strip across the road at the SF index
 function mkStartLine(){
