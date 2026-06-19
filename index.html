@@ -5268,7 +5268,7 @@ function _unlockEngineSounds(){
     if(dist>maxR){dx=dx/dist*maxR;dy=dy/dist*maxR;dist=maxR;}
     if(joyThumb){joyThumb.style.left=(50+dx/_joyR*50)+'%';joyThumb.style.top=(50+dy/_joyR*50)+'%';}
     var nx=dx/maxR,ny=-dy/maxR;
-    mobileSteerVal=Math.max(-1,Math.min(1,nx));
+    mobileSteerVal=Math.max(-1,Math.min(1,-nx));
     mobileGas=ny>0.15?Math.min(1,(ny-0.15)/0.85):0;
     mobileBrake=ny<-0.15?Math.min(1,(-ny-0.15)/0.85):0;
     mobileDrifting=mobileBrake>0.3;
