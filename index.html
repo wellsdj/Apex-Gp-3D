@@ -856,35 +856,46 @@ var KIT_TILES={
 // Heading convention: 0=toward -Z, 90=toward +X, 180=toward +Z, 270=toward -X
 // The walker tracks (gx, gz, heading) in grid units.
 var KIT_TRACKS=[
-  // "KENNEY GP" — 17-tile circuit, 4 left turns summing to 360°
-  // Leg 0 (heading -Z): 3×straightLong then cornerLarger (sweeping T1)
-  // Leg 1 (heading +X): 2×straightLong then cornerLarge (medium T2)
-  // Leg 2 (heading +Z): 4×straightLong then cornerSmall (tight hairpin T3)
-  // Leg 3 (heading -X): 2×straightLong + 2×straight + cornerLarge (medium T4 back to start)
+  // "KENNEY GP" — 17-tile circuit with varied corners
   [
-    {id:'straightLong',rot:0},    // 0: start/finish straight
-    {id:'straightLong',rot:0},    // 1: continuation
-    {id:'straightLong',rot:0},    // 2: end of back straight
-    {id:'cornerLarger',rot:0},    // 3: T1 sweeping left (3×3)
-    {id:'straightLong',rot:0},    // 4: short straight
-    {id:'straightLong',rot:0},    // 5: continuation
-    {id:'cornerLarge',rot:0},     // 6: T2 medium left (2×2)
-    {id:'straightLong',rot:0},    // 7: long return straight
-    {id:'straightLong',rot:0},    // 8: continuation
-    {id:'straightLong',rot:0},    // 9: continuation
-    {id:'straightLong',rot:0},    // 10: end of return straight
-    {id:'cornerSmall',rot:0},     // 11: T3 tight hairpin (1×1)
-    {id:'straightLong',rot:0},    // 12: pit straight
-    {id:'straight',rot:0},        // 13: connector
-    {id:'straightLong',rot:0},    // 14: approach
-    {id:'straight',rot:0},        // 15: connector
-    {id:'cornerLarge',rot:0}      // 16: T4 medium left back to start (2×2)
+    {id:'straightLong',rot:0},{id:'straightLong',rot:0},{id:'straightLong',rot:0},
+    {id:'cornerLarger',rot:0},
+    {id:'straightLong',rot:0},{id:'straightLong',rot:0},
+    {id:'cornerLarge',rot:0},
+    {id:'straightLong',rot:0},{id:'straightLong',rot:0},{id:'straightLong',rot:0},{id:'straightLong',rot:0},
+    {id:'cornerSmall',rot:0},
+    {id:'straightLong',rot:0},{id:'straight',rot:0},{id:'straightLong',rot:0},{id:'straight',rot:0},
+    {id:'cornerLarge',rot:0}
+  ],
+  // "SILVERSTONE MINI" — fast circuit, sweeping turns + hairpins
+  [
+    {id:'straightLong',rot:0},{id:'straightLong',rot:0},{id:'straightLong',rot:0},
+    {id:'cornerLarger',rot:0},
+    {id:'straightLong',rot:0},
+    {id:'cornerSmall',rot:0},
+    {id:'straightLong',rot:0},{id:'straightLong',rot:0},{id:'straightLong',rot:0},
+    {id:'cornerLarger',rot:0},
+    {id:'straightLong',rot:0},
+    {id:'cornerSmall',rot:0}
+  ],
+  // "TECHNICAL GP" — mixed radii: sweeper, medium, hairpin, medium
+  [
+    {id:'straightLong',rot:0},{id:'straightLong',rot:0},
+    {id:'cornerLarger',rot:0},
+    {id:'straightLong',rot:0},
+    {id:'cornerLarge',rot:0},
+    {id:'straightLong',rot:0},{id:'straightLong',rot:0},{id:'straightLong',rot:0},
+    {id:'cornerSmall',rot:0},
+    {id:'straightLong',rot:0},{id:'straightLong',rot:0},
+    {id:'cornerLarge',rot:0}
   ]
 ];
 // Append kit tracks to TRACKS array
 (function(){
   var kitDefs=[
-    {name:"KENNEY GP",kit:true,kitIdx:0,sky:0x5599dd,fog:0x6eaadd,ambI:.55,sunI:.85,sunC:0xffffff,hemiSky:0x77bbee,hemiGnd:0x556644,grass:0x4d8f6e,sf:[0,0],wp:[[0,0],[100,0],[200,0]]}
+    {name:"KENNEY GP",kit:true,kitIdx:0,sky:0x5599dd,fog:0x6eaadd,ambI:.55,sunI:.85,sunC:0xffffff,hemiSky:0x77bbee,hemiGnd:0x556644,grass:0x4d8f6e,sf:[0,0],wp:[[0,0],[100,0],[200,0]]},
+    {name:"SILVERSTONE MINI",kit:true,kitIdx:1,sky:0x7ec8e8,fog:0x9fd0e0,ambI:.52,sunI:.92,sunC:0xfff0d8,hemiSky:0x8ec8ee,hemiGnd:0x4a7040,grass:0x4d8f6e,sf:[0,0],wp:[[0,0],[100,0],[200,0]]},
+    {name:"TECHNICAL GP",kit:true,kitIdx:2,sky:0xf08030,fog:0xd0703a,ambI:.45,sunI:.8,sunC:0xffaa55,hemiSky:0xffaa66,hemiGnd:0x443322,grass:0x4d8f6e,sf:[0,0],wp:[[0,0],[100,0],[200,0]]}
   ];
   for(var i=0;i<kitDefs.length;i++)TRACKS.push(kitDefs[i]);
 })();
@@ -2109,78 +2120,158 @@ function mkTrackKit(grassCOverride){
   }
   // ── 7. Trackside props ──
   function _placeProps(){
-    // Barriers along track edges (alternating red/white)
-    var barrierSpacing=3; // in sd indices
-    var barrierFiles=['barrierRed.glb','barrierWhite.glb'];
-    var _bIdx=0;
-    function _loadBarriers(){
-      if(_bIdx>=barrierFiles.length)return _loadGrandstand();
-      loader.load('models/'+barrierFiles[_bIdx],function(gltf){
-        gltf.scene.updateMatrixWorld(true);
-        var meshes=[];
-        gltf.scene.traverse(function(o){if(o.isMesh)meshes.push(o)});
-        // Place on both sides, alternating colors
-        var positions=[];
-        var off=TW/2+CWW+2;
-        for(var side=-1;side<=1;side+=2){
-          for(var bi=0;bi<sd.length;bi+=barrierSpacing){
-            if((Math.floor(bi/barrierSpacing)+(_bIdx))%2!==0)continue;
-            var s=sd[bi];
-            var bx=s.c.x+s.n.x*side*off;
-            var bz=s.c.z+s.n.z*side*off;
-            var m4=new THREE.Matrix4();
-            var sc=S*0.03; // barriers are small, scale them up
-            m4.compose(
-              new THREE.Vector3(bx,0.1,bz),
-              new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.atan2(s.t.x,s.t.z)),
-              new THREE.Vector3(sc,sc,sc)
-            );
-            positions.push(m4);
-          }
+    // barrierWall.glb is 1.0×0.13×0.12 in model space. We want ~TW-sized walls
+    // along the track edges. Scale so 1.0 model unit = ~TW/2 world units.
+    var bwScale=TW*0.5; // each barrier wall ≈ 13m long
+    var off=TW/2+CWW+1.5;
+    var barrierSpacing=8;
+    loader.load('models/barrierWall.glb',function(gltf){
+      gltf.scene.updateMatrixWorld(true);
+      var meshes=[];
+      gltf.scene.traverse(function(o){if(o.isMesh)meshes.push(o)});
+      var mats=[];
+      for(var side=-1;side<=1;side+=2){
+        for(var bi=0;bi<sd.length;bi+=barrierSpacing){
+          var s=sd[bi];
+          var bx=s.c.x+s.n.x*side*off,bz=s.c.z+s.n.z*side*off;
+          var m4=new THREE.Matrix4();
+          m4.compose(
+            new THREE.Vector3(bx,0,bz),
+            new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.atan2(s.t.x,s.t.z)),
+            new THREE.Vector3(bwScale,bwScale,bwScale)
+          );
+          mats.push(m4);
         }
-        if(positions.length>0){
-          for(var mi=0;mi<meshes.length;mi++){
-            var inst=new THREE.InstancedMesh(meshes[mi].geometry,meshes[mi].material,positions.length);
-            inst.castShadow=false;inst.receiveShadow=true;inst.frustumCulled=false;
-            var lm=meshes[mi].matrixWorld.clone();
-            var _im=new THREE.Matrix4();
-            for(var ii=0;ii<positions.length;ii++){
-              _im.multiplyMatrices(positions[ii],lm);
-              inst.setMatrixAt(ii,_im);
-            }
-            inst.instanceMatrix.needsUpdate=true;
-            scene.add(inst);
-          }
+      }
+      if(mats.length>0){
+        for(var mi=0;mi<meshes.length;mi++){
+          var inst=new THREE.InstancedMesh(meshes[mi].geometry,meshes[mi].material,mats.length);
+          inst.castShadow=false;inst.receiveShadow=true;inst.frustumCulled=false;
+          var lm=meshes[mi].matrixWorld.clone(),_im=new THREE.Matrix4();
+          for(var ii=0;ii<mats.length;ii++){_im.multiplyMatrices(mats[ii],lm);inst.setMatrixAt(ii,_im)}
+          inst.instanceMatrix.needsUpdate=true;scene.add(inst);
         }
-        _bIdx++;_loadBarriers();
-      },undefined,function(){_bIdx++;_loadBarriers()});
+      }
+      _placeGrandstands();
+    },undefined,function(){_placeGrandstands()});
+    function _placeGrandstands(){
+      // grandStandCovered.glb is 1.0×1.19×1.02 in model space
+      // Scale to ~20m wide, placed along the start/finish straight
+      var gsScale=20;
+      var gsFiles=['grandStandCovered.glb','grandStand.glb','grandStandAwning.glb'];
+      var gsOff=TW/2+CWW+18;
+      var gsCount=0;
+      // Place 3 grandstands along the longest straight (near sf)
+      var gsIdxs=[sfIdx,(sfIdx+60)%sd.length,(sfIdx-60+sd.length)%sd.length];
+      var _gsi=0;
+      function _nextGS(){
+        if(_gsi>=gsIdxs.length){_placeOverhead();return}
+        var gi=gsIdxs[_gsi],fi=gsFiles[_gsi%gsFiles.length];
+        _gsi++;
+        loader.load('models/'+fi,function(gltf){
+          var s=sd[gi];if(!s){_nextGS();return}
+          var obj=gltf.scene;
+          obj.scale.setScalar(gsScale);
+          obj.position.set(s.c.x+s.n.x*gsOff,0,s.c.z+s.n.z*gsOff);
+          obj.rotation.y=Math.atan2(s.t.x,s.t.z)+Math.PI;
+          obj.traverse(function(o){if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+          scene.add(obj);_nextGS();
+        },undefined,function(){_nextGS()});
+      }
+      _nextGS();
     }
-    function _loadGrandstand(){
-      loader.load('models/grandStandCovered.glb',function(gltf){
-        // Place along start/finish straight
-        var s=sd[sfIdx];if(!s)return;
-        var obj=gltf.scene;
-        var sc=S*0.04;
-        obj.scale.setScalar(sc);
-        var off=TW/2+CWW+12;
-        obj.position.set(s.c.x+s.n.x*off,0,s.c.z+s.n.z*off);
-        obj.rotation.y=Math.atan2(s.t.x,s.t.z);
-        obj.traverse(function(o){if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
-        scene.add(obj);
-      },undefined,function(){});
-      // Overhead lights at start/finish
+    function _placeOverhead(){
+      // overheadLights.glb: 1.26×0.69×0.19 → scale to span the road width
+      var ohScale=TW/1.26;
       loader.load('models/overheadLights.glb',function(gltf){
         var s=sd[sfIdx];if(!s)return;
         var obj=gltf.scene;
-        var sc=S*0.04;
-        obj.scale.setScalar(sc);
+        obj.scale.setScalar(ohScale);
         obj.position.set(s.c.x,0,s.c.z);
         obj.rotation.y=Math.atan2(s.n.x,s.n.z);
         obj.traverse(function(o){if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
         scene.add(obj);
-      },undefined,function(){});
+        _placeBillboards();
+      },undefined,function(){_placeBillboards()});
     }
-    _loadBarriers();
+    function _placeBillboards(){
+      // billboard.glb: 1.0×1.0×0.48 → scale to ~8m wide
+      var bbScale=8;
+      loader.load('models/billboard.glb',function(gltf){
+        gltf.scene.updateMatrixWorld(true);
+        var meshes=[];
+        gltf.scene.traverse(function(o){if(o.isMesh)meshes.push(o)});
+        // Place at corners (high curvature points)
+        var bbOff=TW/2+CWW+10;
+        var mats=[],step=Math.floor(sd.length/6);
+        for(var bi=step;bi<sd.length;bi+=step){
+          var s=sd[bi%sd.length];
+          if((trackCurv[bi%sd.length]||0)<curbCurvThresh*0.5)continue;
+          for(var side=-1;side<=1;side+=2){
+            var m4=new THREE.Matrix4();
+            m4.compose(
+              new THREE.Vector3(s.c.x+s.n.x*side*bbOff,0,s.c.z+s.n.z*side*bbOff),
+              new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.atan2(-s.n.x*side,-s.n.z*side)),
+              new THREE.Vector3(bbScale,bbScale,bbScale)
+            );
+            mats.push(m4);
+          }
+        }
+        if(mats.length>0){
+          for(var mi=0;mi<meshes.length;mi++){
+            var inst=new THREE.InstancedMesh(meshes[mi].geometry,meshes[mi].material,mats.length);
+            inst.castShadow=true;inst.receiveShadow=true;inst.frustumCulled=false;
+            var lm=meshes[mi].matrixWorld.clone(),_im=new THREE.Matrix4();
+            for(var ii=0;ii<mats.length;ii++){_im.multiplyMatrices(mats[ii],lm);inst.setMatrixAt(ii,_im)}
+            inst.instanceMatrix.needsUpdate=true;scene.add(inst);
+          }
+        }
+        _placeFlags();
+      },undefined,function(){_placeFlags()});
+    }
+    function _placeFlags(){
+      // flagCheckers at start/finish, flagRed/flagGreen at corners
+      var flagScale=12;
+      loader.load('models/flagCheckers.glb',function(gltf){
+        var s=sd[sfIdx];if(!s)return;
+        var obj=gltf.scene;obj.scale.setScalar(flagScale);
+        var fo=TW/2+3;
+        obj.position.set(s.c.x+s.n.x*fo,0,s.c.z+s.n.z*fo);
+        obj.rotation.y=Math.atan2(s.t.x,s.t.z);
+        scene.add(obj);
+      },undefined,function(){});
+      // Light posts for night mode
+      var _isNight=selWeather==='night'||selWeather==='night_dark';
+      if(_isNight){
+        loader.load('models/lightPostLarge.glb',function(gltf){
+          gltf.scene.updateMatrixWorld(true);
+          var meshes=[];gltf.scene.traverse(function(o){if(o.isMesh)meshes.push(o)});
+          var lpScale=25,lpOff=TW/2+CWW+6,lpSpacing=20;
+          var mats=[];
+          for(var side=-1;side<=1;side+=2){
+            for(var li=0;li<sd.length;li+=lpSpacing){
+              var s=sd[li];
+              var m4=new THREE.Matrix4();
+              m4.compose(
+                new THREE.Vector3(s.c.x+s.n.x*side*lpOff,0,s.c.z+s.n.z*side*lpOff),
+                new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.atan2(-s.n.x*side,-s.n.z*side)),
+                new THREE.Vector3(lpScale,lpScale,lpScale)
+              );
+              mats.push(m4);
+            }
+          }
+          if(mats.length>0){
+            for(var mi=0;mi<meshes.length;mi++){
+              var inst=new THREE.InstancedMesh(meshes[mi].geometry,meshes[mi].material,mats.length);
+              inst.frustumCulled=false;
+              var lm=meshes[mi].matrixWorld.clone(),_im=new THREE.Matrix4();
+              for(var ii=0;ii<mats.length;ii++){_im.multiplyMatrices(mats[ii],lm);inst.setMatrixAt(ii,_im)}
+              inst.instanceMatrix.needsUpdate=true;scene.add(inst);
+            }
+          }
+        },undefined,function(){});
+      }
+    }
   }
   _loadNextTile();
   // ── 8. Update dummy wp on the TRACKS entry so other code doesn't crash ──
