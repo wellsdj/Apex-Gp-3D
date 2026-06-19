@@ -64,6 +64,13 @@
   </div>
 
   <div class="grp">
+    <div class="lbl">Track Size <span id="vSize" style="float:right;color:#cfe0ee">100%</span></div>
+    <input id="sSize" type="range" min="60" max="180" value="100" style="width:100%">
+    <div class="lbl" style="margin-top:8px">Road Width <span id="vWidth" style="float:right;color:#cfe0ee">100%</span></div>
+    <input id="sWidth" type="range" min="70" max="140" value="100" style="width:100%">
+  </div>
+
+  <div class="grp">
     <div class="lbl">Track</div>
     <div class="btns">
       <button id="bExport" class="wide on">Export Track</button>
@@ -100,8 +107,12 @@
 // ──────────────────────────────────────────────────────────────────────────
 
 // World size of one grid cell. The Kenney road occupies the central 0.69 of a
-// tile, so G = TW / 0.69 makes the tile road match the game's road width (TW=26).
-var G = 26 / 0.69;            // ≈ 37.7 world units per cell
+// tile, so BASE_G = TW / 0.69 makes the tile road match the game road (TW=26).
+// Track Size scales the whole cell (and therefore the road) up or down.
+var BASE_G = 26 / 0.69;       // ≈ 37.7 world units per cell at size 1.0
+var sizeMul = 1.0;            // Track Size slider
+var widthMul = 1.0;          // Road Width slider (drivable surface)
+function geff(){ return BASE_G * sizeMul; }   // effective cell size
 var TILE_MODEL = { straight:'roadStraight.glb', corner:'roadCornerSmall.glb' };
 
 // ── Tile port logic ───────────────────────────────────────────────────────
@@ -131,7 +142,7 @@ renderer.setClearColor(0x10131a);
 var scene=new THREE.Scene();
 
 // Top-down orthographic camera. We pan a pivot in X/Z and keep looking straight down.
-var view={cx:0,cz:0,span:9*G};
+var view={cx:0,cz:0,span:9*BASE_G};
 var cam=new THREE.OrthographicCamera(-1,1,1,-1,.1,5000);
 function fitCam(){
   var a=innerWidth/innerHeight, h=view.span/2, w=h*a;
@@ -144,8 +155,9 @@ scene.add(new THREE.AmbientLight(0xffffff,.85));
 var dl=new THREE.DirectionalLight(0xffffff,.6);dl.position.set(1,3,2);scene.add(dl);
 
 // Grid
-var grid=new THREE.GridHelper(200*G,200,0x2a3340,0x1c2530);
-grid.position.y=-0.02;scene.add(grid);
+var grid=null;
+function setGrid(){if(grid)scene.remove(grid);grid=new THREE.GridHelper(200*geff(),200,0x2a3340,0x1c2530);grid.position.y=-0.02;scene.add(grid);}
+setGrid();
 // Highlighted origin cross
 var axes=new THREE.Group();
 [[1,0,0x5b8cff],[0,1,0x5b8cff]].forEach(function(){});
@@ -153,12 +165,12 @@ scene.add(axes);
 
 // Hover cell preview
 var hoverMat=new THREE.MeshBasicMaterial({color:0x2f6df0,transparent:true,opacity:.18});
-var hover=new THREE.Mesh(new THREE.PlaneGeometry(G,G),hoverMat);
+var hover=new THREE.Mesh(new THREE.PlaneGeometry(BASE_G,BASE_G),hoverMat);
 hover.rotation.x=-Math.PI/2;hover.position.y=.02;hover.visible=false;scene.add(hover);
 
 // Start marker
 var startMat=new THREE.MeshBasicMaterial({color:0x5fe08a,transparent:true,opacity:.85});
-var startMark=new THREE.Mesh(new THREE.PlaneGeometry(G*.5,G*.16),startMat);
+var startMark=new THREE.Mesh(new THREE.PlaneGeometry(BASE_G*.5,BASE_G*.16),startMat);
 startMark.rotation.x=-Math.PI/2;startMark.position.y=.05;startMark.visible=false;scene.add(startMark);
 
 // Centerline overlay (drawn live so you can see the racing line)
@@ -188,7 +200,7 @@ function loadTemplate(type){
       var c=box.getCenter(new THREE.Vector3());
       var wrap=new THREE.Group();
       root.position.set(-c.x,-c.y,-c.z);wrap.add(root);
-      var holder=new THREE.Group();holder.scale.setScalar(G);holder.add(wrap);
+      var holder=new THREE.Group();holder.scale.setScalar(BASE_G);holder.add(wrap);
       templates[type]=holder;res();
     },undefined,rej);
   });
@@ -206,7 +218,8 @@ function place(i,j){
   remove(i,j);
   var t={i:i,j:j,type:tool,rot:curRot};
   var obj=templates[tool].clone(true);
-  obj.position.set(i*G,0,j*G);
+  obj.scale.setScalar(geff());
+  obj.position.set(i*geff(),0,j*geff());
   obj.rotation.y=curRot*Math.PI/2;
   scene.add(obj);t.obj=obj;
   tiles[key(i,j)]=t;
@@ -226,23 +239,23 @@ function setStart(i,j){
 }
 
 // ── Geometry: centreline points for a single tile, entry→exit ─────────────
-function edgeMid(i,j,dir){return [ (i+dir[0]*0.5)*G, (j+dir[1]*0.5)*G ];}
+function edgeMid(i,j,dir){return [ (i+dir[0]*0.5)*geff(), (j+dir[1]*0.5)*geff() ];}
 function tileCenterline(t,entryDir,exitDir){
   var pts=[];
-  var C=[t.i*G,t.j*G];
+  var C=[t.i*geff(),t.j*geff()];
   if(t.type==='straight'){
     pts.push(edgeMid(t.i,t.j,entryDir));
     pts.push([C[0],C[1]]);
     pts.push(edgeMid(t.i,t.j,exitDir));
   }else{
     var off=cornerArcOff(t.rot);                 // half-cell units
-    var ac=[C[0]+off[0]*0.5*G, C[1]+off[1]*0.5*G];
+    var ac=[C[0]+off[0]*0.5*geff(), C[1]+off[1]*0.5*geff()];
     var pa=edgeMid(t.i,t.j,entryDir), pb=edgeMid(t.i,t.j,exitDir);
     var a0=Math.atan2(pa[1]-ac[1],pa[0]-ac[0]);
     var a1=Math.atan2(pb[1]-ac[1],pb[0]-ac[0]);
     // take the short way round (a quarter turn)
     var d=a1-a0;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;
-    var R=0.5*G,N=8;
+    var R=0.5*geff(),N=8;
     for(var s=0;s<=N;s++){var a=a0+d*s/N;pts.push([ac[0]+Math.cos(a)*R, ac[1]+Math.sin(a)*R]);}
   }
   return pts;
@@ -295,6 +308,15 @@ function refresh(){
     var v=[];for(var i=0;i<=res.wp.length;i++){var p=res.wp[i%res.wp.length];v.push(p[0],.6,p[1]);}
     var geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(v,3));
     lineGroup.add(new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x5fe08a})));
+    // drivable-corridor edges (show Road Width): offset the centreline by ±half
+    var half=widthMul*0.69*geff()/2,wpN=res.wp.length;
+    var le=[],re=[];
+    for(var ei=0;ei<=wpN;ei++){
+      var a=res.wp[ei%wpN],b=res.wp[(ei+1)%wpN];
+      var dx=b[0]-a[0],dz=b[1]-a[1],dl=Math.hypot(dx,dz)||1;var nx=-dz/dl,nz=dx/dl;
+      le.push(a[0]+nx*half,.55,a[1]+nz*half);re.push(a[0]-nx*half,.55,a[1]-nz*half);
+    }
+    [le,re].forEach(function(arr){var g2=new THREE.BufferGeometry();g2.setAttribute('position',new THREE.Float32BufferAttribute(arr,3));lineGroup.add(new THREE.Line(g2,new THREE.LineBasicMaterial({color:0x9fb0bf})));});
     st.innerHTML='<b>'+n+'</b> tiles · <span class="ok">CLOSED LOOP ✓</span><br>'+
                  res.wp.length+' waypoints · ready to export';
   }else{
@@ -304,7 +326,7 @@ function refresh(){
   // start marker
   if(startKey&&tiles[startKey]){
     var t=tiles[startKey];startMark.visible=true;
-    startMark.position.set(t.i*G,.05,t.j*G);
+    startMark.position.set(t.i*geff(),.05,t.j*geff());
     startMark.rotation.z=Math.atan2(startDir[0],startDir[1]);
   }else startMark.visible=false;
 }
@@ -316,12 +338,12 @@ function cellAt(ev){
   ndc.x=(ev.clientX/innerWidth)*2-1;ndc.y=-(ev.clientY/innerHeight)*2+1;
   ray.setFromCamera(ndc,cam);var hit=new THREE.Vector3();
   if(!ray.ray.intersectPlane(ground,hit))return null;
-  return {i:Math.round(hit.x/G),j:Math.round(hit.z/G)};
+  return {i:Math.round(hit.x/geff()),j:Math.round(hit.z/geff())};
 }
 var dragging=false,dragMoved=false,panLast=null,setStartMode=false;
 canvas.addEventListener('mousedown',function(e){dragging=true;dragMoved=false;panLast={x:e.clientX,y:e.clientY};});
 canvas.addEventListener('mousemove',function(e){
-  var c=cellAt(e);if(c){hover.visible=true;hover.position.set(c.i*G,.02,c.j*G);}
+  var c=cellAt(e);if(c){hover.visible=true;hover.scale.set(sizeMul,sizeMul,1);hover.position.set(c.i*geff(),.02,c.j*geff());}
   if(dragging&&panLast){
     var dx=e.clientX-panLast.x,dy=e.clientY-panLast.y;
     if(Math.abs(dx)+Math.abs(dy)>3)dragMoved=true;
@@ -336,7 +358,7 @@ canvas.addEventListener('mouseup',function(e){
   place(c.i,c.j);
 });
 canvas.addEventListener('contextmenu',function(e){e.preventDefault();var c=cellAt(e);if(c)remove(c.i,c.j);});
-canvas.addEventListener('wheel',function(e){e.preventDefault();view.span=Math.max(2*G,Math.min(60*G,view.span*(1+e.deltaY*.0012)));fitCam();},{passive:false});
+canvas.addEventListener('wheel',function(e){e.preventDefault();view.span=Math.max(2*BASE_G,Math.min(80*BASE_G,view.span*(1+e.deltaY*.0012)));fitCam();},{passive:false});
 
 function selTool(t){tool=t;
   ['Straight','Corner','Erase'].forEach(function(n){document.getElementById('t'+n).classList.remove('on');});
@@ -349,6 +371,10 @@ document.getElementById('bRot').onclick=function(){curRot=(curRot+1)%4;};
 document.getElementById('bStart').onclick=function(){setStartMode=true;this.classList.add('on');};
 document.getElementById('bFlip').onclick=function(){if(startKey){startDir=opp(startDir);refresh();}};
 document.getElementById('bClear').onclick=function(){if(!confirm('Clear the whole track?'))return;Object.keys(tiles).forEach(function(k){scene.remove(tiles[k].obj);});tiles={};startKey=null;startDir=null;refresh();};
+// Track Size: rescale every tile + the grid to the new cell size.
+function applySize(){setGrid();Object.keys(tiles).forEach(function(k){var t=tiles[k];t.obj.scale.setScalar(geff());t.obj.position.set(t.i*geff(),0,t.j*geff());});refresh();}
+document.getElementById('sSize').oninput=function(){sizeMul=(+this.value)/100;document.getElementById('vSize').textContent=this.value+'%';applySize();};
+document.getElementById('sWidth').oninput=function(){widthMul=(+this.value)/100;document.getElementById('vWidth').textContent=this.value+'%';refresh();};
 addEventListener('keydown',function(e){
   var k=e.key.toLowerCase();
   if(k==='1')selTool('straight');else if(k==='2')selTool('corner');else if(k==='3')selTool('erase');
@@ -364,11 +390,13 @@ document.getElementById('bExport').onclick=function(){
   var wp=res.wp.map(function(p){return [round2(p[0]),round2(p[1])];});
   var tileList=[];Object.keys(tiles).forEach(function(k){var t=tiles[k];tileList.push({i:t.i,j:t.j,type:t.type,rot:t.rot});});
   var sf=wp[0];
-  var data={name:name,G:round2(G),sf:sf,wp:wp,tiles:tileList};
+  var Gx=round2(geff());
+  var tw=round2(widthMul*0.69*geff());   // drivable surface width
+  var data={name:name,G:Gx,tw:tw,sf:sf,wp:wp,tiles:tileList};
   // TRACKS entry (kart-style: flat, tiles drive the visuals & physics)
   var entry='{name:"'+name+'",tileTrack:true,flat:true,sky:0x6db4e8,fog:0x86b8d8,'+
             'ambI:.55,sunI:.95,sunC:0xfff4e0,hemiSky:0x88bbee,hemiGnd:0x4a6644,grass:0x3a7a35,'+
-            'G:'+data.G+',sf:['+sf[0]+','+sf[1]+'],'+
+            'G:'+Gx+',tw:'+tw+',sf:['+sf[0]+','+sf[1]+'],'+
             'tiles:'+JSON.stringify(tileList)+',\n  wp:'+JSON.stringify(wp)+'}';
   var out=document.getElementById('out');out.style.display='flex';
   document.getElementById('outText').value=entry;
