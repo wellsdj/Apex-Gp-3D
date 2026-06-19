@@ -834,6 +834,60 @@ var TRACKS=[
 {name:"GRANDE APEX",sky:0x6db4e8,fog:0x86b8d8,ambI:.55,sunI:.95,sunC:0xfff4e0,hemiSky:0x88bbee,hemiGnd:0x4a6644,grass:0x3a7a35,sf:[578,0],wp:[[920,0],[792,0],[663,0],[535,0],[407,0],[289,0],[187,6],[112,34],[66,91],[45,161],[51,230],[86,287],[144,321],[187,369],[209,428],[225,487],[268,535],[337,556],[417,565],[460,503],[476,428],[514,380],[578,369],[626,412],[631,482],[663,540],[738,569],[813,578],[888,572],[942,540],[960,482],[958,417],[931,358],[936,294],[968,241],[970,177],[952,102],[933,43]]},
 {name:"SERPENTE",sky:0x7ec8e8,fog:0x9fd0e0,ambI:.52,sunI:.92,sunC:0xfff0d8,hemiSky:0x8ec8ee,hemiGnd:0x4a7040,grass:0x3a7530,sf:[300,19.8],wp:[[152,19.8],[175.9,19.8],[199.8,19.8],[223.7,19.8],[247.7,19.8],[271.6,19.8],[295.5,19.8],[319.4,19.8],[343.3,19.8],[367.2,19.8],[391.2,19.8],[415.1,19.8],[439,19.8],[462.9,19.8],[486.8,19.8],[510.7,19.8],[534.7,19.8],[556.9,14.6],[577.7,3.5],[597.5,0],[617.3,3.5],[634.9,13],[656.7,19.7],[679.4,22.4],[699.9,32.9],[719.1,39.2],[739.2,38.5],[757.9,30.9],[778.8,21.3],[802,19.8],[825.9,19.8],[849.8,19.8],[873.7,19.8],[897.7,19.8],[921.6,19.8],[945.5,19.8],[969.4,19.8],[993.3,19.8],[1017.3,19.8],[1041.2,19.8],[1065.1,19.8],[1089,19.8],[1112.9,19.8],[1136.8,19.8],[1160.8,19.8],[1184.7,20.1],[1208.4,23.6],[1231.2,30.8],[1252.6,41.6],[1272,55.6],[1288.9,72.5],[1302.9,91.9],[1313.7,113.3],[1320.9,136.1],[1324.4,159.8],[1324.1,183.7],[1319.9,207.3],[1312.1,229.9],[1300.8,251],[1286.3,270.1],[1268.9,286.5],[1249.1,300],[1227.5,310.2],[1204.5,316.8],[1180.7,319.7],[1157,319.8],[1133.4,319.8],[1109.7,320.6],[1090.7,326.9],[1074.8,339],[1061.1,353.6],[1043.7,363.6],[1024,367.4],[1004.2,364.8],[986.2,356.1],[972,342],[956.8,328.9],[938.3,321.3],[918.3,319.8],[898.3,319.8],[878.3,319.8],[858.3,319.8],[834.5,320.3],[811.4,325.4],[790.3,336],[772.3,351.3],[758.5,370.5],[746.4,386.5],[731.2,399.7],[713.7,409.6],[694.6,415.7],[674.6,417.8],[654.6,415.7],[635.5,409.6],[618,399.7],[602.9,386.5],[590.8,370.5],[576.9,351.2],[558.9,335.9],[537.8,325.4],[514.7,320.2],[490.9,319.7],[470.9,319.7],[450.9,319.7],[430.9,319.7],[410.6,321.1],[391.1,327.9],[374.3,339.7],[359.7,353.7],[338.6,364.9],[315,368.7],[291.4,364.9],[270.3,353.7],[255.7,339.8],[238.9,328],[219.4,321.2],[199.1,319.8],[175.5,319.8],[151.9,319.8],[128.1,318.2],[104.8,312.8],[82.6,303.8],[62.1,291.4],[43.9,275.9],[28.4,257.7],[16,237.2],[7,215],[1.6,191.7],[0,167.8],[2.2,144],[8.2,120.8],[17.8,98.9],[30.8,78.8],[46.8,61],[65.4,45.9],[86.2,34.1],[108.6,25.6],[132.1,20.9]]}
 ];
+// ── Kit Tile Registry (Kenney Racing Kit) ──────────────────────────────────
+var KIT_SCALE=26/0.69; // TW / road width in tile units ≈ 37.68
+var KIT_TILES={
+  straight:     {file:'roadStraight.glb',     grid:[1,1], type:'straight', len:1},
+  straightLong: {file:'roadStraightLong.glb', grid:[1,2], type:'straight', len:2},
+  cornerSmall:  {file:'roadCornerSmall.glb',  grid:[1,1], type:'corner', angle:90, radius:0.5,  pivot:[0,0]},
+  cornerLarge:  {file:'roadCornerLarge.glb',  grid:[2,2], type:'corner', angle:90, radius:1.5,  pivot:[0,0]},
+  cornerLarger: {file:'roadCornerLarger.glb', grid:[3,3], type:'corner', angle:90, radius:2.5,  pivot:[0,0]}
+};
+// Kit track layouts — array of tile placements that chain entry→exit.
+// Each: {id:'tileId', rot:0|90|180|270}
+// Default orientation: entry from +Z side, road runs along Z axis.
+// Corners: default turns left (from -Z entry to +X exit).
+// rot rotates the whole tile CW when viewed from above.
+// rot=0   left turn (entry from -Z to exit +X)
+// rot=90  right turn equivalent
+// rot=180 left turn entering from +Z
+// rot=270 right turn entering from +Z
+//
+// Heading convention: 0=toward -Z, 90=toward +X, 180=toward +Z, 270=toward -X
+// The walker tracks (gx, gz, heading) in grid units.
+var KIT_TRACKS=[
+  // "KENNEY GP" — 17-tile circuit, 4 left turns summing to 360°
+  // Leg 0 (heading -Z): 3×straightLong then cornerLarger (sweeping T1)
+  // Leg 1 (heading +X): 2×straightLong then cornerLarge (medium T2)
+  // Leg 2 (heading +Z): 4×straightLong then cornerSmall (tight hairpin T3)
+  // Leg 3 (heading -X): 2×straightLong + 2×straight + cornerLarge (medium T4 back to start)
+  [
+    {id:'straightLong',rot:0},    // 0: start/finish straight
+    {id:'straightLong',rot:0},    // 1: continuation
+    {id:'straightLong',rot:0},    // 2: end of back straight
+    {id:'cornerLarger',rot:0},    // 3: T1 sweeping left (3×3)
+    {id:'straightLong',rot:0},    // 4: short straight
+    {id:'straightLong',rot:0},    // 5: continuation
+    {id:'cornerLarge',rot:0},     // 6: T2 medium left (2×2)
+    {id:'straightLong',rot:0},    // 7: long return straight
+    {id:'straightLong',rot:0},    // 8: continuation
+    {id:'straightLong',rot:0},    // 9: continuation
+    {id:'straightLong',rot:0},    // 10: end of return straight
+    {id:'cornerSmall',rot:0},     // 11: T3 tight hairpin (1×1)
+    {id:'straightLong',rot:0},    // 12: pit straight
+    {id:'straight',rot:0},        // 13: connector
+    {id:'straightLong',rot:0},    // 14: approach
+    {id:'straight',rot:0},        // 15: connector
+    {id:'cornerLarge',rot:0}      // 16: T4 medium left back to start (2×2)
+  ]
+];
+// Append kit tracks to TRACKS array
+(function(){
+  var kitDefs=[
+    {name:"KENNEY GP",kit:true,kitIdx:0,sky:0x5599dd,fog:0x6eaadd,ambI:.55,sunI:.85,sunC:0xffffff,hemiSky:0x77bbee,hemiGnd:0x556644,grass:0x4d8f6e,sf:[0,0],wp:[[0,0],[100,0],[200,0]]}
+  ];
+  for(var i=0;i<kitDefs.length;i++)TRACKS.push(kitDefs[i]);
+})();
 var WEATHER={
   dry:{name:'CLOUDY',gripMul:1,brkMul:1,accMul:1,steerMul:1,slideFactor:0,topSpdMul:1,skyOver:0x8899aa,fogOver:0x8899aa,ambOver:.5,sunOver:.7,sunCOver:0xdddddd,hemiSkyOver:0x99aabb,hemiGndOver:0x556655,grassOver:0x3a7a3a,rain:false},
   dry_bright:{name:'CLEAR',gripMul:1,brkMul:1,accMul:1,steerMul:1,slideFactor:0,topSpdMul:1,skyOver:0x5599dd,fogOver:0x6eaadd,ambOver:.55,sunOver:.85,sunCOver:0xffffff,hemiSkyOver:0x77bbee,hemiGndOver:0x556644,grassOver:0x3a8a3a,rain:false},
@@ -1849,7 +1903,295 @@ function buildRacingLine(){
   racingLineMesh.visible=!!hudShow.line;
   scene.add(racingLineMesh);
 }
+// ── Kit (tile-based) track builder ─────────────────────────────────────────
+function _kitFwd(h){var r=h*Math.PI/180;return{x:Math.sin(r),z:-Math.cos(r)}}
+function _kitRgt(h){var r=(h+90)*Math.PI/180;return{x:Math.sin(r),z:-Math.cos(r)}}
+// Walk a kit layout and return array of {x, z, heading, tile, arcCx, arcCz, arcR, arcStartA, id}
+function _kitWalkLayout(kitIdx){
+  var layout=KIT_TRACKS[kitIdx],result=[];
+  var x=0,z=0,heading=0;
+  for(var i=0;i<layout.length;i++){
+    var td=layout[i],tile=KIT_TILES[td.id];
+    var fwd=_kitFwd(heading),rgt=_kitRgt(heading);
+    var entry={x:x,z:z,heading:heading};
+    if(tile.type==='straight'){
+      var ex=x+fwd.x*tile.len,ez=z+fwd.z*tile.len;
+      result.push({x:entry.x,z:entry.z,heading:heading,type:'straight',len:tile.len,
+        ex:ex,ez:ez,id:td.id});
+      x=ex;z=ez;
+    }else{
+      var gs=tile.grid[0],dr=gs-0.5,df=gs-0.5;
+      // Arc center in world coords
+      var acx=x+rgt.x*tile.radius,acz=z+rgt.z*tile.radius;
+      // Start angle of the arc (angle from arc center to entry point)
+      var startA=Math.atan2(x-acx,-(z-acz));
+      var ex2=x+rgt.x*dr+fwd.x*df,ez2=z+rgt.z*dr+fwd.z*df;
+      result.push({x:entry.x,z:entry.z,heading:heading,type:'corner',
+        arcCx:acx,arcCz:acz,arcR:tile.radius,arcStartA:startA,
+        gs:gs,ex:ex2,ez:ez2,id:td.id});
+      x=ex2;z=ez2;heading=(heading+90)%360;
+    }
+  }
+  return result;
+}
+// Generate centerline points from a kit layout (for preview or full track build)
+function _kitCenterline(kitIdx,density){
+  var walk=_kitWalkLayout(kitIdx),pts=[];
+  var S=KIT_SCALE;
+  for(var i=0;i<walk.length;i++){
+    var w=walk[i];
+    if(w.type==='straight'){
+      var n=Math.max(2,Math.round(w.len*density));
+      var fwd=_kitFwd(w.heading);
+      for(var j=0;j<n;j++){
+        var t=j/n;
+        pts.push({x:(w.x+fwd.x*w.len*t)*S,z:(w.z+fwd.z*w.len*t)*S});
+      }
+    }else{
+      // Arc: sweep 90° (PI/2)
+      var arcLen=w.arcR*Math.PI/2;
+      var n2=Math.max(4,Math.round(arcLen*density));
+      for(var j2=0;j2<n2;j2++){
+        var t2=j2/n2;
+        var a=w.arcStartA+t2*Math.PI/2; // 90° sweep
+        var px=w.arcCx+Math.sin(a)*w.arcR;
+        var pz=w.arcCz-Math.cos(a)*w.arcR;
+        pts.push({x:px*S,z:pz*S});
+      }
+    }
+  }
+  return pts;
+}
+function kitTrackPreviewPoints(kitIdx){
+  return _kitCenterline(kitIdx,8);
+}
+function mkTrackKit(grassCOverride){
+  var T=TRACKS[selTrack],kitIdx=T.kitIdx;
+  var layout=KIT_TRACKS[kitIdx];
+  var walk=_kitWalkLayout(kitIdx);
+  var S=KIT_SCALE;
+  // ── 1. Build centerline: tPts[] and sd[] ──
+  var clPts=_kitCenterline(kitIdx,40);
+  tPts=[];sd=[];
+  for(var i=0;i<clPts.length;i++){
+    tPts.push(new THREE.Vector3(clPts[i].x,0,clPts[i].z));
+  }
+  // Build sd[] with tangent and normal
+  for(var i2=0;i2<tPts.length;i2++){
+    var prev=tPts[(i2-1+tPts.length)%tPts.length];
+    var next=tPts[(i2+1)%tPts.length];
+    var tx=next.x-prev.x,tz=next.z-prev.z;
+    var tl=Math.sqrt(tx*tx+tz*tz)||1;
+    tx/=tl;tz/=tl;
+    sd.push({c:tPts[i2].clone(),t:new THREE.Vector3(tx,0,tz),n:new THREE.Vector3(-tz,0,tx)});
+  }
+  // Build a spline from the centerline so spl.getTangent() works in doLaps/checkCP
+  spl=new THREE.CatmullRomCurve3(tPts.map(function(p){return p.clone()}),true,'catmullrom',.5);
+  // ── 2. Track metrics ──
+  trackLenM=0;
+  for(var _tl=1;_tl<=tPts.length;_tl++){
+    var _pa=tPts[_tl-1],_pb=tPts[_tl%tPts.length];
+    trackLenM+=Math.sqrt((_pb.x-_pa.x)*(_pb.x-_pa.x)+(_pb.z-_pa.z)*(_pb.z-_pa.z));
+  }
+  trackLenM=Math.max(500,trackLenM);
+  // SF index: closest point to grid origin (start of first tile)
+  var sfRef=T.sf,bd=Infinity;
+  for(var i3=0;i3<tPts.length;i3++){
+    var d2=Math.pow(tPts[i3].x-sfRef[0],2)+Math.pow(tPts[i3].z-sfRef[1],2);
+    if(d2<bd){bd=d2;sfIdx=i3}
+  }
+  // Update sf to the actual centerline position so preview dot is accurate
+  if(sd[sfIdx])T.sf=[sd[sfIdx].c.x,sd[sfIdx].c.z];
+  // Bounds
+  var tx1=Infinity,tx2=-Infinity,tz1=Infinity,tz2=-Infinity;
+  for(var ib=0;ib<tPts.length;ib++){
+    tx1=Math.min(tx1,tPts[ib].x);tx2=Math.max(tx2,tPts[ib].x);
+    tz1=Math.min(tz1,tPts[ib].z);tz2=Math.max(tz2,tPts[ib].z);
+  }
+  tCX=(tx1+tx2)/2;tCZ=(tz1+tz2)/2;
+  trackViewR=Math.max(tx2-tx1,tz2-tz1)/2+40;
+  // ── 3. Curvature analysis ──
+  var cv2=[];
+  for(var i5=0;i5<sd.length;i5++){
+    var p5=sd[(i5-5+sd.length)%sd.length],nx5=sd[(i5+5)%sd.length];
+    cv2.push(new THREE.Vector3().subVectors(nx5.t,p5.t).length());
+  }
+  trackCurv=[];
+  for(var i6=0;i6<cv2.length;i6++){
+    var ss=0,cc=0;
+    for(var j3=-15;j3<=15;j3++){ss+=cv2[(i6+j3+cv2.length)%cv2.length];cc++}
+    trackCurv.push(ss/cc);
+  }
+  var _csort=trackCurv.slice().sort(function(a,b){return a-b});
+  curbCurvThresh=Math.max(.03,_csort[Math.floor(_csort.length*.72)]);
+  flatCurvThresh=Math.max(.012,_csort[Math.floor(_csort.length*.5)]);
+  // ── 4. Ground height, collision grid, racing line, start line ──
+  _buildGroundH();
+  _buildColGrid();
+  buildRacingLine();
+  mkStartLine();
+  PIT=null;_pitPrevSL=0;
+  builtTrack=selTrack;builtWeather=selWeather;
+  // ── 5. Ground plane ──
+  var grassC=grassCOverride||T.grass;
+  var gnd=new THREE.Mesh(
+    new THREE.PlaneGeometry(4000,4000),
+    new THREE.MeshLambertMaterial({color:grassC})
+  );
+  gnd.rotation.x=-Math.PI/2;gnd.position.set(tCX,-0.3,tCZ);gnd.receiveShadow=true;
+  scene.add(gnd);
+  // ── 6. Load and place GLB tile models ──
+  var loader=new THREE.GLTFLoader();
+  var _tileCache={};
+  // Group tiles by id for instancing
+  var tileCounts={};
+  for(var ti=0;ti<walk.length;ti++){
+    var wt=walk[ti];
+    if(!tileCounts[wt.id])tileCounts[wt.id]=[];
+    tileCounts[wt.id].push(ti);
+  }
+  var tileIds=Object.keys(tileCounts);
+  var _loadIdx=0;
+  function _loadNextTile(){
+    if(_loadIdx>=tileIds.length){_placeProps();return}
+    var tId=tileIds[_loadIdx++];
+    var tileDef=KIT_TILES[tId];
+    loader.load('models/'+tileDef.file,function(gltf){
+      var srcMeshes=[];
+      gltf.scene.updateMatrixWorld(true);
+      gltf.scene.traverse(function(o){if(o.isMesh&&o.geometry)srcMeshes.push(o)});
+      var indices=tileCounts[tId],n=indices.length;
+      // Build transform matrices for each instance
+      var matrices=[];
+      for(var mi=0;mi<n;mi++){
+        var w=walk[indices[mi]];
+        var m4=new THREE.Matrix4();
+        // Tile local origin at entry point, rotated to match heading
+        // The tile model sits at local origin with road going along -Z.
+        // We need to rotate it so local -Z aligns with the walker's heading.
+        var rotY=w.heading*Math.PI/180;
+        // For corners, the tile's origin is at the entry point, but the model
+        // origin is at (0,0,0) with entry at (0.5, 0, 0) in local space.
+        // We need to offset so the road center (0.5 in local X) aligns with
+        // the walker's entry position.
+        // Entry in local space: (0.5, 0, 0) → we need to shift by -0.5 in local X
+        // In world space: shift by -0.5 * right_vector
+        var rgt=_kitRgt(w.heading);
+        var wx=w.x*S-rgt.x*0.5*S;
+        var wz=w.z*S-rgt.z*0.5*S;
+        // Compose: translate to world pos, rotate by heading, scale
+        var sMat=new THREE.Matrix4().makeScale(S,S,S);
+        var rMat=new THREE.Matrix4().makeRotationY(rotY);
+        var tMat=new THREE.Matrix4().makeTranslation(wx,0,wz);
+        m4.multiplyMatrices(tMat,rMat);
+        m4.multiply(sMat);
+        matrices.push(m4);
+      }
+      // Create instanced meshes for each sub-mesh in the model
+      for(var si=0;si<srcMeshes.length;si++){
+        var sm=srcMeshes[si];
+        var inst=new THREE.InstancedMesh(sm.geometry,sm.material,n);
+        inst.castShadow=true;inst.receiveShadow=true;inst.frustumCulled=false;
+        var localM=sm.matrixWorld.clone();
+        var _im=new THREE.Matrix4();
+        for(var ii=0;ii<n;ii++){
+          _im.multiplyMatrices(matrices[ii],localM);
+          inst.setMatrixAt(ii,_im);
+        }
+        inst.instanceMatrix.needsUpdate=true;
+        scene.add(inst);
+      }
+      _loadNextTile();
+    },undefined,function(err){
+      console.error('Kit tile load error:',tId,err);
+      _loadNextTile();
+    });
+  }
+  // ── 7. Trackside props ──
+  function _placeProps(){
+    // Barriers along track edges (alternating red/white)
+    var barrierSpacing=3; // in sd indices
+    var barrierFiles=['barrierRed.glb','barrierWhite.glb'];
+    var _bIdx=0;
+    function _loadBarriers(){
+      if(_bIdx>=barrierFiles.length)return _loadGrandstand();
+      loader.load('models/'+barrierFiles[_bIdx],function(gltf){
+        gltf.scene.updateMatrixWorld(true);
+        var meshes=[];
+        gltf.scene.traverse(function(o){if(o.isMesh)meshes.push(o)});
+        // Place on both sides, alternating colors
+        var positions=[];
+        var off=TW/2+CWW+2;
+        for(var side=-1;side<=1;side+=2){
+          for(var bi=0;bi<sd.length;bi+=barrierSpacing){
+            if((Math.floor(bi/barrierSpacing)+(_bIdx))%2!==0)continue;
+            var s=sd[bi];
+            var bx=s.c.x+s.n.x*side*off;
+            var bz=s.c.z+s.n.z*side*off;
+            var m4=new THREE.Matrix4();
+            var sc=S*0.03; // barriers are small, scale them up
+            m4.compose(
+              new THREE.Vector3(bx,0.1,bz),
+              new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.atan2(s.t.x,s.t.z)),
+              new THREE.Vector3(sc,sc,sc)
+            );
+            positions.push(m4);
+          }
+        }
+        if(positions.length>0){
+          for(var mi=0;mi<meshes.length;mi++){
+            var inst=new THREE.InstancedMesh(meshes[mi].geometry,meshes[mi].material,positions.length);
+            inst.castShadow=false;inst.receiveShadow=true;inst.frustumCulled=false;
+            var lm=meshes[mi].matrixWorld.clone();
+            var _im=new THREE.Matrix4();
+            for(var ii=0;ii<positions.length;ii++){
+              _im.multiplyMatrices(positions[ii],lm);
+              inst.setMatrixAt(ii,_im);
+            }
+            inst.instanceMatrix.needsUpdate=true;
+            scene.add(inst);
+          }
+        }
+        _bIdx++;_loadBarriers();
+      },undefined,function(){_bIdx++;_loadBarriers()});
+    }
+    function _loadGrandstand(){
+      loader.load('models/grandStandCovered.glb',function(gltf){
+        // Place along start/finish straight
+        var s=sd[sfIdx];if(!s)return;
+        var obj=gltf.scene;
+        var sc=S*0.04;
+        obj.scale.setScalar(sc);
+        var off=TW/2+CWW+12;
+        obj.position.set(s.c.x+s.n.x*off,0,s.c.z+s.n.z*off);
+        obj.rotation.y=Math.atan2(s.t.x,s.t.z);
+        obj.traverse(function(o){if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+        scene.add(obj);
+      },undefined,function(){});
+      // Overhead lights at start/finish
+      loader.load('models/overheadLights.glb',function(gltf){
+        var s=sd[sfIdx];if(!s)return;
+        var obj=gltf.scene;
+        var sc=S*0.04;
+        obj.scale.setScalar(sc);
+        obj.position.set(s.c.x,0,s.c.z);
+        obj.rotation.y=Math.atan2(s.n.x,s.n.z);
+        obj.traverse(function(o){if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+        scene.add(obj);
+      },undefined,function(){});
+    }
+    _loadBarriers();
+  }
+  _loadNextTile();
+  // ── 8. Update dummy wp on the TRACKS entry so other code doesn't crash ──
+  var wpArr=[];
+  for(var wi=0;wi<tPts.length;wi+=Math.max(1,Math.floor(tPts.length/40))){
+    wpArr.push([tPts[wi].x,tPts[wi].z]);
+  }
+  T.wp=wpArr;
+}
 function mkTrack(grassCOverride){
+  if(TRACKS[selTrack].kit){mkTrackKit(grassCOverride);return}
   // Tracks with a 3D model: build the drivable path + ground synchronously
   // (physics/resetCar need tPts & sd immediately) and stream in the visual
   // model in the background, auto-fitted to the track footprint.
@@ -2912,7 +3254,13 @@ var previewAnim=null,previewStart=0;
 function drawTrackPreview(){
   if(previewAnim){cancelAnimationFrame(previewAnim);previewAnim=null}
   var c=document.getElementById('trackPreview');if(!c)return;var ctx=c.getContext('2d'),w=120,h=120;
-  var wp=TRACKS[selTrack].wp,pts=wp.map(function(p){return{x:p[0],z:p[1]}});
+  var pts;
+  if(TRACKS[selTrack].kit){
+    pts=kitTrackPreviewPoints(TRACKS[selTrack].kitIdx);
+  }else{
+    var wp=TRACKS[selTrack].wp;
+    pts=wp.map(function(p){return{x:p[0],z:p[1]}});
+  }
   var x1=Infinity,x2=-Infinity,z1=Infinity,z2=-Infinity;
   pts.forEach(function(p){x1=Math.min(x1,p.x);x2=Math.max(x2,p.x);z1=Math.min(z1,p.z);z2=Math.max(z2,p.z)});
   var rX=x2-x1+40,rZ=z2-z1+40,sc=Math.min(w/rX,h/rZ)*.8;
