@@ -1225,6 +1225,47 @@ function loadTrackGLB(filename){
 function loadTrackAsset(filename){
   return /\.glb$/i.test(filename)?loadTrackGLB(filename):loadTrackOBJ(filename);
 }
+// ── Tile tracks (built in editor.html) ────────────────────────────────────
+// Loads a Kenney road tile, recolours it, recentres its footprint to the
+// origin and scales a 1-unit tile up to G world units so it drops onto the
+// integer grid. Cached; every placement is a clone.
+var tileTemplates={};
+function loadTileGLB(filename,G){
+  var ckey=filename+'@'+G;
+  if(tileTemplates[ckey])return Promise.resolve(tileTemplates[ckey].clone(true));
+  return new Promise(function(res,rej){
+    new THREE.GLTFLoader().load('models/'+filename,function(gltf){
+      var root=gltf.scene;
+      root.traverse(function(o){if(!o.isMesh)return;o.castShadow=false;o.receiveShadow=true;
+        var mats=Array.isArray(o.material)?o.material:[o.material];
+        mats.forEach(function(m){if(!m||!m.color)return;var nm=(m.name||'')+'';
+          if(/road/i.test(nm))m.color.setHex(0x3a3d42);
+          else if(/grass|terrain/i.test(nm))m.color.setHex(0x4f7a39);
+          else if(/grey/i.test(nm))m.color.setHex(0xdadde0);
+          if(m.roughness!==undefined)m.roughness=.9;
+        });
+      });
+      var box=new THREE.Box3().setFromObject(root),c=box.getCenter(new THREE.Vector3());
+      var wrap=new THREE.Group();root.position.set(-c.x,-c.y,-c.z);wrap.add(root);
+      var holder=new THREE.Group();holder.scale.setScalar(G);holder.add(wrap);
+      tileTemplates[ckey]=holder;res(holder.clone(true));
+    },undefined,rej);
+  });
+}
+var TILE_MODELS={straight:'roadStraight.glb',corner:'roadCornerSmall.glb'};
+// Place all tiles of a finished editor track into the scene.
+function buildTileTrack(T){
+  var G=T.G||(26/0.69),group=new THREE.Group();scene.add(group);
+  var need={};T.tiles.forEach(function(t){need[t.type]=1;});
+  Object.keys(need).forEach(function(type){
+    loadTileGLB(TILE_MODELS[type],G).then(function(tmpl){
+      T.tiles.forEach(function(t){if(t.type!==type)return;
+        var o=tmpl.clone(true);o.position.set(t.i*G,0,t.j*G);o.rotation.y=t.rot*Math.PI/2;group.add(o);
+      });
+    }).catch(function(e){console.error('tile load failed',type,e);});
+  });
+  return group;
+}
 function parseF1OBJ(txt){
   var pos=[],nrm=[],groups=[],cur=null,o='',m='';
   var lines=txt.split('\n');
@@ -1850,6 +1891,22 @@ function buildRacingLine(){
   scene.add(racingLineMesh);
 }
 function mkTrack(grassCOverride){
+  // Tile tracks (built in editor.html): physics from the waypoint racing line,
+  // visuals from snapped Kenney road tiles. Ground is a flat grass plane; the
+  // tiles bring their own road + verges.
+  if(TRACKS[selTrack].tileTrack){
+    var pts=WP.map(function(p){return new THREE.Vector3(p[0],0,p[1])});spl=new THREE.CatmullRomCurve3(pts,true,'catmullrom',.5);tPts=spl.getPoints(2400);sd=[];for(var i=0;i<tPts.length;i++){var t=i/tPts.length,tn=spl.getTangent(t).normalize();sd.push({c:spl.getPoint(t),t:tn,n:new THREE.Vector3(-tn.z,0,tn.x)})}
+    _buildGroundH();
+    trackLenM=0;for(var _tl=1;_tl<=tPts.length;_tl++){var _pa3=tPts[_tl-1],_pb3=tPts[_tl%tPts.length];trackLenM+=Math.sqrt((_pb3.x-_pa3.x)*(_pb3.x-_pa3.x)+(_pb3.z-_pa3.z)*(_pb3.z-_pa3.z))}trackLenM=Math.max(500,trackLenM);
+    var sfRef=TRACKS[selTrack].sf;var bd=Infinity;for(var i2=0;i2<tPts.length;i2++){var d2=Math.pow(tPts[i2].x-sfRef[0],2)+Math.pow(tPts[i2].z-sfRef[1],2);if(d2<bd){bd=d2;sfIdx=i2}}
+    var tx1=Infinity,tx2=-Infinity,tz1=Infinity,tz2=-Infinity;for(var ib=0;ib<tPts.length;ib++){tx1=Math.min(tx1,tPts[ib].x);tx2=Math.max(tx2,tPts[ib].x);tz1=Math.min(tz1,tPts[ib].z);tz2=Math.max(tz2,tPts[ib].z)}var CX=(tx1+tx2)/2,CZ=(tz1+tz2)/2;tCX=CX;tCZ=CZ;trackViewR=Math.max(tx2-tx1,tz2-tz1)/2+60;_buildColGrid();builtTrack=selTrack;builtWeather=selWeather;PIT=null;_pitPrevSL=0;
+    var grassC=grassCOverride||TRACKS[selTrack].grass;
+    var gnd=new THREE.Mesh(new THREE.PlaneGeometry(6000,6000),new THREE.MeshLambertMaterial({color:grassC}));gnd.rotation.x=-Math.PI/2;gnd.position.y=-0.1;gnd.receiveShadow=true;scene.add(gnd);
+    mkStartLine();
+    buildTileTrack(TRACKS[selTrack]);
+    mkWorld();
+    return;
+  }
   // Tracks with a 3D model: build the drivable path + ground synchronously
   // (physics/resetCar need tPts & sd immediately) and stream in the visual
   // model in the background, auto-fitted to the track footprint.

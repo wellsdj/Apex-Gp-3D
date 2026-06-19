@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>APEX GP — Track Editor</title>
+<style>
+  html,body{margin:0;height:100%;background:#10131a;color:#e8edf2;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden}
+  #c{position:fixed;inset:0;display:block}
+  #ui{position:fixed;left:14px;top:14px;width:240px;background:rgba(14,18,26,.92);
+      border:1px solid #2a3340;border-radius:12px;padding:14px 14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+  #ui h1{font-size:15px;margin:0 0 2px;letter-spacing:1px;color:#7fd1ff}
+  #ui .sub{font-size:11px;color:#8a97a6;margin-bottom:12px}
+  .grp{margin-bottom:12px}
+  .grp .lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#8a97a6;margin-bottom:6px}
+  .btns{display:flex;gap:6px;flex-wrap:wrap}
+  button{background:#1c2430;color:#cfe0ee;border:1px solid #33404f;border-radius:8px;
+      padding:8px 10px;font-size:12px;cursor:pointer;flex:1;min-width:0}
+  button:hover{background:#27323f}
+  button.on{background:#2f6df0;border-color:#5b8cff;color:#fff}
+  button.wide{flex-basis:100%}
+  #status{font-size:11px;line-height:1.5;color:#9fb0bf;background:#161c26;border-radius:8px;padding:8px 10px;margin-top:4px}
+  #status b{color:#fff}
+  .ok{color:#5fe08a!important}.bad{color:#ff7a7a!important}
+  #out{position:fixed;right:14px;top:14px;bottom:14px;width:360px;display:none;flex-direction:column;
+      background:rgba(14,18,26,.95);border:1px solid #2a3340;border-radius:12px;padding:12px}
+  #out h2{font-size:13px;margin:0 0 8px;color:#7fd1ff}
+  #out textarea{flex:1;width:100%;box-sizing:border-box;background:#0c0f15;color:#bfe3c2;border:1px solid #2a3340;
+      border-radius:8px;font:11px/1.4 monospace;padding:8px;resize:none}
+  #out .row{display:flex;gap:6px;margin-top:8px}
+  #hint{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);font-size:11px;color:#7e8b9a;
+      background:rgba(14,18,26,.85);border:1px solid #232c38;border-radius:20px;padding:6px 14px;white-space:nowrap}
+  kbd{background:#222c38;border:1px solid #3a4655;border-radius:4px;padding:1px 5px;font:11px monospace;color:#cfe0ee}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="ui">
+  <h1>TRACK EDITOR</h1>
+  <div class="sub">Snap-to-grid · Kenney Racing Kit</div>
+
+  <div class="grp">
+    <div class="lbl">Tool</div>
+    <div class="btns">
+      <button id="tStraight" class="on">Straight <kbd>1</kbd></button>
+      <button id="tCorner">Corner <kbd>2</kbd></button>
+    </div>
+    <div class="btns" style="margin-top:6px">
+      <button id="tErase" class="wide">Eraser <kbd>3</kbd></button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="lbl">Actions</div>
+    <div class="btns">
+      <button id="bRot">Rotate <kbd>R</kbd></button>
+      <button id="bStart">Set Start</button>
+    </div>
+    <div class="btns" style="margin-top:6px">
+      <button id="bFlip">Flip Dir</button>
+      <button id="bClear">Clear</button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="lbl">Track</div>
+    <div class="btns">
+      <button id="bExport" class="wide on">Export Track</button>
+    </div>
+  </div>
+
+  <div id="status">Place tiles to begin.</div>
+</div>
+
+<div id="out">
+  <h2>Exported track — paste into the game</h2>
+  <textarea id="outText" readonly></textarea>
+  <div class="row">
+    <button id="bCopy">Copy</button>
+    <button id="bDownload">Download .json</button>
+    <button id="bCloseOut">Close</button>
+  </div>
+</div>
+
+<div id="hint">
+  <kbd>Click</kbd> place · <kbd>R</kbd> rotate · <kbd>1/2/3</kbd> tools · drag to pan · wheel to zoom
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+"use strict";
+// ──────────────────────────────────────────────────────────────────────────
+// APEX GP TRACK EDITOR
+// Builds a closed circuit out of 1×1 Kenney road tiles on an integer grid.
+// Because every tile snaps to a whole cell, edges always line up — no gaps,
+// no misalignment. Export produces both the 3D tile layout AND a racing-line
+// waypoint list so the track is immediately drivable in the game.
+// ──────────────────────────────────────────────────────────────────────────
+
+// World size of one grid cell. The Kenney road occupies the central 0.69 of a
+// tile, so G = TW / 0.69 makes the tile road match the game's road width (TW=26).
+var G = 26 / 0.69;            // ≈ 37.7 world units per cell
+var TILE_MODEL = { straight:'roadStraight.glb', corner:'roadCornerSmall.glb' };
+
+// ── Tile port logic ───────────────────────────────────────────────────────
+// Directions in grid space (x right, z down). N=-z, S=+z, E=+x, W=-x.
+var DIR = { N:[0,-1], S:[0,1], E:[1,0], W:[-1,0] };
+function dirEq(a,b){return a[0]===b[0]&&a[1]===b[1];}
+function opp(d){return [-d[0],-d[1]];}
+// rotY(+90°) maps (x,z)->(z,-x)  (CCW in top-down view: E→N→W→S→E)
+function rotCCW(v){return [v[1],-v[0]];}
+function rotN(v,r){for(var i=0;i<((r%4)+4)%4;i++)v=rotCCW(v);return v;}
+
+// Canonical (rotation 0) port directions, derived directly from the GLB geometry:
+//  straight  → road runs N–S
+//  corner    → quarter arc joining S and E edge-midpoints, around the SE corner
+function tilePorts(type,rot){
+  if(type==='straight') return [rotN(DIR.N,rot), rotN(DIR.S,rot)];
+  return [rotN(DIR.S,rot), rotN(DIR.E,rot)];           // corner
+}
+// Corner arc centre offset from cell centre, in units of half-a-cell (SE = [1,1]).
+function cornerArcOff(rot){return rotN([1,1],rot);}
+
+// ── Scene ─────────────────────────────────────────────────────────────────
+var canvas=document.getElementById('c');
+var renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true});
+renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(2,devicePixelRatio));
+renderer.setClearColor(0x10131a);
+var scene=new THREE.Scene();
+
+// Top-down orthographic camera. We pan a pivot in X/Z and keep looking straight down.
+var view={cx:0,cz:0,span:9*G};
+var cam=new THREE.OrthographicCamera(-1,1,1,-1,.1,5000);
+function fitCam(){
+  var a=innerWidth/innerHeight, h=view.span/2, w=h*a;
+  cam.left=-w;cam.right=w;cam.top=h;cam.bottom=-h;cam.near=.1;cam.far=5000;
+  cam.position.set(view.cx,500,view.cz);cam.up.set(0,0,-1);cam.lookAt(view.cx,0,view.cz);
+  cam.updateProjectionMatrix();
+}
+fitCam();
+scene.add(new THREE.AmbientLight(0xffffff,.85));
+var dl=new THREE.DirectionalLight(0xffffff,.6);dl.position.set(1,3,2);scene.add(dl);
+
+// Grid
+var grid=new THREE.GridHelper(200*G,200,0x2a3340,0x1c2530);
+grid.position.y=-0.02;scene.add(grid);
+// Highlighted origin cross
+var axes=new THREE.Group();
+[[1,0,0x5b8cff],[0,1,0x5b8cff]].forEach(function(){});
+scene.add(axes);
+
+// Hover cell preview
+var hoverMat=new THREE.MeshBasicMaterial({color:0x2f6df0,transparent:true,opacity:.18});
+var hover=new THREE.Mesh(new THREE.PlaneGeometry(G,G),hoverMat);
+hover.rotation.x=-Math.PI/2;hover.position.y=.02;hover.visible=false;scene.add(hover);
+
+// Start marker
+var startMat=new THREE.MeshBasicMaterial({color:0x5fe08a,transparent:true,opacity:.85});
+var startMark=new THREE.Mesh(new THREE.PlaneGeometry(G*.5,G*.16),startMat);
+startMark.rotation.x=-Math.PI/2;startMark.position.y=.05;startMark.visible=false;scene.add(startMark);
+
+// Centerline overlay (drawn live so you can see the racing line)
+var lineGroup=new THREE.Group();scene.add(lineGroup);
+
+// ── Tile templates (loaded GLBs, recentred + scaled to one cell) ──────────
+var loader=new THREE.GLTFLoader();
+var templates={};   // type -> recentred Group (clone per placement)
+function recolor(o){
+  o.traverse(function(m){
+    if(!m.isMesh)return;m.castShadow=false;m.receiveShadow=true;
+    var mats=Array.isArray(m.material)?m.material:[m.material];
+    mats.forEach(function(mat){if(!mat||!mat.color)return;var nm=(mat.name||'')+'';
+      if(/road/i.test(nm))mat.color.setHex(0x3a3d42);
+      else if(/grass|terrain/i.test(nm))mat.color.setHex(0x4f7a39);
+      else if(/grey/i.test(nm))mat.color.setHex(0xdadde0);
+      if(mat.roughness!==undefined)mat.roughness=.9;
+    });
+  });
+}
+function loadTemplate(type){
+  return new Promise(function(res,rej){
+    loader.load('models/'+TILE_MODEL[type],function(g){
+      var root=g.scene;recolor(root);
+      // Recentre the footprint to the origin and scale a 1-unit tile up to G.
+      var box=new THREE.Box3().setFromObject(root);
+      var c=box.getCenter(new THREE.Vector3());
+      var wrap=new THREE.Group();
+      root.position.set(-c.x,-c.y,-c.z);wrap.add(root);
+      var holder=new THREE.Group();holder.scale.setScalar(G);holder.add(wrap);
+      templates[type]=holder;res();
+    },undefined,rej);
+  });
+}
+
+// ── Track data ────────────────────────────────────────────────────────────
+// tiles keyed by "i,j" -> {i,j,type,rot,obj}
+var tiles={};
+var tool='straight', curRot=0;
+var startKey=null, startDir=null;   // chosen start tile + travel direction
+
+function key(i,j){return i+','+j;}
+function place(i,j){
+  if(tool==='erase'){remove(i,j);return;}
+  remove(i,j);
+  var t={i:i,j:j,type:tool,rot:curRot};
+  var obj=templates[tool].clone(true);
+  obj.position.set(i*G,0,j*G);
+  obj.rotation.y=curRot*Math.PI/2;
+  scene.add(obj);t.obj=obj;
+  tiles[key(i,j)]=t;
+  if(!startKey)setStart(i,j);
+  refresh();
+}
+function remove(i,j){
+  var k=key(i,j),t=tiles[k];if(!t)return;
+  scene.remove(t.obj);delete tiles[k];
+  if(startKey===k){startKey=null;startDir=null;var any=Object.keys(tiles)[0];if(any){var p=tiles[any];setStart(p.i,p.j);}}
+  refresh();
+}
+function setStart(i,j){
+  var t=tiles[key(i,j)];if(!t)return;
+  startKey=key(i,j);startDir=tilePorts(t.type,t.rot)[1]; // exit via 2nd port
+  refresh();
+}
+
+// ── Geometry: centreline points for a single tile, entry→exit ─────────────
+function edgeMid(i,j,dir){return [ (i+dir[0]*0.5)*G, (j+dir[1]*0.5)*G ];}
+function tileCenterline(t,entryDir,exitDir){
+  var pts=[];
+  var C=[t.i*G,t.j*G];
+  if(t.type==='straight'){
+    pts.push(edgeMid(t.i,t.j,entryDir));
+    pts.push([C[0],C[1]]);
+    pts.push(edgeMid(t.i,t.j,exitDir));
+  }else{
+    var off=cornerArcOff(t.rot);                 // half-cell units
+    var ac=[C[0]+off[0]*0.5*G, C[1]+off[1]*0.5*G];
+    var pa=edgeMid(t.i,t.j,entryDir), pb=edgeMid(t.i,t.j,exitDir);
+    var a0=Math.atan2(pa[1]-ac[1],pa[0]-ac[0]);
+    var a1=Math.atan2(pb[1]-ac[1],pb[0]-ac[0]);
+    // take the short way round (a quarter turn)
+    var d=a1-a0;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;
+    var R=0.5*G,N=8;
+    for(var s=0;s<=N;s++){var a=a0+d*s/N;pts.push([ac[0]+Math.cos(a)*R, ac[1]+Math.sin(a)*R]);}
+  }
+  return pts;
+}
+
+// ── Trace the loop & build waypoints ──────────────────────────────────────
+// Returns {ok, wp:[[x,z]...], order:[...], reason}
+function traceLoop(){
+  var n=Object.keys(tiles).length;
+  if(!startKey||n<3)return {ok:false,reason:'Need a closed loop (3+ tiles).'};
+  var start=tiles[startKey];
+  // entry into the start tile is the port that ISN'T startDir
+  var ports=tilePorts(start.type,start.rot);
+  var entry=dirEq(ports[0],startDir)?ports[1]:ports[0];
+  var wp=[],order=[],guard=0;
+  var cur=start, curEntry=entry, curExit=startDir;
+  do{
+    if(++guard>5000)return {ok:false,reason:'Trace runaway.'};
+    var cl=tileCenterline(cur,curEntry,curExit);
+    for(var p=0;p<cl.length;p++){
+      // dedupe shared junction points
+      if(wp.length){var last=wp[wp.length-1];if(Math.abs(last[0]-cl[p][0])<1e-3&&Math.abs(last[1]-cl[p][1])<1e-3)continue;}
+      wp.push(cl[p]);
+    }
+    order.push(key(cur.i,cur.j));
+    // step to neighbour across the exit edge
+    var ni=cur.i+curExit[0], nj=cur.j+curExit[1];
+    var nx=tiles[key(ni,nj)];
+    if(!nx)return {ok:false,reason:'Path breaks at cell '+ni+','+nj+'.'};
+    var nports=tilePorts(nx.type,nx.rot);
+    var need=opp(curExit);
+    if(!dirEq(nports[0],need)&&!dirEq(nports[1],need))
+      return {ok:false,reason:'Tile '+ni+','+nj+' does not connect back.'};
+    var nextExit=dirEq(nports[0],need)?nports[1]:nports[0];
+    cur=nx;curEntry=need;curExit=nextExit;
+  }while(key(cur.i,cur.j)!==startKey);
+  if(order.length!==n)return {ok:false,reason:'Loop misses '+(n-order.length)+' tile(s).'};
+  // drop duplicate closing point
+  if(wp.length>1){var a=wp[0],b=wp[wp.length-1];if(Math.abs(a[0]-b[0])<1e-3&&Math.abs(a[1]-b[1])<1e-3)wp.pop();}
+  return {ok:true,wp:wp,order:order};
+}
+
+// ── Live refresh: centreline + validation status ──────────────────────────
+function refresh(){
+  while(lineGroup.children.length)lineGroup.remove(lineGroup.children[0]);
+  var res=traceLoop();
+  var st=document.getElementById('status');
+  var n=Object.keys(tiles).length;
+  if(res.ok){
+    var v=[];for(var i=0;i<=res.wp.length;i++){var p=res.wp[i%res.wp.length];v.push(p[0],.6,p[1]);}
+    var geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(v,3));
+    lineGroup.add(new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x5fe08a})));
+    st.innerHTML='<b>'+n+'</b> tiles · <span class="ok">CLOSED LOOP ✓</span><br>'+
+                 res.wp.length+' waypoints · ready to export';
+  }else{
+    // draw open path faintly for guidance
+    st.innerHTML='<b>'+n+'</b> tiles · <span class="bad">'+res.reason+'</span>';
+  }
+  // start marker
+  if(startKey&&tiles[startKey]){
+    var t=tiles[startKey];startMark.visible=true;
+    startMark.position.set(t.i*G,.05,t.j*G);
+    startMark.rotation.z=Math.atan2(startDir[0],startDir[1]);
+  }else startMark.visible=false;
+}
+
+// ── Input ─────────────────────────────────────────────────────────────────
+var ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
+var ground=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+function cellAt(ev){
+  ndc.x=(ev.clientX/innerWidth)*2-1;ndc.y=-(ev.clientY/innerHeight)*2+1;
+  ray.setFromCamera(ndc,cam);var hit=new THREE.Vector3();
+  if(!ray.ray.intersectPlane(ground,hit))return null;
+  return {i:Math.round(hit.x/G),j:Math.round(hit.z/G)};
+}
+var dragging=false,dragMoved=false,panLast=null,setStartMode=false;
+canvas.addEventListener('mousedown',function(e){dragging=true;dragMoved=false;panLast={x:e.clientX,y:e.clientY};});
+canvas.addEventListener('mousemove',function(e){
+  var c=cellAt(e);if(c){hover.visible=true;hover.position.set(c.i*G,.02,c.j*G);}
+  if(dragging&&panLast){
+    var dx=e.clientX-panLast.x,dy=e.clientY-panLast.y;
+    if(Math.abs(dx)+Math.abs(dy)>3)dragMoved=true;
+    if(dragMoved){var k=view.span/innerHeight;view.cx-=dx*k;view.cz-=dy*k;panLast={x:e.clientX,y:e.clientY};fitCam();}
+  }
+});
+canvas.addEventListener('mouseup',function(e){
+  dragging=false;
+  if(dragMoved){panLast=null;return;}panLast=null;
+  var c=cellAt(e);if(!c)return;
+  if(setStartMode){setStart(c.i,c.j);setStartMode=false;document.getElementById('bStart').classList.remove('on');return;}
+  place(c.i,c.j);
+});
+canvas.addEventListener('contextmenu',function(e){e.preventDefault();var c=cellAt(e);if(c)remove(c.i,c.j);});
+canvas.addEventListener('wheel',function(e){e.preventDefault();view.span=Math.max(2*G,Math.min(60*G,view.span*(1+e.deltaY*.0012)));fitCam();},{passive:false});
+
+function selTool(t){tool=t;
+  ['Straight','Corner','Erase'].forEach(function(n){document.getElementById('t'+n).classList.remove('on');});
+  document.getElementById('t'+(t==='straight'?'Straight':t==='corner'?'Corner':'Erase')).classList.add('on');
+}
+document.getElementById('tStraight').onclick=function(){selTool('straight');};
+document.getElementById('tCorner').onclick=function(){selTool('corner');};
+document.getElementById('tErase').onclick=function(){selTool('erase');};
+document.getElementById('bRot').onclick=function(){curRot=(curRot+1)%4;};
+document.getElementById('bStart').onclick=function(){setStartMode=true;this.classList.add('on');};
+document.getElementById('bFlip').onclick=function(){if(startKey){startDir=opp(startDir);refresh();}};
+document.getElementById('bClear').onclick=function(){if(!confirm('Clear the whole track?'))return;Object.keys(tiles).forEach(function(k){scene.remove(tiles[k].obj);});tiles={};startKey=null;startDir=null;refresh();};
+addEventListener('keydown',function(e){
+  var k=e.key.toLowerCase();
+  if(k==='1')selTool('straight');else if(k==='2')selTool('corner');else if(k==='3')selTool('erase');
+  else if(k==='r')curRot=(curRot+1)%4;
+});
+
+// ── Export ────────────────────────────────────────────────────────────────
+function round2(n){return Math.round(n*10)/10;}
+document.getElementById('bExport').onclick=function(){
+  var res=traceLoop();
+  if(!res.ok){alert('Cannot export — '+res.reason);return;}
+  var name=(prompt('Track name:','MY CIRCUIT')||'MY CIRCUIT').toUpperCase();
+  var wp=res.wp.map(function(p){return [round2(p[0]),round2(p[1])];});
+  var tileList=[];Object.keys(tiles).forEach(function(k){var t=tiles[k];tileList.push({i:t.i,j:t.j,type:t.type,rot:t.rot});});
+  var sf=wp[0];
+  var data={name:name,G:round2(G),sf:sf,wp:wp,tiles:tileList};
+  // TRACKS entry (kart-style: flat, tiles drive the visuals & physics)
+  var entry='{name:"'+name+'",tileTrack:true,flat:true,sky:0x6db4e8,fog:0x86b8d8,'+
+            'ambI:.55,sunI:.95,sunC:0xfff4e0,hemiSky:0x88bbee,hemiGnd:0x4a6644,grass:0x3a7a35,'+
+            'G:'+data.G+',sf:['+sf[0]+','+sf[1]+'],'+
+            'tiles:'+JSON.stringify(tileList)+',\n  wp:'+JSON.stringify(wp)+'}';
+  var out=document.getElementById('out');out.style.display='flex';
+  document.getElementById('outText').value=entry;
+  window._exportData=data;window._exportEntry=entry;
+};
+document.getElementById('bCopy').onclick=function(){var t=document.getElementById('outText');t.select();document.execCommand('copy');this.textContent='Copied!';var b=this;setTimeout(function(){b.textContent='Copy';},1200);};
+document.getElementById('bDownload').onclick=function(){
+  var blob=new Blob([JSON.stringify(window._exportData,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(window._exportData.name||'track').replace(/\s+/g,'_')+'.json';a.click();
+};
+document.getElementById('bCloseOut').onclick=function(){document.getElementById('out').style.display='none';};
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+addEventListener('resize',function(){renderer.setSize(innerWidth,innerHeight);fitCam();});
+(function loop(){requestAnimationFrame(loop);renderer.render(scene,cam);})();
+
+Promise.all([loadTemplate('straight'),loadTemplate('corner')]).then(function(){
+  document.getElementById('status').textContent='Ready — pick a tool and click the grid.';
+  // seed a tiny demo loop so it's obvious how it works
+}).catch(function(e){
+  document.getElementById('status').innerHTML='<span class="bad">Failed to load tile models. Run from a web server (not file://).</span>';
+  console.error(e);
+});
+</script>
+</body>
+</html>
