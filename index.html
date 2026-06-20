@@ -906,7 +906,7 @@ var TRACKS=[
 var BUILTIN_TRACK_COUNT=TRACKS.length;
 function getUserTracks(){try{return JSON.parse(localStorage.getItem('apexgp_user_tracks'))||[]}catch(e){return[]}}
 function saveUserTracks(arr){try{localStorage.setItem('apexgp_user_tracks',JSON.stringify(arr))}catch(e){}}
-function rebuildTrackList(){TRACKS.length=BUILTIN_TRACK_COUNT;getUserTracks().forEach(function(ut){TRACKS.push(ut)});if(selTrack>=TRACKS.length)selTrack=TRACKS.length-1;if(selTrack<0)selTrack=0;var tn=document.getElementById('trackName');if(tn)tn.textContent=TRACKS[selTrack].name;var tnum=document.getElementById('trackNum');if(tnum)tnum.textContent=(selTrack+1)+' / '+TRACKS.length;edUpdateGarageButtons()}
+function rebuildTrackList(){TRACKS.length=BUILTIN_TRACK_COUNT;getUserTracks().forEach(function(ut){TRACKS.push(ut)});if(typeof selTrack!=='number'||isNaN(selTrack))selTrack=0;if(selTrack>=TRACKS.length)selTrack=TRACKS.length-1;if(selTrack<0)selTrack=0;var cur=TRACKS[selTrack];if(cur){var tn=document.getElementById('trackName');if(tn)tn.textContent=cur.name;var tnum=document.getElementById('trackNum');if(tnum)tnum.textContent=(selTrack+1)+' / '+TRACKS.length}edUpdateGarageButtons()}
 function edUpdateGarageButtons(){var isUser=selTrack>=BUILTIN_TRACK_COUNT;var eb=document.getElementById('editTrackBtn');if(eb)eb.style.display=isUser?'':'none';var db=document.getElementById('deleteTrackBtn');if(db)db.style.display=isUser?'':'none'}
 rebuildTrackList();
 var WEATHER={
