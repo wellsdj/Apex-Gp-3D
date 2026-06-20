@@ -630,6 +630,10 @@ body.mobile #spdOutlineSvg{display:none}
 .ed-btn.save-btn:hover{background:#228a3a}
 .ed-btn.back-btn{background:#5a2020;border-color:#8a3030;color:#fff}
 .ed-btn.back-btn:hover{background:#7a2a2a}
+.ed-mode-bar{display:flex;gap:4px;margin-bottom:10px;flex-shrink:0}
+.ed-mode-btn{background:#161c26;color:#8a97a6;border:1px solid #222c38;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;flex:1;min-width:0;text-align:center;font-family:'Rajdhani',sans-serif;letter-spacing:.5px}
+.ed-mode-btn:hover{background:#1c2430;color:#cfe0ee}
+.ed-mode-btn.on{background:#2f6df0;border-color:#5b8cff;color:#fff}
 .ed-tabs{display:flex;gap:3px;margin-bottom:8px;flex-shrink:0;flex-wrap:wrap}
 .ed-tab{background:#161c26;color:#8a97a6;border:1px solid #222c38;border-radius:6px;padding:5px 0;font-size:10px;cursor:pointer;flex:1;min-width:0;text-align:center;font-family:'Rajdhani',sans-serif;letter-spacing:.5px}
 .ed-tab:hover{background:#1c2430;color:#cfe0ee}
@@ -648,6 +652,8 @@ body.mobile #spdOutlineSvg{display:none}
 .ed-rot-deg{font-family:'Orbitron',sans-serif;font-size:14px;color:#7fd1ff;min-width:44px;text-align:center}
 .ed-btn.erase-on{background:#8a2020;border-color:#cc3030;color:#fff;animation:edPulseRed 1.5s infinite}
 @keyframes edPulseRed{0%,100%{box-shadow:0 0 0 rgba(200,50,50,0)}50%{box-shadow:0 0 8px rgba(200,50,50,.5)}}
+.ed-context-box{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:6px}
+.ed-hint-text{font-size:11px;color:#7e8b9a;line-height:1.5;padding:6px 0}
 #editorStatus{font-size:11px;line-height:1.5;color:#9fb0bf;background:#161c26;border-radius:8px;padding:8px 10px;flex-shrink:0}
 #editorStatus b{color:#fff}
 #editorStatus .eok{color:#5fe08a}
@@ -677,33 +683,24 @@ body.mobile #spdOutlineSvg{display:none}
 <canvas id="editorCanvas"></canvas>
 <div id="editorUI">
   <h1>TRACK BUILDER</h1>
-  <div class="ed-sub">Click to place · Right-click erase · Drag to orbit</div>
+  <div class="ed-sub" id="edSubtitle">Click to draw your track</div>
   <div class="ed-name-row"><input id="edTrackName" type="text" maxlength="24" value="MY CIRCUIT" spellcheck="false" placeholder="Track name"></div>
-  <div class="ed-tabs" id="edTabs"></div>
-  <div class="ed-asset-list" id="edAssetList"></div>
-  <div class="ed-grp">
-    <div class="ed-lbl">Actions</div>
-    <div class="ed-rot-ind"><div class="ed-rot-arrow" onclick="edRotLeft()" title="Rotate left (Q)">◀</div><div class="ed-rot-deg" id="edRotDeg">0°</div><div class="ed-rot-arrow" onclick="edRotRight()" title="Rotate right (R)">▶</div></div>
-    <div class="ed-btns">
-      <button class="ed-btn" id="edBStart" onclick="edStartMode=true;this.classList.add('on')">Set Start</button>
-      <button class="ed-btn" onclick="if(edStartKey&&edStartDir){edStartDir=edOpp(edStartDir);edRefresh()}">Flip Dir</button>
-    </div>
-    <div class="ed-btns" style="margin-top:5px">
-      <button class="ed-btn" id="edTErase" onclick="edSelAsset(null);edBuildUI()">🗑 DELETE <kbd>E</kbd></button>
-      <button class="ed-btn" onclick="edClearAll()">Clear All</button>
-    </div>
+  <div class="ed-mode-bar">
+    <button class="ed-mode-btn on" id="edMDraw" onclick="edSetMode('draw')">DRAW</button>
+    <button class="ed-mode-btn" id="edMCurb" onclick="edSetMode('curb')">CURBS</button>
+    <button class="ed-mode-btn" id="edMPit" onclick="edSetMode('pit')">PIT</button>
+    <button class="ed-mode-btn" id="edMProps" onclick="edSetMode('props')">PROPS</button>
   </div>
+  <div class="ed-context-box" id="edContextBox"></div>
   <div class="ed-grp">
-    <div class="ed-lbl">Track Size <span id="edVSize" style="float:right;color:#cfe0ee">100%</span></div>
-    <input id="edSSize" type="range" min="60" max="180" value="100" oninput="edSizeMul=(+this.value)/100;document.getElementById('edVSize').textContent=this.value+'%';edApplySize()">
-    <div class="ed-lbl" style="margin-top:6px">Road Width <span id="edVWidth" style="float:right;color:#cfe0ee">100%</span></div>
-    <input id="edSWidth" type="range" min="70" max="140" value="100" oninput="edWidthMul=(+this.value)/100;document.getElementById('edVWidth').textContent=this.value+'%';edRefresh()">
+    <div class="ed-lbl">Road Width <span id="edVWidth" style="float:right;color:#cfe0ee">26</span></div>
+    <input id="edSWidth" type="range" min="14" max="50" value="26" oninput="edRoadW=+this.value;document.getElementById('edVWidth').textContent=this.value;edRebuildRoad()">
   </div>
   <div class="ed-btns"><button class="ed-btn save-btn wide" onclick="edSaveTrack()">SAVE TRACK</button></div>
   <div class="ed-btns" style="margin-top:5px;margin-bottom:8px"><button class="ed-btn back-btn wide" onclick="exitEditor()">BACK TO GARAGE</button></div>
-  <div id="editorStatus">Place tiles to begin.</div>
+  <div id="editorStatus">Click on the grass to place points.</div>
 </div>
-<div id="editorHint"><kbd>Click</kbd> place · <kbd>Right-click</kbd> delete · <kbd>R</kbd>/<kbd>Q</kbd> rotate · <kbd>E</kbd> delete mode · <kbd>Drag</kbd> orbit · <kbd>Scroll</kbd> zoom</div>
+<div id="editorHint"><kbd>Click</kbd> add point · <kbd>Right-click</kbd> delete point · <kbd>Drag point</kbd> move · <kbd>Drag</kbd> orbit · <kbd>Scroll</kbd> zoom</div>
 </div>
 <div id="qualiUI"><div class="quali-title">QUALIFYING<span class="quali-time" id="qualiTime">3:00</span></div><div class="quali-standings" id="qualiStandings"></div></div>
 <div id="raceLbUI"><div class="quali-title" id="raceLbTitle">RACE POSITIONS</div><div class="quali-standings" id="raceLbStandings"></div></div>
@@ -2004,15 +2001,32 @@ function mkTrack(grassCOverride){
   // Tile tracks (built in editor.html): physics from the waypoint racing line,
   // visuals from snapped Kenney road tiles. Ground is a flat grass plane; the
   // tiles bring their own road + verges.
-  if(TRACKS[selTrack].tileTrack){
+  if(TRACKS[selTrack].splineTrack||TRACKS[selTrack].tileTrack){
     var pts=WP.map(function(p){return new THREE.Vector3(p[0],0,p[1])});spl=new THREE.CatmullRomCurve3(pts,true,'catmullrom',.5);tPts=spl.getPoints(2400);sd=[];for(var i=0;i<tPts.length;i++){var t=i/tPts.length,tn=spl.getTangent(t).normalize();sd.push({c:spl.getPoint(t),t:tn,n:new THREE.Vector3(-tn.z,0,tn.x)})}
-    // Drivable width: editor's "tw" sets the racing surface; walls sit a little
-    // outside it. Falls back to the default corridor when unset.
     var _twHalf=(TRACKS[selTrack].tw?TRACKS[selTrack].tw/2:13)+5;for(var _hi=0;_hi<sd.length;_hi++)sd[_hi].hw=_twHalf;
     _buildGroundH();
     trackLenM=0;for(var _tl=1;_tl<=tPts.length;_tl++){var _pa3=tPts[_tl-1],_pb3=tPts[_tl%tPts.length];trackLenM+=Math.sqrt((_pb3.x-_pa3.x)*(_pb3.x-_pa3.x)+(_pb3.z-_pa3.z)*(_pb3.z-_pa3.z))}trackLenM=Math.max(500,trackLenM);
     var sfRef=TRACKS[selTrack].sf;var bd=Infinity;for(var i2=0;i2<tPts.length;i2++){var d2=Math.pow(tPts[i2].x-sfRef[0],2)+Math.pow(tPts[i2].z-sfRef[1],2);if(d2<bd){bd=d2;sfIdx=i2}}
     var tx1=Infinity,tx2=-Infinity,tz1=Infinity,tz2=-Infinity;for(var ib=0;ib<tPts.length;ib++){tx1=Math.min(tx1,tPts[ib].x);tx2=Math.max(tx2,tPts[ib].x);tz1=Math.min(tz1,tPts[ib].z);tz2=Math.max(tz2,tPts[ib].z)}var CX=(tx1+tx2)/2,CZ=(tz1+tz2)/2;tCX=CX;tCZ=CZ;trackViewR=Math.max(tx2-tx1,tz2-tz1)/2+60;_buildColGrid();builtTrack=selTrack;builtWeather=selWeather;PIT=null;_pitPrevSL=0;
+    if(TRACKS[selTrack].splineTrack){
+      // Spline tracks use mkTrackProcedural for full-quality road, curbs, barriers
+      mkTrackProcedural(grassCOverride);
+      // Place props if any
+      var _T=TRACKS[selTrack];
+      if(_T.props&&_T.props.length){
+        _trackOccupied=[];
+        _T.props.forEach(function(p){_trackOccupied.push({x:p.i*ED_BASE_G,z:p.j*ED_BASE_G,r:ED_BASE_G*0.8})});
+        var pneed={};_T.props.forEach(function(p){pneed[p.file]=1});
+        Object.keys(pneed).forEach(function(file){
+          loadTileGLB(file,ED_BASE_G).then(function(tmpl){
+            _T.props.forEach(function(p){if(p.file!==file)return;
+              var o=tmpl.clone(true);o.position.set(p.i*ED_BASE_G,0,p.j*ED_BASE_G);o.rotation.y=p.rot*Math.PI/2;scene.add(o);
+            });
+          });
+        });
+      }
+      return;
+    }
     var grassC=grassCOverride||TRACKS[selTrack].grass;
     var gnd=new THREE.Mesh(new THREE.PlaneGeometry(6000,6000),new THREE.MeshLambertMaterial({color:grassC}));gnd.rotation.x=-Math.PI/2;gnd.position.y=-0.1;gnd.receiveShadow=true;scene.add(gnd);
     mkStartLine();
@@ -5759,62 +5773,25 @@ if(_gpBtn)_gpBtn.style.display='block';
 applyCarSponsors();
 if(typeof _syncSettingsUI==='function')_syncSettingsUI();
 
-// ── Integrated Track Editor ─────────────────────────────────────────────────
+// ── Integrated Track Editor (Spline-based) ──────────────────────────────────
 var editorActive=false,edRun=false;
 var edScene=null,edCam=null,edRenderer=null,edCanvas=null;
-var edTiles={},edProps=[],edCurRot=0;
-var edStartKey=null,edStartDir=null,edStartMode=false;
-var edGrid=null,edHover=null,edStartMark=null,edLineGroup=null;
-var edTemplateCache={},edSelectedAsset=null,edSelectedCat='road';
-var ED_BASE_G=26/0.69,edSizeMul=1.0,edWidthMul=1.0;
+var edTemplateCache={},edSelectedAsset=null,edSelectedCat='border';
+var ED_BASE_G=26/0.69;
 var edEditingId=null;
 var edCamTheta=Math.PI*0.75,edCamPhi=Math.PI/3.2,edCamDist=600;
 var edCamTarget={x:0,y:0,z:0};
+// Spline editor state
+var edCtrlPts=[],edSpline=null,edRoadMesh=null,edCurbMeshes=[];
+var edCurbSegs=[],edPitEntry=null,edPitExit=null,edPitMesh=null;
+var edProps=[],edCurRot=0,edRoadW=26,edMode='draw';
+var edPtMeshes=[],edLineMesh=null,edSplineMesh=null;
+var edDragging=null,edClosedLoop=false;
+var edLineGroup=null,edGrid=null,edHover=null;
 
-// Asset catalogue — every Kenney Racing Kit model, categorised
-var ED_CATS={road:'ROAD',border:'BORDERS',scenery:'SCENERY',pits:'PITS'};
+// Props asset catalogue (scenery only — road drawing is spline-based now)
+var ED_CATS={border:'BORDERS',scenery:'SCENERY',pits:'PITS'};
 var ED_ASSETS=[
-  // ROAD — connected pieces that form the racing line
-  {cat:'road',file:'roadStraight.glb',name:'Straight',ports:'ns'},
-  {cat:'road',file:'roadStraightLong.glb',name:'Long Straight',ports:'ns'},
-  {cat:'road',file:'roadStraightArrow.glb',name:'Arrow Straight',ports:'ns'},
-  {cat:'road',file:'roadStart.glb',name:'Start Line',ports:'ns'},
-  {cat:'road',file:'roadStartPositions.glb',name:'Grid Positions',ports:'ns'},
-  {cat:'road',file:'roadBump.glb',name:'Speed Bump',ports:'ns'},
-  {cat:'road',file:'roadCornerSmall.glb',name:'Corner (Tight)',ports:'se'},
-  {cat:'road',file:'roadCornerSmallBorder.glb',name:'Corner + Border',ports:'se'},
-  {cat:'road',file:'roadCornerSmallSand.glb',name:'Corner + Sand',ports:'se'},
-  {cat:'road',file:'roadCornerSmallWall.glb',name:'Corner + Wall',ports:'se'},
-  {cat:'road',file:'roadCornerSmallSquare.glb',name:'Square Corner',ports:'se'},
-  {cat:'road',file:'roadCornerLarge.glb',name:'Wide Corner',ports:'se'},
-  {cat:'road',file:'roadCornerLargeBorder.glb',name:'Wide + Border',ports:'se'},
-  {cat:'road',file:'roadCornerLargeBorderInner.glb',name:'Wide + Border In',ports:'se'},
-  {cat:'road',file:'roadCornerLargeSand.glb',name:'Wide + Sand',ports:'se'},
-  {cat:'road',file:'roadCornerLargeSandInner.glb',name:'Wide + Sand In',ports:'se'},
-  {cat:'road',file:'roadCornerLargeWall.glb',name:'Wide + Wall',ports:'se'},
-  {cat:'road',file:'roadCornerLargeWallInner.glb',name:'Wide + Wall In',ports:'se'},
-  {cat:'road',file:'roadCornerLarger.glb',name:'Wider Corner',ports:'se'},
-  {cat:'road',file:'roadCornerLargerBorder.glb',name:'Wider + Border',ports:'se'},
-  {cat:'road',file:'roadCornerLargerBorderInner.glb',name:'Wider + Border In',ports:'se'},
-  {cat:'road',file:'roadCornerLargerSand.glb',name:'Wider + Sand',ports:'se'},
-  {cat:'road',file:'roadCornerLargerSandInner.glb',name:'Wider + Sand In',ports:'se'},
-  {cat:'road',file:'roadCornerLargerWall.glb',name:'Wider + Wall',ports:'se'},
-  {cat:'road',file:'roadCornerLargerWallInner.glb',name:'Wider + Wall In',ports:'se'},
-  {cat:'road',file:'roadStraightBridge.glb',name:'Bridge',ports:'ns'},
-  {cat:'road',file:'roadStraightBridgeStart.glb',name:'Bridge Start',ports:'ns'},
-  {cat:'road',file:'roadStraightBridgeMid.glb',name:'Bridge Mid',ports:'ns'},
-  {cat:'road',file:'roadCornerBridgeSmall.glb',name:'Bridge Corner',ports:'se'},
-  {cat:'road',file:'roadCornerBridgeLarge.glb',name:'Bridge Wide',ports:'se'},
-  {cat:'road',file:'roadCornerBridgeLarger.glb',name:'Bridge Wider',ports:'se'},
-  {cat:'road',file:'roadRamp.glb',name:'Ramp',ports:'ns'},
-  {cat:'road',file:'roadRampLong.glb',name:'Long Ramp',ports:'ns'},
-  {cat:'road',file:'roadRampWall.glb',name:'Ramp + Wall',ports:'ns'},
-  {cat:'road',file:'roadRampLongWall.glb',name:'Long Ramp + Wall',ports:'ns'},
-  {cat:'road',file:'roadRampLongCurved.glb',name:'Curved Ramp',ports:'se'},
-  {cat:'road',file:'roadRampLongCurvedWall.glb',name:'Curved Ramp + Wall',ports:'se'},
-  {cat:'road',file:'roadCurved.glb',name:'Gentle Curve',ports:'ns'},
-  {cat:'road',file:'roadSide.glb',name:'Road Side',ports:'ns'},
-  // BORDERS
   {cat:'border',file:'barrier.glb',name:'Barrier'},
   {cat:'border',file:'barrierRed.glb',name:'Red Barrier'},
   {cat:'border',file:'barrierWhite.glb',name:'White Barrier'},
@@ -5824,7 +5801,6 @@ var ED_ASSETS=[
   {cat:'border',file:'rail.glb',name:'Rail'},
   {cat:'border',file:'railDouble.glb',name:'Double Rail'},
   {cat:'border',file:'pylon.glb',name:'Pylon'},
-  // SCENERY
   {cat:'scenery',file:'grandStand.glb',name:'Grandstand'},
   {cat:'scenery',file:'grandStandAwning.glb',name:'Grandstand + Awning'},
   {cat:'scenery',file:'grandStandCovered.glb',name:'Covered Stand'},
@@ -5857,34 +5833,15 @@ var ED_ASSETS=[
   {cat:'scenery',file:'raceCarRed.glb',name:'Red Race Car'},
   {cat:'scenery',file:'raceCarWhite.glb',name:'White Race Car'},
   {cat:'scenery',file:'grass.glb',name:'Grass Tile'},
-  // PITS
   {cat:'pits',file:'pitsGarage.glb',name:'Pit Garage'},
   {cat:'pits',file:'pitsGarageClosed.glb',name:'Closed Garage'},
   {cat:'pits',file:'pitsGarageCorner.glb',name:'Garage Corner'},
   {cat:'pits',file:'pitsOffice.glb',name:'Pit Office'},
   {cat:'pits',file:'pitsOfficeCorner.glb',name:'Office Corner'},
-  {cat:'pits',file:'pitsOfficeRoof.glb',name:'Office Roof'},
-  {cat:'pits',file:'roadPitEntry.glb',name:'Pit Entry Road'},
-  {cat:'pits',file:'roadPitStraight.glb',name:'Pit Straight'},
-  {cat:'pits',file:'roadPitStraightLong.glb',name:'Pit Long Straight'},
-  {cat:'pits',file:'roadPitGarage.glb',name:'Pit Garage Road'}
+  {cat:'pits',file:'pitsOfficeRoof.glb',name:'Office Roof'}
 ];
-var ED_DIR={N:[0,-1],S:[0,1],E:[1,0],W:[-1,0]};
-function edGeff(){return ED_BASE_G*edSizeMul}
-function edDirEq(a,b){return a[0]===b[0]&&a[1]===b[1]}
-function edOpp(d){return[-d[0],-d[1]]}
-function edRotCCW(v){return[v[1],-v[0]]}
-function edRotN(v,r){for(var i=0;i<((r%4)+4)%4;i++)v=edRotCCW(v);return v}
-function edTilePorts(type,rot){
-  if(type==='straight')type='roadStraight.glb';if(type==='corner')type='roadCornerSmall.glb';
-  var a=null;for(var ai=0;ai<ED_ASSETS.length;ai++){if(ED_ASSETS[ai].file===type||ED_ASSETS[ai].file===type+'.glb'){a=ED_ASSETS[ai];break}}
-  if(!a||!a.ports)return null;
-  if(a.ports==='ns')return[edRotN(ED_DIR.N,rot),edRotN(ED_DIR.S,rot)];
-  return[edRotN(ED_DIR.S,rot),edRotN(ED_DIR.E,rot)];
-}
-function edCornerArcOff(rot){return edRotN([1,1],rot)}
-function edIsRoad(file){for(var i=0;i<ED_ASSETS.length;i++){if(ED_ASSETS[i].file===file)return!!ED_ASSETS[i].ports}return false}
-function edPortType(file){if(file==='straight')file='roadStraight.glb';if(file==='corner')file='roadCornerSmall.glb';for(var i=0;i<ED_ASSETS.length;i++){if(ED_ASSETS[i].file===file)return ED_ASSETS[i].ports||null}return null}
+
+function edGeff(){return ED_BASE_G}
 
 // 3D orbit camera
 function edUpdateCam(){
@@ -5916,49 +5873,10 @@ function edLoadModel(file){
   });
 }
 
-function edBuildUI(){
-  var tabs=document.getElementById('edTabs');tabs.innerHTML='';
-  Object.keys(ED_CATS).forEach(function(cat){
-    var b=document.createElement('button');b.className='ed-tab'+(cat===edSelectedCat?' on':'');
-    b.textContent=ED_CATS[cat];b.onclick=function(){edSelectedCat=cat;edBuildUI();};
-    tabs.appendChild(b);
-  });
-  var list=document.getElementById('edAssetList');list.innerHTML='';
-  ED_ASSETS.forEach(function(a,idx){
-    if(a.cat!==edSelectedCat)return;
-    var d=document.createElement('div');d.className='ed-asset-item'+(edSelectedAsset===a?' on':'');
-    d.setAttribute('data-file',a.file);
-    var thumb=document.createElement('div');thumb.className='ed-asset-thumb';
-    d.appendChild(thumb);
-    var sp=document.createElement('span');sp.textContent=a.name;d.appendChild(sp);
-    d.onclick=function(){edSelAsset(a)};
-    list.appendChild(d);
-    edRenderThumb(a.file,thumb);
-  });
-}
-function edSelAsset(a){
-  edSelectedAsset=a;
-  var eb=document.getElementById('edTErase');
-  if(eb){eb.classList.toggle('on',!a);eb.classList.toggle('erase-on',!a)}
-  if(edHover)edHover.material.color.setHex(a?0x5b8cff:0xff4444);
-  var items=document.querySelectorAll('.ed-asset-item');
-  items.forEach(function(it){
-    var match=a&&it.getAttribute('data-file')===a.file;
-    it.classList.toggle('on',!!match);
-  });
-  if(a)edPreloadAsset(a.file);
-}
-function edPreloadAsset(file){if(!edTemplateCache[file])edLoadModel(file)}
-
-// rotation.y is CCW from above, so the on-screen "right" arrow must DECREASE rot
-function edRotRight(){edCurRot=(edCurRot+3)%4;edUpdateRotDisp()}
-function edRotLeft(){edCurRot=(edCurRot+1)%4;edUpdateRotDisp()}
-function edUpdateRotDisp(){var d=document.getElementById('edRotDeg');if(d)d.textContent=(edCurRot*90)+'°'}
-
+// Thumbnail system for prop browser
 var edThumbCache={},edThumbRenderer=null,edThumbScene=null,edThumbCam=null;
 function edInitThumbs(){
   var c=document.createElement('canvas');c.width=180;c.height=148;
-  // preserveDrawingBuffer is required so toDataURL() actually captures the frame
   edThumbRenderer=new THREE.WebGLRenderer({canvas:c,antialias:true,preserveDrawingBuffer:true});
   edThumbRenderer.setSize(180,148);edThumbRenderer.setClearColor(0x141a24,1);
   edThumbScene=new THREE.Scene();
@@ -5990,6 +5908,319 @@ function edRenderThumb(file,el){
   });
 }
 
+// ── Procedural road texture for editor preview ──
+function edMkRoadTexture(){
+  var c=document.createElement('canvas');c.width=512;c.height=512;var x=c.getContext('2d');
+  x.fillStyle='#2d2f33';x.fillRect(0,0,512,512);
+  for(var i=0;i<4000;i++){
+    var px=Math.random()*512,py=Math.random()*512,v=Math.random();
+    x.fillStyle=v<.45?'rgba(0,0,0,.18)':(v<.85?'rgba(255,255,255,.04)':'rgba(255,255,255,.10)');
+    x.fillRect(px,py,1.4,1.4);
+  }
+  // white edge lines at U=0.03 and U=0.97
+  x.fillStyle='rgba(255,255,255,.85)';
+  x.fillRect(0,0,15,512);x.fillRect(497,0,15,512);
+  // center dashed line
+  x.fillStyle='rgba(255,255,255,.45)';
+  for(var dy=0;dy<512;dy+=40){x.fillRect(254,dy,4,24)}
+  // red-white curb stripes on edges
+  for(var cs=0;cs<512;cs+=32){
+    x.fillStyle=(cs/32)%2===0?'rgba(200,30,30,.7)':'rgba(255,255,255,.7)';
+    x.beginPath();x.moveTo(0,cs);x.lineTo(12,cs);x.lineTo(12,cs+32);x.lineTo(0,cs+32);x.fill();
+    x.beginPath();x.moveTo(500,cs);x.lineTo(512,cs);x.lineTo(512,cs+32);x.lineTo(500,cs+32);x.fill();
+  }
+  var t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;return t;
+}
+
+// ── Spline road building ──
+function edRebuildSpline(){
+  if(edSplineMesh){edScene.remove(edSplineMesh);edSplineMesh=null}
+  if(edLineMesh){edScene.remove(edLineMesh);edLineMesh=null}
+  if(edRoadMesh){edScene.remove(edRoadMesh);edRoadMesh=null}
+  edSpline=null;edClosedLoop=false;
+  if(edCtrlPts.length<2){edUpdateStatus();return}
+  // polyline through control points
+  var lv=[];edCtrlPts.forEach(function(p){lv.push(p.x,.5,p.z)});
+  if(edCtrlPts.length>=3){lv.push(edCtrlPts[0].x,.5,edCtrlPts[0].z)}
+  var lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.Float32BufferAttribute(lv,3));
+  edLineMesh=new THREE.Line(lg,new THREE.LineBasicMaterial({color:0x446688,transparent:true,opacity:.4}));
+  edScene.add(edLineMesh);
+  if(edCtrlPts.length<3){edUpdateStatus();return}
+  // auto-close check
+  var first=edCtrlPts[0],last=edCtrlPts[edCtrlPts.length-1];
+  var closeDist=Math.hypot(first.x-last.x,first.z-last.z);
+  edClosedLoop=true; // CatmullRom closed loop always
+  // build CatmullRom spline
+  var pts3=edCtrlPts.map(function(p){return new THREE.Vector3(p.x,0,p.z)});
+  edSpline=new THREE.CatmullRomCurve3(pts3,true,'catmullrom',.5);
+  edRebuildRoad();
+}
+
+function edRebuildRoad(){
+  if(edRoadMesh){edScene.remove(edRoadMesh);edRoadMesh=null}
+  if(edSplineMesh){edScene.remove(edSplineMesh);edSplineMesh=null}
+  if(!edSpline){edUpdateStatus();return}
+  var N=600,hw=edRoadW/2;
+  // smooth spline preview line
+  var sv=[];for(var si=0;si<=N;si++){var p=edSpline.getPoint(si/N);sv.push(p.x,1.2,p.z)}
+  var sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(sv,3));
+  edSplineMesh=new THREE.Line(sg,new THREE.LineBasicMaterial({color:0x5fe08a}));
+  edScene.add(edSplineMesh);
+  // road ribbon
+  var rv=[],ruv=[],ri=[],rLen=0;
+  for(var i=0;i<=N;i++){
+    var t=i/N,pt=edSpline.getPoint(t),tn=edSpline.getTangent(t).normalize();
+    var nx=-tn.z,nz=tn.x;
+    if(i>0){var pp=edSpline.getPoint((i-1)/N);rLen+=Math.hypot(pt.x-pp.x,pt.z-pp.z)}
+    rv.push(pt.x-nx*hw,.6,pt.z-nz*hw,pt.x+nx*hw,.6,pt.z+nz*hw);
+    ruv.push(0,rLen/(hw*2),1,rLen/(hw*2));
+    if(i<N){var j=i*2;ri.push(j,j+1,j+2,j+1,j+3,j+2)}
+  }
+  var rg=new THREE.BufferGeometry();
+  rg.setAttribute('position',new THREE.Float32BufferAttribute(rv,3));
+  rg.setAttribute('uv',new THREE.Float32BufferAttribute(ruv,2));
+  rg.setIndex(ri);rg.computeVertexNormals();
+  if(!edRoadTex)edRoadTex=edMkRoadTexture();
+  edRoadMesh=new THREE.Mesh(rg,new THREE.MeshStandardMaterial({map:edRoadTex,roughness:.9,metalness:0}));
+  edRoadMesh.receiveShadow=true;edScene.add(edRoadMesh);
+  // edge lines (white)
+  for(var side=-1;side<=1;side+=2){
+    var ev=[];for(var ei=0;ei<=N;ei++){var et=ei/N,ep=edSpline.getPoint(et),etn=edSpline.getTangent(et).normalize();
+      ev.push(ep.x+(-etn.z)*side*(hw-.4),.9,ep.z+etn.x*side*(hw-.4))}
+    var eg=new THREE.BufferGeometry();eg.setAttribute('position',new THREE.Float32BufferAttribute(ev,3));
+    var el=new THREE.Line(eg,new THREE.LineBasicMaterial({color:0xffffff}));
+    el.userData._edRoadEdge=true;edScene.add(el);
+  }
+  edRebuildCurbs();
+  edUpdateStatus();
+}
+var edRoadTex=null;
+
+// ── Curbs ──
+function edRebuildCurbs(){
+  edCurbMeshes.forEach(function(m){edScene.remove(m)});edCurbMeshes=[];
+  if(!edSpline||edCurbSegs.length===0)return;
+  var N=600,hw=edRoadW/2;
+  edCurbSegs.forEach(function(seg){
+    var s0=Math.floor(seg.startT*N),s1=Math.floor(seg.endT*N);
+    if(s1<=s0)s1+=N;
+    var vt=[],cl=[],ix=[];
+    for(var r=s0;r<=s1;r++){
+      var t=(r%N)/N,pt=edSpline.getPoint(t),tn=edSpline.getTangent(t).normalize();
+      var nx=-tn.z,nz=tn.x,off=seg.side*hw,cw=seg.side*2.5;
+      var inn=new THREE.Vector3(pt.x+nx*off,.7,pt.z+nz*off);
+      var out=new THREE.Vector3(pt.x+nx*(off+cw),.7,pt.z+nz*(off+cw));
+      var stripe=Math.floor((r-s0)/5)%2===0;
+      var c=stripe?[.92,.05,.05]:[.98,.98,.98];
+      vt.push(inn.x,inn.y,inn.z,out.x,out.y,out.z);cl.push(c[0],c[1],c[2],c[0],c[1],c[2]);
+    }
+    for(var r2=0;r2<(s1-s0);r2++){var j=r2*2;ix.push(j,j+1,j+2,j+1,j+3,j+2)}
+    if(vt.length>0){var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vt,3));
+      g.setAttribute('color',new THREE.Float32BufferAttribute(cl,3));g.setIndex(ix);g.computeVertexNormals();
+      var m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true}));edScene.add(m);edCurbMeshes.push(m)}
+  });
+}
+
+// ── Pit lane preview ──
+function edRebuildPit(){
+  if(edPitMesh){edScene.remove(edPitMesh);edPitMesh=null}
+  if(!edSpline||edPitEntry===null||edPitExit===null)return;
+  var N=200,hw=edRoadW/2,offset=hw+15;
+  var rv=[],ri=[];
+  var t0=edPitEntry,t1=edPitExit;
+  if(t1<t0)t1+=1;
+  var dt=(t1-t0)/N;
+  for(var i=0;i<=N;i++){
+    var t=(t0+dt*i)%1,pt=edSpline.getPoint(t),tn=edSpline.getTangent(t).normalize();
+    var nx=-tn.z,nz=tn.x;
+    var blend=Math.sin(i/N*Math.PI);var lat=offset*blend;
+    var cx=pt.x+nx*lat,cz=pt.z+nz*lat,phw=5;
+    rv.push(cx-nx*phw,.55,cz-nz*phw,cx+nx*phw,.55,cz+nz*phw);
+    if(i<N){var j=i*2;ri.push(j,j+1,j+2,j+1,j+3,j+2)}
+  }
+  var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(rv,3));
+  g.setIndex(ri);g.computeVertexNormals();
+  edPitMesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0x3a3d42,roughness:.9,transparent:true,opacity:.7}));
+  edScene.add(edPitMesh);
+}
+
+// ── Control point management ──
+function edAddPt(x,z){
+  var pt={x:x,z:z,id:Date.now()+Math.random()};
+  edCtrlPts.push(pt);
+  var sphere=new THREE.Mesh(new THREE.SphereGeometry(3,12,8),new THREE.MeshBasicMaterial({color:0x00e0ff}));
+  sphere.position.set(x,2,z);sphere.userData._edPtIdx=edCtrlPts.length-1;
+  edScene.add(sphere);edPtMeshes.push(sphere);
+  edRebuildSpline();
+}
+function edRemovePt(idx){
+  if(idx<0||idx>=edCtrlPts.length)return;
+  edCtrlPts.splice(idx,1);
+  if(edPtMeshes[idx])edScene.remove(edPtMeshes[idx]);
+  edPtMeshes.splice(idx,1);
+  edPtMeshes.forEach(function(m,i){m.userData._edPtIdx=i});
+  edRebuildSpline();
+}
+function edMovePt(idx,x,z){
+  if(idx<0||idx>=edCtrlPts.length)return;
+  edCtrlPts[idx].x=x;edCtrlPts[idx].z=z;
+  edPtMeshes[idx].position.set(x,2,z);
+  edRebuildSpline();
+}
+function edClearAllPts(){
+  edPtMeshes.forEach(function(m){edScene.remove(m)});edPtMeshes=[];
+  edCtrlPts=[];edCurbSegs=[];edPitEntry=null;edPitExit=null;
+  edRebuildSpline();edRebuildPit();
+}
+
+// ── Hit testing ──
+var edRay=new THREE.Raycaster(),edNdc=new THREE.Vector2(),edGround=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+function edGroundAt(ev){
+  edNdc.x=(ev.clientX/innerWidth)*2-1;edNdc.y=-(ev.clientY/innerHeight)*2+1;
+  edRay.setFromCamera(edNdc,edCam);var hit=new THREE.Vector3();
+  if(!edRay.ray.intersectPlane(edGround,hit))return null;
+  return{x:hit.x,z:hit.z};
+}
+function edCellAt(ev){
+  var g=edGroundAt(ev);if(!g)return null;
+  return{i:Math.round(g.x/edGeff()),j:Math.round(g.z/edGeff())};
+}
+function edHitPt(ev){
+  edNdc.x=(ev.clientX/innerWidth)*2-1;edNdc.y=-(ev.clientY/innerHeight)*2+1;
+  edRay.setFromCamera(edNdc,edCam);
+  var hits=edRay.intersectObjects(edPtMeshes);
+  if(hits.length>0)return hits[0].object.userData._edPtIdx;
+  return-1;
+}
+function edNearestSplineT(x,z){
+  if(!edSpline)return-1;
+  var best=-1,bestD=Infinity;
+  for(var i=0;i<600;i++){var t=i/600,p=edSpline.getPoint(t);
+    var d=Math.hypot(p.x-x,p.z-z);if(d<bestD){bestD=d;best=t}}
+  return bestD<edRoadW?best:-1;
+}
+
+// ── Spline parameter to side: which side of center was clicked? ──
+function edClickSide(x,z,t){
+  if(!edSpline)return 1;
+  var pt=edSpline.getPoint(t),tn=edSpline.getTangent(t).normalize();
+  var nx=-tn.z,nz=tn.x;
+  var dx=x-pt.x,dz=z-pt.z;
+  return(dx*nx+dz*nz)>0?1:-1;
+}
+
+// ── Status ──
+function edUpdateStatus(){
+  var st=document.getElementById('editorStatus');if(!st)return;
+  var n=edCtrlPts.length,pn=edProps.length;
+  if(n<3)st.innerHTML='<b>'+n+'</b> points · <span class="ebad">Need 3+ points for a track</span>';
+  else st.innerHTML='<b>'+n+'</b> points · <b>'+pn+'</b> props · <span class="eok">CLOSED LOOP ✓</span>';
+}
+
+// ── Mode switching and context UI ──
+function edSetMode(mode){
+  edMode=mode;
+  ['edMDraw','edMCurb','edMPit','edMProps'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.classList.remove('on')});
+  var mId={draw:'edMDraw',curb:'edMCurb',pit:'edMPit',props:'edMProps'}[mode];
+  var el=document.getElementById(mId);if(el)el.classList.add('on');
+  // Update subtitle hint
+  var sub=document.getElementById('edSubtitle');
+  if(sub){
+    if(mode==='draw')sub.textContent='Click to add points · Drag to move · Right-click to delete';
+    else if(mode==='curb')sub.textContent='Click track edge to place curb start, then end';
+    else if(mode==='pit')sub.textContent='Click track for pit entry, then exit';
+    else sub.textContent='Place scenery props on the grass';
+  }
+  // Update hint bar
+  var hb=document.getElementById('editorHint');
+  if(hb){
+    if(mode==='draw')hb.innerHTML='<kbd>Click</kbd> add point · <kbd>Right-click</kbd> delete point · <kbd>Drag point</kbd> move · <kbd>Drag</kbd> orbit · <kbd>Scroll</kbd> zoom';
+    else if(mode==='curb')hb.innerHTML='<kbd>Click</kbd> curb start/end · <kbd>Right-click</kbd> remove curb · <kbd>Drag</kbd> orbit';
+    else if(mode==='pit')hb.innerHTML='<kbd>Click</kbd> set pit entry/exit · <kbd>Drag</kbd> orbit';
+    else hb.innerHTML='<kbd>Click</kbd> place prop · <kbd>Right-click</kbd> delete prop · <kbd>R</kbd>/<kbd>Q</kbd> rotate · <kbd>Drag</kbd> orbit';
+  }
+  // Show/hide grid for props mode
+  if(edGrid)edGrid.visible=(mode==='props');
+  if(edHover)edHover.visible=false;
+  edBuildContextUI();
+}
+var edCurbClickState=null; // {startT, side} when waiting for second click
+function edBuildContextUI(){
+  var box=document.getElementById('edContextBox');if(!box)return;box.innerHTML='';
+  if(edMode==='draw'){
+    var h=document.createElement('div');h.className='ed-hint-text';
+    h.textContent='Click anywhere on the grass to add control points. The road draws through them in a smooth loop.';
+    box.appendChild(h);
+    var btns=document.createElement('div');btns.className='ed-btns';
+    var ub=document.createElement('button');ub.className='ed-btn';ub.textContent='Undo Last Point';
+    ub.onclick=function(){if(edCtrlPts.length>0)edRemovePt(edCtrlPts.length-1)};btns.appendChild(ub);
+    var cb=document.createElement('button');cb.className='ed-btn';cb.textContent='Clear All';
+    cb.onclick=edClearAllPts;btns.appendChild(cb);
+    box.appendChild(btns);
+  }else if(edMode==='curb'){
+    var h2=document.createElement('div');h2.className='ed-hint-text';
+    if(!edSpline){h2.textContent='Draw a track first (use DRAW mode).';h2.style.color='#ff7a7a'}
+    else if(!edCurbClickState)h2.textContent='Click on the track edge where you want curbs to START.';
+    else h2.textContent='Now click where you want curbs to END.';
+    box.appendChild(h2);
+    edCurbSegs.forEach(function(seg,idx){
+      var row=document.createElement('div');row.className='ed-btns';row.style.marginTop='4px';
+      var lbl=document.createElement('button');lbl.className='ed-btn';
+      lbl.textContent='Curb '+(idx+1)+' ('+(seg.side>0?'Right':'Left')+')';
+      lbl.style.pointerEvents='none';row.appendChild(lbl);
+      var del=document.createElement('button');del.className='ed-btn';del.style.flex='0 0 auto';del.textContent='✕';
+      del.onclick=function(){edCurbSegs.splice(idx,1);edRebuildCurbs();edBuildContextUI()};
+      row.appendChild(del);box.appendChild(row);
+    });
+  }else if(edMode==='pit'){
+    var h3=document.createElement('div');h3.className='ed-hint-text';
+    if(!edSpline){h3.textContent='Draw a track first (use DRAW mode).';h3.style.color='#ff7a7a'}
+    else if(edPitEntry===null)h3.textContent='Click on the track where the PIT ENTRY should be.';
+    else if(edPitExit===null)h3.textContent='Click on the track where the PIT EXIT should be.';
+    else h3.textContent='Pit lane set! Entry and exit are marked on the track.';
+    box.appendChild(h3);
+    if(edPitEntry!==null||edPitExit!==null){
+      var btns3=document.createElement('div');btns3.className='ed-btns';btns3.style.marginTop='4px';
+      var clr=document.createElement('button');clr.className='ed-btn';clr.textContent='Clear Pit Lane';
+      clr.onclick=function(){edPitEntry=null;edPitExit=null;edRebuildPit();edBuildContextUI()};
+      btns3.appendChild(clr);box.appendChild(btns3);
+    }
+  }else{
+    // Props mode - show category tabs and asset grid
+    var tabs=document.createElement('div');tabs.className='ed-tabs';
+    Object.keys(ED_CATS).forEach(function(cat){
+      var b=document.createElement('button');b.className='ed-tab'+(cat===edSelectedCat?' on':'');
+      b.textContent=ED_CATS[cat];b.onclick=function(){edSelectedCat=cat;edBuildContextUI()};
+      tabs.appendChild(b);
+    });
+    box.appendChild(tabs);
+    var list=document.createElement('div');list.className='ed-asset-list';
+    ED_ASSETS.forEach(function(a){
+      if(a.cat!==edSelectedCat)return;
+      var d=document.createElement('div');d.className='ed-asset-item'+(edSelectedAsset===a?' on':'');
+      d.setAttribute('data-file',a.file);
+      var thumb=document.createElement('div');thumb.className='ed-asset-thumb';
+      d.appendChild(thumb);
+      var sp=document.createElement('span');sp.textContent=a.name;d.appendChild(sp);
+      d.onclick=function(){edSelectedAsset=a;edBuildContextUI()};
+      list.appendChild(d);
+      edRenderThumb(a.file,thumb);
+    });
+    box.appendChild(list);
+    // Rotation
+    var rotRow=document.createElement('div');rotRow.className='ed-rot-ind';
+    rotRow.innerHTML='<div class="ed-rot-arrow" onclick="edCurRot=(edCurRot+1)%4;edBuildContextUI()">◀</div><div class="ed-rot-deg">'+(edCurRot*90)+'°</div><div class="ed-rot-arrow" onclick="edCurRot=(edCurRot+3)%4;edBuildContextUI()">▶</div>';
+    box.appendChild(rotRow);
+    // Delete mode
+    var db=document.createElement('div');db.className='ed-btns';db.style.marginTop='4px';
+    var del2=document.createElement('button');del2.className='ed-btn'+(edSelectedAsset===null?' erase-on':'');
+    del2.textContent='🗑 DELETE MODE';del2.onclick=function(){edSelectedAsset=null;edBuildContextUI()};
+    db.appendChild(del2);box.appendChild(db);
+  }
+}
+
+// ── Editor init ──
 function initEditor(){
   edCanvas=document.getElementById('editorCanvas');
   edRenderer=new THREE.WebGLRenderer({canvas:edCanvas,antialias:true});
@@ -6002,181 +6233,108 @@ function initEditor(){
   edScene.add(new THREE.AmbientLight(0xffffff,.7));
   var dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(200,400,150);edScene.add(dl);
   var hemi=new THREE.HemisphereLight(0x88bbee,0x4a6644,.4);edScene.add(hemi);
-  // Grass ground
   var grassMat=new THREE.MeshLambertMaterial({color:0x4a8a3a});
   var grassGeo=new THREE.PlaneGeometry(4000,4000);
   var grassMesh=new THREE.Mesh(grassGeo,grassMat);grassMesh.rotation.x=-Math.PI/2;grassMesh.position.y=-0.1;
   grassMesh.receiveShadow=true;edScene.add(grassMesh);
-  // Subtle grid
   edGrid=new THREE.GridHelper(100*edGeff(),100,0x3a6a2a,0x3a6a2a);
-  edGrid.position.y=0.01;edGrid.material.transparent=true;edGrid.material.opacity=0.3;edScene.add(edGrid);
-  // Hover preview
+  edGrid.position.y=0.01;edGrid.material.transparent=true;edGrid.material.opacity=0.3;edGrid.visible=false;edScene.add(edGrid);
   var hm=new THREE.MeshBasicMaterial({color:0x5b8cff,transparent:true,opacity:.25});
-  edHover=new THREE.Mesh(new THREE.PlaneGeometry(ED_BASE_G,ED_BASE_G),hm);
+  edHover=new THREE.Mesh(new THREE.PlaneGeometry(edGeff(),edGeff()),hm);
   edHover.rotation.x=-Math.PI/2;edHover.position.y=.05;edHover.visible=false;edScene.add(edHover);
-  // Start marker
-  var sm=new THREE.MeshBasicMaterial({color:0x5fe08a,transparent:true,opacity:.85});
-  edStartMark=new THREE.Mesh(new THREE.PlaneGeometry(ED_BASE_G*.5,ED_BASE_G*.16),sm);
-  edStartMark.rotation.x=-Math.PI/2;edStartMark.position.y=.15;edStartMark.visible=false;edScene.add(edStartMark);
-  // Racing line overlay
   edLineGroup=new THREE.Group();edScene.add(edLineGroup);
-  // Input
-  var dragging=false,dragMoved=false,panLast=null,shiftDown=false;
-  var onDown=function(e){if(!editorActive)return;if(e.button===2)return;dragging=true;dragMoved=false;panLast={x:e.clientX,y:e.clientY}};
-  var onMove=function(e){
+
+  // Input handlers
+  var dragging=false,dragMoved=false,panLast=null,ptDragIdx=-1;
+  edCanvas.addEventListener('mousedown',function(e){
+    if(!editorActive)return;if(e.button===2)return;
+    dragging=true;dragMoved=false;panLast={x:e.clientX,y:e.clientY};
+    if(edMode==='draw'){ptDragIdx=edHitPt(e);if(ptDragIdx>=0){edPtMeshes[ptDragIdx].material.color.setHex(0xffee00);return}}
+  });
+  edCanvas.addEventListener('mousemove',function(e){
     if(!editorActive)return;
-    shiftDown=e.shiftKey;
-    var c=edCellAt(e);
-    if(c){edHover.visible=true;edHover.scale.set(edSizeMul,edSizeMul,1);edHover.position.set(c.i*edGeff(),.05,c.j*edGeff())}else edHover.visible=false;
+    // Props mode: show grid hover
+    if(edMode==='props'){
+      var c=edCellAt(e);
+      if(c){edHover.visible=true;edHover.position.set(c.i*edGeff(),.05,c.j*edGeff())}else edHover.visible=false;
+    }
     if(dragging&&panLast){
       var dx=e.clientX-panLast.x,dy=e.clientY-panLast.y;
       if(Math.abs(dx)+Math.abs(dy)>3)dragMoved=true;
       if(dragMoved){
-        if(shiftDown){
-          var fw=new THREE.Vector3();edCam.getWorldDirection(fw);fw.y=0;fw.normalize();
-          var rt=new THREE.Vector3(fw.z,0,-fw.x);
-          var sc=edCamDist*0.002;
-          edCamTarget.x-=(dx*rt.x+dy*fw.x)*sc;
-          edCamTarget.z-=(dx*rt.z+dy*fw.z)*sc;
-        }else{
-          edCamTheta-=dx*0.005;edCamPhi=Math.max(0.15,Math.min(1.5,edCamPhi+dy*0.005));
+        if(ptDragIdx>=0){
+          var g=edGroundAt(e);if(g)edMovePt(ptDragIdx,g.x,g.z);
+          panLast={x:e.clientX,y:e.clientY};return;
         }
+        if(e.shiftKey){
+          var fw=new THREE.Vector3();edCam.getWorldDirection(fw);fw.y=0;fw.normalize();
+          var rt=new THREE.Vector3(fw.z,0,-fw.x);var sc=edCamDist*0.002;
+          edCamTarget.x-=(dx*rt.x+dy*fw.x)*sc;edCamTarget.z-=(dx*rt.z+dy*fw.z)*sc;
+        }else{edCamTheta-=dx*0.005;edCamPhi=Math.max(0.15,Math.min(1.5,edCamPhi+dy*0.005))}
         panLast={x:e.clientX,y:e.clientY};edUpdateCam();
       }
     }
-  };
-  var onUp=function(e){
+  });
+  edCanvas.addEventListener('mouseup',function(e){
     if(!editorActive)return;
-    if(e.button===2){e.preventDefault();var c=edCellAt(e);if(c)edRemove(c.i,c.j);dragging=false;return}
-    dragging=false;
-    if(dragMoved){panLast=null;return}panLast=null;
-    var c=edCellAt(e);if(!c)return;
-    if(edStartMode){edSetStart(c.i,c.j);edStartMode=false;var bs=document.getElementById('edBStart');if(bs)bs.classList.remove('on');return}
-    edPlace(c.i,c.j);
-  };
-  edCanvas.addEventListener('mousedown',onDown);
-  edCanvas.addEventListener('mousemove',onMove);
-  edCanvas.addEventListener('mouseup',onUp);
+    if(e.button===2){
+      e.preventDefault();
+      if(edMode==='draw'){var pi=edHitPt(e);if(pi>=0){edRemovePt(pi);dragging=false;return}
+        var g0=edGroundAt(e);if(g0){var bi=edNearestPt(g0.x,g0.z);if(bi>=0)edRemovePt(bi)}}
+      else if(edMode==='props'){var c0=edCellAt(e);if(c0)edRemoveProp(c0.i,c0.j)}
+      dragging=false;return;
+    }
+    if(ptDragIdx>=0){edPtMeshes[ptDragIdx].material.color.setHex(0x00e0ff);ptDragIdx=-1;dragging=false;return}
+    dragging=false;if(dragMoved){panLast=null;return}panLast=null;
+    // Click actions per mode
+    if(edMode==='draw'){
+      var g2=edGroundAt(e);if(!g2)return;edAddPt(g2.x,g2.z);
+    }else if(edMode==='curb'){
+      var g3=edGroundAt(e);if(!g3||!edSpline)return;
+      var t=edNearestSplineT(g3.x,g3.z);if(t<0)return;
+      var side=edClickSide(g3.x,g3.z,t);
+      if(!edCurbClickState){edCurbClickState={startT:t,side:side};edBuildContextUI()}
+      else{edCurbSegs.push({startT:edCurbClickState.startT,endT:t,side:edCurbClickState.side});
+        edCurbClickState=null;edRebuildCurbs();edBuildContextUI()}
+    }else if(edMode==='pit'){
+      var g4=edGroundAt(e);if(!g4||!edSpline)return;
+      var t2=edNearestSplineT(g4.x,g4.z);if(t2<0)return;
+      if(edPitEntry===null){edPitEntry=t2;edBuildContextUI()}
+      else if(edPitExit===null){edPitExit=t2;edRebuildPit();edBuildContextUI()}
+    }else if(edMode==='props'){
+      var c2=edCellAt(e);if(!c2)return;
+      if(!edSelectedAsset){edRemoveProp(c2.i,c2.j);return}
+      edPlaceProp(c2.i,c2.j,edSelectedAsset.file,edCurRot);
+    }
+  });
   edCanvas.addEventListener('contextmenu',function(e){e.preventDefault()});
   edCanvas.addEventListener('wheel',function(e){if(!editorActive)return;e.preventDefault();
     edCamDist=Math.max(50,Math.min(2000,edCamDist*(1+e.deltaY*0.001)));edUpdateCam();
   },{passive:false});
-  // Pre-load the two most common road pieces
-  edLoadModel('roadStraight.glb');edLoadModel('roadCornerSmall.glb');
-  edBuildUI();
 }
 function edRenderLoop(){if(!edRun)return;requestAnimationFrame(edRenderLoop);edRenderer.render(edScene,edCam)}
 
-var edRay=new THREE.Raycaster(),edNdc=new THREE.Vector2(),edGround=new THREE.Plane(new THREE.Vector3(0,1,0),0);
-function edCellAt(ev){
-  edNdc.x=(ev.clientX/innerWidth)*2-1;edNdc.y=-(ev.clientY/innerHeight)*2+1;
-  edRay.setFromCamera(edNdc,edCam);var hit=new THREE.Vector3();
-  if(!edRay.ray.intersectPlane(edGround,hit))return null;
-  return{i:Math.round(hit.x/edGeff()),j:Math.round(hit.z/edGeff())};
+// ── Prop helpers ──
+function edPlaceProp(i,j,file,rot){
+  var prop={i:i,j:j,file:file,rot:rot,obj:null};
+  edLoadModel(file).then(function(tmpl){
+    var obj=tmpl.clone(true);obj.scale.setScalar(edGeff());
+    obj.position.set(i*edGeff(),0,j*edGeff());obj.rotation.y=rot*Math.PI/2;
+    edScene.add(obj);prop.obj=obj;edProps.push(prop);
+  });
 }
-function edKey(i,j){return i+','+j}
-function edPlace(i,j){
-  if(!edSelectedAsset){edRemove(i,j);return}
-  var asset=edSelectedAsset;
-  if(asset.ports){
-    edRemove(i,j);
-    var rot=edCurRot;
-    var t={i:i,j:j,type:asset.file,rot:rot,obj:null};
-    edTiles[edKey(i,j)]=t;
-    edLoadModel(asset.file).then(function(tmpl){
-      var obj=tmpl.clone(true);obj.scale.setScalar(edGeff());
-      obj.position.set(i*edGeff(),0,j*edGeff());obj.rotation.y=rot*Math.PI/2;
-      edScene.add(obj);t.obj=obj;
-      if(!edStartKey)edSetStart(i,j);
-      edRefresh();
-    });
-  }else{
-    var prop={i:i,j:j,file:asset.file,rot:edCurRot,obj:null};
-    edLoadModel(asset.file).then(function(tmpl){
-      var obj=tmpl.clone(true);obj.scale.setScalar(edGeff());
-      obj.position.set(i*edGeff(),0,j*edGeff());obj.rotation.y=edCurRot*Math.PI/2;
-      edScene.add(obj);prop.obj=obj;edProps.push(prop);
-    });
-  }
-}
-function edRemove(i,j){
-  var k=edKey(i,j),t=edTiles[k];
-  if(t){if(t.obj)edScene.remove(t.obj);delete edTiles[k];
-    if(edStartKey===k){edStartKey=null;edStartDir=null;var any=Object.keys(edTiles)[0];if(any){var p=edTiles[any];edSetStart(p.i,p.j)}}edRefresh()}
+function edRemoveProp(i,j){
   for(var pi=edProps.length-1;pi>=0;pi--){
     if(edProps[pi].i===i&&edProps[pi].j===j){if(edProps[pi].obj)edScene.remove(edProps[pi].obj);edProps.splice(pi,1)}
   }
 }
-function edSetStart(i,j){
-  var t=edTiles[edKey(i,j)];if(!t)return;
-  var ports=edTilePorts(t.type,t.rot);if(!ports)return;
-  edStartKey=edKey(i,j);edStartDir=ports[1];edRefresh();
-}
-function edEdgeMid(i,j,dir){return[(i+dir[0]*0.5)*edGeff(),(j+dir[1]*0.5)*edGeff()]}
-function edTileCenterline(t,entryDir,exitDir){
-  var pts=[],C=[t.i*edGeff(),t.j*edGeff()],pt=edPortType(t.type);
-  if(pt==='ns'){pts.push(edEdgeMid(t.i,t.j,entryDir));pts.push([C[0],C[1]]);pts.push(edEdgeMid(t.i,t.j,exitDir))}
-  else{var off=edCornerArcOff(t.rot),ac=[C[0]+off[0]*0.5*edGeff(),C[1]+off[1]*0.5*edGeff()];
-    var pa=edEdgeMid(t.i,t.j,entryDir),pb=edEdgeMid(t.i,t.j,exitDir);
-    var a0=Math.atan2(pa[1]-ac[1],pa[0]-ac[0]),a1=Math.atan2(pb[1]-ac[1],pb[0]-ac[0]);
-    var d=a1-a0;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;
-    var R=0.5*edGeff(),N=8;for(var s=0;s<=N;s++){var a=a0+d*s/N;pts.push([ac[0]+Math.cos(a)*R,ac[1]+Math.sin(a)*R])}}
-  return pts;
-}
-function edTraceLoop(){
-  var roadKeys=Object.keys(edTiles);var n=roadKeys.length;
-  if(!edStartKey||n<3)return{ok:false,reason:'Need 3+ road tiles in a closed loop.'};
-  var start=edTiles[edStartKey];if(!start)return{ok:false,reason:'Start tile missing.'};
-  var ports=edTilePorts(start.type,start.rot);
-  if(!ports)return{ok:false,reason:'Start tile has no ports.'};
-  var entry=edDirEq(ports[0],edStartDir)?ports[1]:ports[0];
-  var wp=[],order=[],guard=0,cur=start,curEntry=entry,curExit=edStartDir;
-  do{
-    if(++guard>5000)return{ok:false,reason:'Trace runaway.'};
-    var cl=edTileCenterline(cur,curEntry,curExit);
-    for(var p=0;p<cl.length;p++){if(wp.length){var last=wp[wp.length-1];if(Math.abs(last[0]-cl[p][0])<1e-3&&Math.abs(last[1]-cl[p][1])<1e-3)continue}wp.push(cl[p])}
-    order.push(edKey(cur.i,cur.j));
-    var ni=cur.i+curExit[0],nj=cur.j+curExit[1],nx=edTiles[edKey(ni,nj)];
-    if(!nx)return{ok:false,reason:'Road breaks at '+ni+','+nj+'.'};
-    var nports=edTilePorts(nx.type,nx.rot);
-    if(!nports)return{ok:false,reason:'Tile at '+ni+','+nj+' has no ports.'};
-    var need=edOpp(curExit);
-    if(!edDirEq(nports[0],need)&&!edDirEq(nports[1],need))return{ok:false,reason:'Tile '+ni+','+nj+' does not connect.'};
-    var nextExit=edDirEq(nports[0],need)?nports[1]:nports[0];
-    cur=nx;curEntry=need;curExit=nextExit;
-  }while(edKey(cur.i,cur.j)!==edStartKey);
-  if(order.length!==n)return{ok:false,reason:'Loop misses '+(n-order.length)+' road tile(s).'};
-  if(wp.length>1){var a=wp[0],b=wp[wp.length-1];if(Math.abs(a[0]-b[0])<1e-3&&Math.abs(a[1]-b[1])<1e-3)wp.pop()}
-  return{ok:true,wp:wp,order:order};
-}
-function edRefresh(){
-  if(!edLineGroup)return;
-  while(edLineGroup.children.length)edLineGroup.remove(edLineGroup.children[0]);
-  var roadCount=Object.keys(edTiles).length,propCount=edProps.length;
-  var res=edTraceLoop(),st=document.getElementById('editorStatus');
-  if(res.ok){
-    var v=[];for(var i=0;i<=res.wp.length;i++){var p=res.wp[i%res.wp.length];v.push(p[0],1,p[1])}
-    var geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(v,3));
-    edLineGroup.add(new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x5fe08a,linewidth:2})));
-    var half=edWidthMul*0.69*edGeff()/2,wpN=res.wp.length,le=[],re=[];
-    for(var ei=0;ei<=wpN;ei++){var a2=res.wp[ei%wpN],b2=res.wp[(ei+1)%wpN];var dx=b2[0]-a2[0],dz=b2[1]-a2[1],dl=Math.hypot(dx,dz)||1;var nx=-dz/dl,nz=dx/dl;le.push(a2[0]+nx*half,.8,a2[1]+nz*half);re.push(a2[0]-nx*half,.8,a2[1]-nz*half)}
-    [le,re].forEach(function(arr){var g2=new THREE.BufferGeometry();g2.setAttribute('position',new THREE.Float32BufferAttribute(arr,3));edLineGroup.add(new THREE.Line(g2,new THREE.LineBasicMaterial({color:0x9fb0bf})))});
-    if(st)st.innerHTML='<b>'+roadCount+'</b> road · <b>'+propCount+'</b> props · <span class="eok">CLOSED LOOP ✓</span><br>'+res.wp.length+' waypoints';
-  }else{if(st)st.innerHTML='<b>'+roadCount+'</b> road · <b>'+propCount+'</b> props · <span class="ebad">'+res.reason+'</span>'}
-  if(edStartKey&&edTiles[edStartKey]){var t=edTiles[edStartKey];edStartMark.visible=true;edStartMark.position.set(t.i*edGeff(),.15,t.j*edGeff());edStartMark.rotation.z=Math.atan2(edStartDir[0],edStartDir[1])}else edStartMark.visible=false;
-}
-function edApplySize(){
-  if(edGrid){edScene.remove(edGrid);edGrid=new THREE.GridHelper(100*edGeff(),100,0x3a6a2a,0x3a6a2a);edGrid.position.y=0.01;edGrid.material.transparent=true;edGrid.material.opacity=0.3;edScene.add(edGrid)}
-  Object.keys(edTiles).forEach(function(k){var t=edTiles[k];if(t.obj){t.obj.scale.setScalar(edGeff());t.obj.position.set(t.i*edGeff(),0,t.j*edGeff())}});
-  edProps.forEach(function(p){if(p.obj){p.obj.scale.setScalar(edGeff());p.obj.position.set(p.i*edGeff(),0,p.j*edGeff())}});
-  edRefresh();
-}
-function edClearAll(){
-  Object.keys(edTiles).forEach(function(k){if(edTiles[k].obj)edScene.remove(edTiles[k].obj)});
-  edProps.forEach(function(p){if(p.obj)edScene.remove(p.obj)});
-  edTiles={};edProps=[];edStartKey=null;edStartDir=null;edRefresh();
+function edNearestPt(x,z){
+  var best=-1,bestD=400;
+  for(var i=0;i<edCtrlPts.length;i++){var d=Math.hypot(edCtrlPts[i].x-x,edCtrlPts[i].z-z);if(d<bestD){bestD=d;best=i}}
+  return best;
 }
 
+// ── Show / save / exit ──
 function showEditor(trackData){
   editorActive=true;mRun=false;
   document.getElementById('menuScreen').classList.add('hide');
@@ -6186,72 +6344,73 @@ function showEditor(trackData){
   if(!edScene)initEditor();
   edRenderer.setSize(innerWidth,innerHeight);
   edCam.aspect=innerWidth/innerHeight;edCam.updateProjectionMatrix();edUpdateCam();
-  edCurRot=0;edUpdateRotDisp();
-  edSelectedAsset=ED_ASSETS[0];edBuildUI();edSelAsset(ED_ASSETS[0]);
-  if(trackData&&trackData.tiles){
+  edMode='draw';edSetMode('draw');
+  if(trackData&&trackData.splineTrack&&trackData.ctrlPts){
     edEditingId=trackData.id||null;
     document.getElementById('edTrackName').value=trackData.name||'MY CIRCUIT';
-    edSizeMul=trackData.editorState?trackData.editorState.sizeMul:1.0;
-    edWidthMul=trackData.editorState?trackData.editorState.widthMul:1.0;
-    document.getElementById('edSSize').value=Math.round(edSizeMul*100);
-    document.getElementById('edVSize').textContent=Math.round(edSizeMul*100)+'%';
-    document.getElementById('edSWidth').value=Math.round(edWidthMul*100);
-    document.getElementById('edVWidth').textContent=Math.round(edWidthMul*100)+'%';
-    edClearAll();
-    var tilesToLoad=[];trackData.tiles.forEach(function(td){tilesToLoad.push(td)});
-    var propsToLoad=trackData.props||[];
-    var loadAllTiles=function(){
-      var files={};tilesToLoad.forEach(function(td){files[td.type]=1});
-      propsToLoad.forEach(function(pd){files[pd.file]=1});
-      var promises=Object.keys(files).map(function(f){return edLoadModel(f)});
-      Promise.all(promises).then(function(){
-        tilesToLoad.forEach(function(td){
-          var t={i:td.i,j:td.j,type:td.type,rot:td.rot,obj:null};
-          var tmpl=edTemplateCache[td.type];if(!tmpl)return;
-          var obj=tmpl.clone(true);obj.scale.setScalar(edGeff());
-          obj.position.set(td.i*edGeff(),0,td.j*edGeff());obj.rotation.y=td.rot*Math.PI/2;
-          edScene.add(obj);t.obj=obj;edTiles[edKey(td.i,td.j)]=t;
-        });
-        propsToLoad.forEach(function(pd){
-          var tmpl=edTemplateCache[pd.file];if(!tmpl)return;
-          var obj=tmpl.clone(true);obj.scale.setScalar(edGeff());
-          obj.position.set(pd.i*edGeff(),0,pd.j*edGeff());obj.rotation.y=pd.rot*Math.PI/2;
-          edScene.add(obj);edProps.push({i:pd.i,j:pd.j,file:pd.file,rot:pd.rot,obj:obj});
-        });
-        if(!edStartKey){var fk=Object.keys(edTiles)[0];if(fk){var ft=edTiles[fk];edSetStart(ft.i,ft.j)}}
-        edRefresh();
-        var keys=Object.keys(edTiles).concat(edProps.map(function(p){return edKey(p.i,p.j)}));
-        if(keys.length){var sx=0,sz=0,cnt=0;Object.keys(edTiles).forEach(function(k){var tt=edTiles[k];sx+=tt.i;sz+=tt.j;cnt++});edProps.forEach(function(p){sx+=p.i;sz+=p.j;cnt++});if(cnt){edCamTarget.x=sx/cnt*edGeff();edCamTarget.z=sz/cnt*edGeff();edUpdateCam()}}
-      });
-    };
-    loadAllTiles();
+    edRoadW=trackData.roadWidth||26;
+    document.getElementById('edSWidth').value=edRoadW;
+    document.getElementById('edVWidth').textContent=edRoadW;
+    edClearAllPts();
+    trackData.ctrlPts.forEach(function(p){edAddPt(p[0],p[1])});
+    edCurbSegs=(trackData.curbs||[]).slice();
+    edPitEntry=trackData.pitEntry!=null?trackData.pitEntry:null;
+    edPitExit=trackData.pitExit!=null?trackData.pitExit:null;
+    edRebuildSpline();edRebuildCurbs();edRebuildPit();
+    if(trackData.props)trackData.props.forEach(function(pd){edPlaceProp(pd.i,pd.j,pd.file,pd.rot)});
+    if(edCtrlPts.length){var sx=0,sz=0;edCtrlPts.forEach(function(p){sx+=p.x;sz+=p.z});
+      edCamTarget.x=sx/edCtrlPts.length;edCamTarget.z=sz/edCtrlPts.length;edUpdateCam()}
+  }else if(trackData&&trackData.tileTrack&&trackData.wp){
+    // Legacy tile track: import as spline control points from waypoints (sampled)
+    edEditingId=trackData.id||null;
+    document.getElementById('edTrackName').value=trackData.name||'MY CIRCUIT';
+    edRoadW=trackData.tw||26;
+    document.getElementById('edSWidth').value=edRoadW;
+    document.getElementById('edVWidth').textContent=edRoadW;
+    edClearAllPts();
+    var step=Math.max(1,Math.floor(trackData.wp.length/20));
+    for(var wi=0;wi<trackData.wp.length;wi+=step){edAddPt(trackData.wp[wi][0],trackData.wp[wi][1])}
+    if(trackData.props)trackData.props.forEach(function(pd){edPlaceProp(pd.i,pd.j,pd.file,pd.rot)});
+    if(edCtrlPts.length){var sx2=0,sz2=0;edCtrlPts.forEach(function(p){sx2+=p.x;sz2+=p.z});
+      edCamTarget.x=sx2/edCtrlPts.length;edCamTarget.z=sz2/edCtrlPts.length;edUpdateCam()}
   }else{
     edEditingId=null;
     document.getElementById('edTrackName').value='MY CIRCUIT';
-    edSizeMul=1.0;edWidthMul=1.0;
-    document.getElementById('edSSize').value=100;document.getElementById('edVSize').textContent='100%';
-    document.getElementById('edSWidth').value=100;document.getElementById('edVWidth').textContent='100%';
-    edClearAll();edCamTarget={x:0,y:0,z:0};edCamTheta=Math.PI*0.75;edCamPhi=Math.PI/3.2;edCamDist=600;edUpdateCam();
+    edRoadW=26;
+    document.getElementById('edSWidth').value=26;document.getElementById('edVWidth').textContent='26';
+    edClearAllPts();edProps=[];
+    edCamTarget={x:0,y:0,z:0};edCamTheta=Math.PI*0.75;edCamPhi=Math.PI/3.2;edCamDist=600;edUpdateCam();
   }
   edRun=true;edRenderLoop();
 }
-function exitEditor(){editorActive=false;edRun=false;document.getElementById('editorScreen').classList.add('hide');showGarage()}
+function exitEditor(){
+  editorActive=false;edRun=false;
+  // Clean up road edge lines
+  if(edScene){var toRm=[];edScene.children.forEach(function(c){if(c.userData&&c.userData._edRoadEdge)toRm.push(c)});toRm.forEach(function(c){edScene.remove(c)})}
+  document.getElementById('editorScreen').classList.add('hide');showGarage();
+}
 
 function edRound2(n){return Math.round(n*10)/10}
 function edSaveTrack(){
-  var res=edTraceLoop();
-  if(!res.ok){alert('Cannot save — '+res.reason);return}
+  if(edCtrlPts.length<3){alert('Need at least 3 points to form a track.');return}
+  if(!edSpline){alert('No track to save.');return}
   var name=(document.getElementById('edTrackName').value||'MY CIRCUIT').toUpperCase().trim();
   if(!name)name='MY CIRCUIT';
-  var wp=res.wp.map(function(p){return[edRound2(p[0]),edRound2(p[1])]});
-  var tileList=[];Object.keys(edTiles).forEach(function(k){var t=edTiles[k];tileList.push({i:t.i,j:t.j,type:t.type,rot:t.rot})});
+  // Sample waypoints from spline
+  var sampleCount=Math.max(60,Math.floor(edSpline.getLength()/5));
+  var wp=[];for(var i=0;i<sampleCount;i++){
+    var p=edSpline.getPoint(i/sampleCount);
+    wp.push([edRound2(p.x),edRound2(p.z)]);
+  }
+  var ctrlPts=edCtrlPts.map(function(p){return[edRound2(p.x),edRound2(p.z)]});
   var propList=edProps.map(function(p){return{i:p.i,j:p.j,file:p.file,rot:p.rot}});
-  var sf=wp[0],Gx=edRound2(edGeff()),tw=edRound2(edWidthMul*0.69*edGeff());
   var trackData={
-    id:edEditingId||('ut_'+Date.now()),name:name,tileTrack:true,flat:true,
+    id:edEditingId||('ut_'+Date.now()),name:name,splineTrack:true,flat:true,
     sky:0x6db4e8,fog:0x86b8d8,ambI:.55,sunI:.95,sunC:0xfff4e0,hemiSky:0x88bbee,hemiGnd:0x4a6644,grass:0x3a7a35,
-    G:Gx,tw:tw,sf:sf,tiles:tileList,props:propList,wp:wp,
-    editorState:{sizeMul:edSizeMul,widthMul:edWidthMul}
+    ctrlPts:ctrlPts,roadWidth:edRoadW,tw:edRoadW,
+    curbs:edCurbSegs.slice(),
+    pitEntry:edPitEntry,pitExit:edPitExit,
+    sf:wp[0],props:propList,wp:wp
   };
   var tracks=getUserTracks();
   var idx=-1;for(var ti=0;ti<tracks.length;ti++){if(tracks[ti].id===trackData.id){idx=ti;break}}
@@ -6267,13 +6426,18 @@ function edDeleteCurrent(){
   var tracks=getUserTracks().filter(function(ut){return ut.id!==t.id});
   saveUserTracks(tracks);rebuildTrackList();drawTrackPreview();scheduleCloudSave();
 }
+
 addEventListener('keydown',function(e){
   if(!editorActive)return;
   if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;
   var k=e.key.toLowerCase();
-  if(k==='r'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();edRotRight()}
-  else if(k==='q'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();edRotLeft()}
-  else if(k==='e'){edSelAsset(null);edBuildUI()}
+  if(k==='z'&&(e.ctrlKey||e.metaKey)){e.preventDefault();if(edCtrlPts.length>0)edRemovePt(edCtrlPts.length-1)}
+  else if(k==='r'&&!e.ctrlKey&&!e.metaKey&&edMode==='props'){e.preventDefault();edCurRot=(edCurRot+3)%4;edBuildContextUI()}
+  else if(k==='q'&&!e.ctrlKey&&!e.metaKey&&edMode==='props'){e.preventDefault();edCurRot=(edCurRot+1)%4;edBuildContextUI()}
+  else if(k==='1'){edSetMode('draw')}
+  else if(k==='2'){edSetMode('curb')}
+  else if(k==='3'){edSetMode('pit')}
+  else if(k==='4'){edSetMode('props')}
   else if(k==='escape')exitEditor();
 });
 addEventListener('resize',function(){if(!editorActive||!edRenderer)return;edRenderer.setSize(innerWidth,innerHeight);edCam.aspect=innerWidth/innerHeight;edCam.updateProjectionMatrix();edUpdateCam()});
