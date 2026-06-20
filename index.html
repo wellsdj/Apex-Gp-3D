@@ -631,13 +631,19 @@ body.mobile #spdOutlineSvg{display:none}
 .ed-tab{background:#161c26;color:#8a97a6;border:1px solid #222c38;border-radius:6px;padding:5px 0;font-size:10px;cursor:pointer;flex:1;min-width:0;text-align:center;font-family:'Rajdhani',sans-serif;letter-spacing:.5px}
 .ed-tab:hover{background:#1c2430;color:#cfe0ee}
 .ed-tab.on{background:#2f6df0;border-color:#5b8cff;color:#fff}
-.ed-asset-list{flex:1;overflow-y:auto;border:1px solid #1c2530;border-radius:8px;background:#0c0f15;margin-bottom:8px;min-height:0}
+.ed-asset-list{flex:1;overflow-y:auto;border:1px solid #1c2530;border-radius:8px;background:#0c0f15;margin-bottom:8px;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;align-content:start}
 .ed-asset-list::-webkit-scrollbar{width:6px}
 .ed-asset-list::-webkit-scrollbar-thumb{background:#2a3340;border-radius:3px}
-.ed-asset-item{padding:6px 10px;font-size:11px;color:#9fb0bf;cursor:pointer;border-bottom:1px solid #161c26;display:flex;align-items:center;gap:8px}
-.ed-asset-item:hover{background:#1c2430;color:#cfe0ee}
-.ed-asset-item.on{background:rgba(47,109,240,.25);color:#7fd1ff;border-color:rgba(47,109,240,.3)}
-.ed-asset-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ed-asset-item{font-size:9px;color:#9fb0bf;cursor:pointer;border:1px solid #1c2530;border-radius:6px;display:flex;flex-direction:column;align-items:center;padding:4px 2px;text-align:center;background:#12161e;line-height:1.2;min-width:0;overflow:hidden}
+.ed-asset-item:hover{background:#1c2430;color:#cfe0ee;border-color:#33404f}
+.ed-asset-item.on{background:rgba(47,109,240,.25);color:#7fd1ff;border-color:rgba(47,109,240,.5)}
+.ed-asset-thumb{width:100%;height:50px;background-size:contain;background-repeat:no-repeat;background-position:center}
+.ed-rot-ind{display:flex;align-items:center;gap:6px;justify-content:center;padding:4px 0}
+.ed-rot-arrow{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;background:#1c2430;border:1px solid #33404f;color:#cfe0ee;font-size:14px;font-family:'Rajdhani',sans-serif}
+.ed-rot-arrow:hover{background:#2f6df0;color:#fff}
+.ed-rot-deg{font-family:'Orbitron',sans-serif;font-size:14px;color:#7fd1ff;min-width:44px;text-align:center}
+.ed-btn.erase-on{background:#8a2020;border-color:#cc3030;color:#fff;animation:edPulseRed 1.5s infinite}
+@keyframes edPulseRed{0%,100%{box-shadow:0 0 0 rgba(200,50,50,0)}50%{box-shadow:0 0 8px rgba(200,50,50,.5)}}
 #editorStatus{font-size:11px;line-height:1.5;color:#9fb0bf;background:#161c26;border-radius:8px;padding:8px 10px;flex-shrink:0}
 #editorStatus b{color:#fff}
 #editorStatus .eok{color:#5fe08a}
@@ -673,13 +679,13 @@ body.mobile #spdOutlineSvg{display:none}
   <div class="ed-asset-list" id="edAssetList"></div>
   <div class="ed-grp">
     <div class="ed-lbl">Actions</div>
+    <div class="ed-rot-ind"><div class="ed-rot-arrow" onclick="edRotLeft()" title="Rotate left (Q)">◀</div><div class="ed-rot-deg" id="edRotDeg">0°</div><div class="ed-rot-arrow" onclick="edRotRight()" title="Rotate right (R)">▶</div></div>
     <div class="ed-btns">
-      <button class="ed-btn" onclick="edCurRot=(edCurRot+1)%4">Rotate <kbd>R</kbd></button>
       <button class="ed-btn" id="edBStart" onclick="edStartMode=true;this.classList.add('on')">Set Start</button>
-      <button class="ed-btn" onclick="if(edStartKey&&edStartDir){edStartDir=edOpp(edStartDir);edRefresh()}">Flip</button>
+      <button class="ed-btn" onclick="if(edStartKey&&edStartDir){edStartDir=edOpp(edStartDir);edRefresh()}">Flip Dir</button>
     </div>
     <div class="ed-btns" style="margin-top:5px">
-      <button class="ed-btn" id="edTErase" onclick="edSelAsset(null)">Eraser <kbd>E</kbd></button>
+      <button class="ed-btn" id="edTErase" onclick="edSelAsset(null);edBuildUI()">🗑 DELETE <kbd>E</kbd></button>
       <button class="ed-btn" onclick="edClearAll()">Clear All</button>
     </div>
   </div>
@@ -693,7 +699,7 @@ body.mobile #spdOutlineSvg{display:none}
   <div class="ed-btns" style="margin-top:5px;margin-bottom:8px"><button class="ed-btn back-btn wide" onclick="exitEditor()">BACK TO GARAGE</button></div>
   <div id="editorStatus">Place tiles to begin.</div>
 </div>
-<div id="editorHint"><kbd>Click</kbd> place · <kbd>R</kbd> rotate · <kbd>E</kbd> eraser · <kbd>Drag</kbd> orbit · <kbd>Scroll</kbd> zoom · <kbd>Shift+Drag</kbd> pan</div>
+<div id="editorHint"><kbd>Click</kbd> place · <kbd>Right-click</kbd> delete · <kbd>R</kbd>/<kbd>Q</kbd> rotate · <kbd>E</kbd> delete mode · <kbd>Drag</kbd> orbit · <kbd>Scroll</kbd> zoom</div>
 </div>
 <div id="qualiUI"><div class="quali-title">QUALIFYING<span class="quali-time" id="qualiTime">3:00</span></div><div class="quali-standings" id="qualiStandings"></div></div>
 <div id="raceLbUI"><div class="quali-title" id="raceLbTitle">RACE POSITIONS</div><div class="quali-standings" id="raceLbStandings"></div></div>
@@ -5908,25 +5914,63 @@ function edBuildUI(){
   ED_ASSETS.forEach(function(a,idx){
     if(a.cat!==edSelectedCat)return;
     var d=document.createElement('div');d.className='ed-asset-item'+(edSelectedAsset===a?' on':'');
-    var dot=document.createElement('div');dot.className='ed-asset-dot';
-    dot.style.background=a.ports?'#5fe08a':'#8a97a6';
-    d.appendChild(dot);
+    d.setAttribute('data-file',a.file);
+    var thumb=document.createElement('div');thumb.className='ed-asset-thumb';
+    d.appendChild(thumb);
     var sp=document.createElement('span');sp.textContent=a.name;d.appendChild(sp);
     d.onclick=function(){edSelAsset(a)};
     list.appendChild(d);
+    edRenderThumb(a.file,thumb);
   });
 }
 function edSelAsset(a){
   edSelectedAsset=a;
-  document.getElementById('edTErase').classList.toggle('on',!a);
+  var eb=document.getElementById('edTErase');
+  if(eb){eb.classList.toggle('on',!a);eb.classList.toggle('erase-on',!a)}
+  if(edHover)edHover.material.color.setHex(a?0x5b8cff:0xff4444);
   var items=document.querySelectorAll('.ed-asset-item');
-  items.forEach(function(it,i){
-    var match=a&&it.querySelector('span')&&it.querySelector('span').textContent===a.name;
+  items.forEach(function(it){
+    var match=a&&it.getAttribute('data-file')===a.file;
     it.classList.toggle('on',!!match);
   });
   if(a)edPreloadAsset(a.file);
 }
 function edPreloadAsset(file){if(!edTemplateCache[file])edLoadModel(file)}
+
+function edRotRight(){edCurRot=(edCurRot+1)%4;edUpdateRotDisp()}
+function edRotLeft(){edCurRot=(edCurRot+3)%4;edUpdateRotDisp()}
+function edUpdateRotDisp(){var d=document.getElementById('edRotDeg');if(d)d.textContent=(edCurRot*90)+'°'}
+
+var edThumbCache={},edThumbRenderer=null,edThumbScene=null,edThumbCam=null;
+function edInitThumbs(){
+  var c=document.createElement('canvas');c.width=96;c.height=80;
+  edThumbRenderer=new THREE.WebGLRenderer({canvas:c,antialias:true,alpha:true});
+  edThumbRenderer.setSize(96,80);edThumbRenderer.setClearColor(0x000000,0);
+  edThumbScene=new THREE.Scene();
+  edThumbScene.add(new THREE.AmbientLight(0xffffff,.8));
+  var dl=new THREE.DirectionalLight(0xffffff,.6);dl.position.set(3,5,4);edThumbScene.add(dl);
+  edThumbCam=new THREE.PerspectiveCamera(30,96/80,0.01,200);
+}
+function edRenderThumb(file,el){
+  if(edThumbCache[file]){el.style.backgroundImage='url('+edThumbCache[file]+')';return}
+  if(!edThumbRenderer)edInitThumbs();
+  edLoadModel(file).then(function(tmpl){
+    var clone=tmpl.clone(true);clone.scale.setScalar(1);
+    edThumbScene.add(clone);
+    var box=new THREE.Box3().setFromObject(clone);
+    var center=box.getCenter(new THREE.Vector3());
+    var sz=box.getSize(new THREE.Vector3());
+    var mx=Math.max(sz.x,sz.y,sz.z)||1;
+    var dist=mx*2;
+    edThumbCam.position.set(center.x+dist*0.6,center.y+dist*0.4,center.z+dist*0.7);
+    edThumbCam.lookAt(center);
+    edThumbRenderer.render(edThumbScene,edThumbCam);
+    var url=edThumbRenderer.domElement.toDataURL();
+    edThumbCache[file]=url;
+    edThumbScene.remove(clone);
+    el.style.backgroundImage='url('+url+')';
+  });
+}
 
 function initEditor(){
   edCanvas=document.getElementById('editorCanvas');
@@ -6208,7 +6252,8 @@ addEventListener('keydown',function(e){
   if(!editorActive)return;
   if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;
   var k=e.key.toLowerCase();
-  if(k==='r'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();edCurRot=(edCurRot+1)%4}
+  if(k==='r'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();edRotRight()}
+  else if(k==='q'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();edRotLeft()}
   else if(k==='e'){edSelAsset(null);edBuildUI()}
   else if(k==='escape')exitEditor();
 });
