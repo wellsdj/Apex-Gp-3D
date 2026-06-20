@@ -51,6 +51,9 @@
 #customBtn{bottom:auto !important;top:28px !important;left:50% !important;right:auto !important;transform:translateX(10px);font-size:11px;padding:12px 30px}
 #setupBtn{bottom:auto !important;top:28px !important;right:50% !important;left:auto !important;transform:translateX(-10px);font-size:11px;padding:12px 30px}
 #startBtn{bottom:30px !important;left:50% !important;right:auto !important;transform:translateX(-50%);font-size:16px;padding:18px 55px}
+#editorBtn{bottom:30px !important;right:28px !important}
+#editTrackBtn{bottom:90px !important;right:28px !important}
+#deleteTrackBtn{bottom:150px !important;right:28px !important}
 .gar-btn:hover{animation:none;box-shadow:0 0 80px rgba(0,225,255,.55),inset 0 0 90px rgba(90,60,255,.3);border-color:#5ff0ff;transform:scale(1.02)}
 .gar-btn:active{transform:scale(.98)}
 .track-sel{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:18px;z-index:51;pointer-events:all}
@@ -992,6 +995,8 @@ var WP=TRACKS[0].wp;
 var selTrack=0,builtTrack=-1,builtWeather='';
 var TW=26,CWW=2.5,WL=TW/2+CWW+3.5,CAR_HW=1.2;
 var scene,cam,ren,clk,car,spl,tPts,sd,sfIdx=0,tCX=215,tCZ=272;
+var _trackOccupied=[]; // world (x,z,r) of placed tiles+props so trees don't spawn on them
+function _nearTrackProp(x,z){for(var i=0;i<_trackOccupied.length;i++){var o=_trackOccupied[i],dx=x-o.x,dz=z-o.z;if(dx*dx+dz*dz<o.r*o.r)return true}return false}
 var trackCurv=[],carNearIdx=0,curbCurvThresh=.03,flatCurvThresh=.012;
 var P=new THREE.Vector3(),V=new THREE.Vector3(),A=0,AV=0,ST=0,SPD=0;
 var spinV=0,pitchA=0,pitchV=0,rollA=0,rollV=0,ab=false;
@@ -1337,6 +1342,11 @@ function loadTileGLB(filename,G){
 var TILE_MODELS={straight:'roadStraight.glb',corner:'roadCornerSmall.glb'};
 function buildTileTrack(T){
   var G=T.G||(26/0.69),group=new THREE.Group();scene.add(group);
+  // Record every occupied grid cell (tiles + props) so mkWorld's tree scatter
+  // keeps trees on open grass and never drops them on top of a 3D model.
+  _trackOccupied=[];
+  T.tiles.forEach(function(t){_trackOccupied.push({x:t.i*G,z:t.j*G,r:G*0.8})});
+  if(T.props)T.props.forEach(function(p){_trackOccupied.push({x:p.i*G,z:p.j*G,r:G*0.8})});
   // Tile type is now the full filename (e.g. 'roadStraight.glb') or legacy 'straight'/'corner'
   var need={};T.tiles.forEach(function(t){
     var f=t.type;if(f==='straight')f='roadStraight.glb';if(f==='corner')f='roadCornerSmall.glb';
@@ -1989,6 +1999,7 @@ function buildRacingLine(){
   scene.add(racingLineMesh);
 }
 function mkTrack(grassCOverride){
+  _trackOccupied=[]; // cleared each build; only tile tracks repopulate it
   // Tile tracks (built in editor.html): physics from the waypoint racing line,
   // visuals from snapped Kenney road tiles. Ground is a flat grass plane; the
   // tiles bring their own road + verges.
@@ -2362,6 +2373,7 @@ function mkWorld(){
   for(var i=0;i<want;i++){
     var a=Math.random()*Math.PI*2,d=55+Math.random()*600,x=tCX+Math.cos(a)*d,z=tCZ+Math.sin(a)*d;
     if(dtt(x,z)<38)continue;
+    if(_nearTrackProp(x,z))continue;
     slots.push({x:x,z:z,gy:groundHeightAt(x,z)+0.45,sc:2.5+(Math.random()-.5)*.6,ry:Math.random()*Math.PI*2});
   }
   var n=slots.length;
@@ -5937,8 +5949,9 @@ function edSelAsset(a){
 }
 function edPreloadAsset(file){if(!edTemplateCache[file])edLoadModel(file)}
 
-function edRotRight(){edCurRot=(edCurRot+1)%4;edUpdateRotDisp()}
-function edRotLeft(){edCurRot=(edCurRot+3)%4;edUpdateRotDisp()}
+// rotation.y is CCW from above, so the on-screen "right" arrow must DECREASE rot
+function edRotRight(){edCurRot=(edCurRot+3)%4;edUpdateRotDisp()}
+function edRotLeft(){edCurRot=(edCurRot+1)%4;edUpdateRotDisp()}
 function edUpdateRotDisp(){var d=document.getElementById('edRotDeg');if(d)d.textContent=(edCurRot*90)+'°'}
 
 var edThumbCache={},edThumbRenderer=null,edThumbScene=null,edThumbCam=null;
@@ -6168,6 +6181,7 @@ function showEditor(trackData){
   if(!edScene)initEditor();
   edRenderer.setSize(innerWidth,innerHeight);
   edCam.aspect=innerWidth/innerHeight;edCam.updateProjectionMatrix();edUpdateCam();
+  edCurRot=0;edUpdateRotDisp();
   edSelectedAsset=ED_ASSETS[0];edBuildUI();edSelAsset(ED_ASSETS[0]);
   if(trackData&&trackData.tiles){
     edEditingId=trackData.id||null;
