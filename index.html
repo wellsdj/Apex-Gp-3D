@@ -2020,7 +2020,7 @@ function mkTrack(grassCOverride){
         Object.keys(pneed).forEach(function(file){
           loadTileGLB(file,ED_BASE_G).then(function(tmpl){
             _T.props.forEach(function(p){if(p.file!==file)return;
-              var o=tmpl.clone(true);o.position.set(p.i*ED_BASE_G,0,p.j*ED_BASE_G);o.rotation.y=p.rot*Math.PI/2;scene.add(o);
+              var o=tmpl.clone(true);o.scale.setScalar(ED_BASE_G*(p.scale||1));o.position.set(p.i*ED_BASE_G,0,p.j*ED_BASE_G);o.rotation.y=p.rot*Math.PI/2;scene.add(o);
             });
           });
         });
@@ -5789,7 +5789,8 @@ var edPtMeshes=[],edLineMesh=null,edSplineMesh=null;
 var edDragging=null,edClosedLoop=false;
 var edLineGroup=null,edGrid=null,edHover=null;
 var edSelectedPtIdx=-1,edSelectedPropIdx=-1;
-var edPropPreview=null,edPropPreviewFile=null;
+var edPropPreview=null,edPropPreviewFile=null,edCurScale=1;
+var edCurbPreviewMesh=null,edCurbHoverT=null;
 
 // Props asset catalogue (scenery only — road drawing is spline-based now)
 var ED_CATS={border:'BORDERS',scenery:'SCENERY',pits:'PITS'};
@@ -5887,10 +5888,24 @@ function edInitThumbs(){
   var dl=new THREE.DirectionalLight(0xffffff,.9);dl.position.set(4,7,5);edThumbScene.add(dl);
   edThumbCam=new THREE.PerspectiveCamera(32,180/148,0.01,500);
 }
+// Thumbnails share one offscreen renderer/scene, so rendering many at once
+// (a long scenery list) lets async clones collide on the same canvas and most
+// come back blank. Queue them and render strictly one at a time.
+var edThumbQueue=[],edThumbBusy=false;
 function edRenderThumb(file,el){
   if(edThumbCache[file]){el.style.backgroundImage='url('+edThumbCache[file]+')';el.classList.add('has-img');return}
+  edThumbQueue.push({file:file,el:el});
+  edThumbPump();
+}
+function edThumbPump(){
+  if(edThumbBusy||!edThumbQueue.length)return;
+  var job=edThumbQueue.shift();
+  // Element may have been re-rendered (tab switch) — skip stale jobs whose
+  // file already cached, but always continue draining the queue.
+  if(edThumbCache[job.file]){if(job.el){job.el.style.backgroundImage='url('+edThumbCache[job.file]+')';job.el.classList.add('has-img')}return edThumbPump()}
+  edThumbBusy=true;
   if(!edThumbRenderer)edInitThumbs();
-  edLoadModel(file).then(function(tmpl){
+  edLoadModel(job.file).then(function(tmpl){
     try{
       var clone=tmpl.clone(true);clone.scale.setScalar(1);
       edThumbScene.add(clone);
@@ -5904,10 +5919,11 @@ function edRenderThumb(file,el){
       edThumbRenderer.render(edThumbScene,edThumbCam);
       var url=edThumbRenderer.domElement.toDataURL('image/png');
       edThumbScene.remove(clone);
-      edThumbCache[file]=url;
-      el.style.backgroundImage='url('+url+')';el.classList.add('has-img');
-    }catch(err){console.warn('thumb render failed',file,err)}
-  });
+      edThumbCache[job.file]=url;
+      if(job.el){job.el.style.backgroundImage='url('+url+')';job.el.classList.add('has-img')}
+    }catch(err){console.warn('thumb render failed',job.file,err)}
+    edThumbBusy=false;edThumbPump();
+  },function(){edThumbBusy=false;edThumbPump()});
 }
 
 // ── Procedural road texture for editor preview ──
@@ -6058,6 +6074,24 @@ function edRebuildCurbs(){
       var m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true}));edScene.add(m);edCurbMeshes.push(m)}
   });
 }
+// Live curb preview shown while dragging out the second click
+function edClearCurbPreview(){if(edCurbPreviewMesh){edScene.remove(edCurbPreviewMesh);edCurbPreviewMesh=null}}
+function edShowCurbPreview(startT,endT,side){
+  edClearCurbPreview();
+  if(!edSpline)return;
+  var N=600,hw=edRoadW/2;
+  var s0=Math.floor(startT*N),s1=Math.floor(endT*N);
+  if(s1<=s0)s1+=N;
+  var vt=[],ix=[];
+  for(var r=s0;r<=s1;r++){
+    var t=(r%N)/N,pt=edSpline.getPoint(t),tn=edSpline.getTangent(t).normalize();
+    var nx=-tn.z,nz=tn.x,off=side*hw,cw=side*2.5;
+    vt.push(pt.x+nx*off,.85,pt.z+nz*off,pt.x+nx*(off+cw),.85,pt.z+nz*(off+cw));
+  }
+  for(var r2=0;r2<(s1-s0);r2++){var j=r2*2;ix.push(j,j+1,j+2,j+1,j+3,j+2)}
+  if(vt.length>0){var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vt,3));g.setIndex(ix);g.computeVertexNormals();
+    edCurbPreviewMesh=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:0xffd23a,transparent:true,opacity:.55,side:THREE.DoubleSide}));edScene.add(edCurbPreviewMesh)}
+}
 
 // ── Pit lane preview ──
 function edRebuildPit(){
@@ -6137,7 +6171,7 @@ function edNearestSplineT(x,z){
   var best=-1,bestD=Infinity;
   for(var i=0;i<600;i++){var t=i/600,p=edSpline.getPoint(t);
     var d=Math.hypot(p.x-x,p.z-z);if(d<bestD){bestD=d;best=t}}
-  return bestD<edRoadW?best:-1;
+  return bestD<edRoadW*1.4?best:-1;
 }
 
 // ── Spline parameter to side: which side of center was clicked? ──
@@ -6185,6 +6219,7 @@ function edSetMode(mode){
   // Show/hide grid for props mode
   if(edGrid)edGrid.visible=(mode==='props');
   if(edHover)edHover.visible=false;
+  edCurbClickState=null;edClearCurbPreview();
   edSelectedPtIdx=-1;edHighlightProp(-1);
   if(mode==='props')edUpdatePropPreview();
   else{if(edPropPreview){edScene.remove(edPropPreview);edPropPreview=null;edPropPreviewFile=null}}
@@ -6248,15 +6283,24 @@ function edBuildContextUI(){
       var thumb=document.createElement('div');thumb.className='ed-asset-thumb';
       d.appendChild(thumb);
       var sp=document.createElement('span');sp.textContent=a.name;d.appendChild(sp);
-      d.onclick=function(){edSelectedAsset=a;edUpdatePropPreview();edBuildContextUI()};
+      d.onclick=function(){edSelectedAsset=a;edCurScale=edDefaultScale(a);edUpdatePropPreview();edBuildContextUI()};
       list.appendChild(d);
       edRenderThumb(a.file,thumb);
     });
     box.appendChild(list);
     // Rotation
     var rotRow=document.createElement('div');rotRow.className='ed-rot-ind';
-    rotRow.innerHTML='<div class="ed-rot-arrow" onclick="edCurRot=(edCurRot+1)%4;edBuildContextUI()">◀</div><div class="ed-rot-deg">'+(edCurRot*90)+'°</div><div class="ed-rot-arrow" onclick="edCurRot=(edCurRot+3)%4;edBuildContextUI()">▶</div>';
+    rotRow.innerHTML='<div class="ed-rot-arrow" onclick="edCurRot=(edCurRot+1)%4;if(edPropPreview)edPropPreview.rotation.y=edCurRot*Math.PI/2;edBuildContextUI()">◀</div><div class="ed-rot-deg">'+(edCurRot*90)+'°</div><div class="ed-rot-arrow" onclick="edCurRot=(edCurRot+3)%4;if(edPropPreview)edPropPreview.rotation.y=edCurRot*Math.PI/2;edBuildContextUI()">▶</div>';
     box.appendChild(rotRow);
+    // Size slider
+    var szWrap=document.createElement('div');szWrap.style.marginTop='4px';
+    var szLbl=document.createElement('div');szLbl.className='ed-lbl';
+    szLbl.innerHTML='Size <span style="float:right;color:#cfe0ee">'+Math.round(edCurScale*100)+'%</span>';
+    szWrap.appendChild(szLbl);
+    var szIn=document.createElement('input');szIn.type='range';szIn.min='10';szIn.max='300';szIn.step='5';szIn.value=Math.round(edCurScale*100);szIn.style.width='100%';
+    szIn.oninput=function(){edCurScale=(+this.value)/100;szLbl.innerHTML='Size <span style="float:right;color:#cfe0ee">'+this.value+'%</span>';
+      if(edPropPreview)edPropPreview.scale.setScalar(edGeff()*edCurScale);};
+    szWrap.appendChild(szIn);box.appendChild(szWrap);
     // Delete mode
     var db=document.createElement('div');db.className='ed-btns';db.style.marginTop='4px';
     var del2=document.createElement('button');del2.className='ed-btn'+(edSelectedAsset===null?' erase-on':'');
@@ -6305,6 +6349,13 @@ function initEditor(){
         if(edPropPreview){edPropPreview.visible=true;edPropPreview.position.set(c.i*edGeff(),0,c.j*edGeff());edPropPreview.rotation.y=edCurRot*Math.PI/2}
       }else{edHover.visible=false;if(edPropPreview)edPropPreview.visible=false}
     }else{if(edPropPreview)edPropPreview.visible=false}
+    // Curb mode: live preview of the curb being dragged out
+    if(edMode==='curb'&&edCurbClickState){
+      var gc=edGroundAt(e);
+      if(gc){var ht=edNearestSplineT(gc.x,gc.z);
+        if(ht>=0){var ca=edCurbClickState.startT,cb=ht,cfwd=(cb-ca+1)%1;if(cfwd>0.5){var ctmp=ca;ca=cb;cb=ctmp}edShowCurbPreview(ca,cb,edCurbClickState.side)}
+      }
+    }
     if(dragging&&panLast){
       var dx=e.clientX-panLast.x,dy=e.clientY-panLast.y;
       if(Math.abs(dx)+Math.abs(dy)>3)dragMoved=true;
@@ -6352,8 +6403,12 @@ function initEditor(){
       var t=edNearestSplineT(g3.x,g3.z);if(t<0)return;
       var side=edClickSide(g3.x,g3.z,t);
       if(!edCurbClickState){edCurbClickState={startT:t,side:side};edBuildContextUI()}
-      else{edCurbSegs.push({startT:edCurbClickState.startT,endT:t,side:edCurbClickState.side});
-        edCurbClickState=null;edRebuildCurbs();edBuildContextUI()}
+      else{
+        // Pick the shorter way round the loop so a curb never wraps the long way
+        var a=edCurbClickState.startT,b=t,fwd=(b-a+1)%1;
+        if(fwd>0.5){var tmp=a;a=b;b=tmp}
+        edCurbSegs.push({startT:a,endT:b,side:edCurbClickState.side});
+        edCurbClickState=null;edClearCurbPreview();edRebuildCurbs();edBuildContextUI()}
     }else if(edMode==='pit'){
       var g4=edGroundAt(e);if(!g4||!edSpline)return;
       var t2=edNearestSplineT(g4.x,g4.z);if(t2<0)return;
@@ -6364,7 +6419,7 @@ function initEditor(){
       if(!edSelectedAsset){edRemoveProp(c2.i,c2.j);return}
       var hitP=edHitProp(e);
       if(hitP>=0){edSelectedPtIdx=-1;edHighlightProp(hitP);return}
-      edPlaceProp(c2.i,c2.j,edSelectedAsset.file,edCurRot);
+      edPlaceProp(c2.i,c2.j,edSelectedAsset.file,edCurRot,edCurScale);
     }
   });
   edCanvas.addEventListener('contextmenu',function(e){e.preventDefault()});
@@ -6375,10 +6430,18 @@ function initEditor(){
 function edRenderLoop(){if(!edRun)return;requestAnimationFrame(edRenderLoop);edRenderer.render(edScene,edCam)}
 
 // ── Prop helpers ──
-function edPlaceProp(i,j,file,rot){
-  var prop={i:i,j:j,file:file,rot:rot,obj:null};
+// Sensible default size multiplier per category (barriers/fences are tiny models
+// that look huge at the full grid scale, so start them much smaller).
+function edDefaultScale(asset){
+  if(!asset)return 1;
+  if(asset.cat==='border')return 0.3;
+  return 1;
+}
+function edPlaceProp(i,j,file,rot,scale){
+  scale=scale||1;
+  var prop={i:i,j:j,file:file,rot:rot,scale:scale,obj:null};
   edLoadModel(file).then(function(tmpl){
-    var obj=tmpl.clone(true);obj.scale.setScalar(edGeff());
+    var obj=tmpl.clone(true);obj.scale.setScalar(edGeff()*scale);
     obj.position.set(i*edGeff(),0,j*edGeff());obj.rotation.y=rot*Math.PI/2;
     edScene.add(obj);prop.obj=obj;edProps.push(prop);
   });
@@ -6399,8 +6462,8 @@ function edUpdatePropPreview(){
   if(edMode!=='props'||!edSelectedAsset)return;
   edPropPreviewFile=edSelectedAsset.file;
   edLoadModel(edSelectedAsset.file).then(function(tmpl){
-    if(edPropPreviewFile!==edSelectedAsset.file)return;
-    var obj=tmpl.clone(true);obj.scale.setScalar(edGeff());
+    if(!edSelectedAsset||edPropPreviewFile!==edSelectedAsset.file)return;
+    var obj=tmpl.clone(true);obj.scale.setScalar(edGeff()*edCurScale);
     obj.rotation.y=edCurRot*Math.PI/2;
     obj.traverse(function(c){if(c.isMesh){
       var mats=Array.isArray(c.material)?c.material:[c.material];
@@ -6456,7 +6519,7 @@ function showEditor(trackData){
     edPitExit=trackData.pitExit!=null?trackData.pitExit:null;
     edClosedLoop=edCtrlPts.length>=3; // saved tracks are already closed circuits
     edRebuildSpline();edRebuildCurbs();edRebuildPit();
-    if(trackData.props)trackData.props.forEach(function(pd){edPlaceProp(pd.i,pd.j,pd.file,pd.rot)});
+    if(trackData.props)trackData.props.forEach(function(pd){edPlaceProp(pd.i,pd.j,pd.file,pd.rot,pd.scale)});
     if(edCtrlPts.length){var sx=0,sz=0;edCtrlPts.forEach(function(p){sx+=p.x;sz+=p.z});
       edCamTarget.x=sx/edCtrlPts.length;edCamTarget.z=sz/edCtrlPts.length;edUpdateCam()}
   }else if(trackData&&trackData.tileTrack&&trackData.wp){
@@ -6470,7 +6533,7 @@ function showEditor(trackData){
     var step=Math.max(1,Math.floor(trackData.wp.length/20));
     for(var wi=0;wi<trackData.wp.length;wi+=step){edAddPt(trackData.wp[wi][0],trackData.wp[wi][1])}
     edClosedLoop=edCtrlPts.length>=3;edRebuildSpline();
-    if(trackData.props)trackData.props.forEach(function(pd){edPlaceProp(pd.i,pd.j,pd.file,pd.rot)});
+    if(trackData.props)trackData.props.forEach(function(pd){edPlaceProp(pd.i,pd.j,pd.file,pd.rot,pd.scale)});
     if(edCtrlPts.length){var sx2=0,sz2=0;edCtrlPts.forEach(function(p){sx2+=p.x;sz2+=p.z});
       edCamTarget.x=sx2/edCtrlPts.length;edCamTarget.z=sz2/edCtrlPts.length;edUpdateCam()}
   }else{
@@ -6505,7 +6568,7 @@ function edSaveTrack(){
     wp.push([edRound2(p.x),edRound2(p.z)]);
   }
   var ctrlPts=edCtrlPts.map(function(p){return[edRound2(p.x),edRound2(p.z)]});
-  var propList=edProps.map(function(p){return{i:p.i,j:p.j,file:p.file,rot:p.rot}});
+  var propList=edProps.map(function(p){return{i:p.i,j:p.j,file:p.file,rot:p.rot,scale:p.scale||1}});
   var trackData={
     id:edEditingId||('ut_'+Date.now()),name:name,splineTrack:true,flat:true,
     sky:0x6db4e8,fog:0x86b8d8,ambI:.55,sunI:.95,sunC:0xfff4e0,hemiSky:0x88bbee,hemiGnd:0x4a6644,grass:0x3a7a35,
