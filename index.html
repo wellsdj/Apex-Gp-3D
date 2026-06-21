@@ -697,6 +697,7 @@ body.mobile #spdOutlineSvg{display:none}
     <input id="edSWidth" type="range" min="14" max="50" value="26" oninput="edRoadW=+this.value;document.getElementById('edVWidth').textContent=this.value;edRebuildRoad()">
   </div>
   <div class="ed-btns"><button class="ed-btn save-btn wide" onclick="edSaveTrack()">SAVE TRACK</button></div>
+  <div class="ed-btns" style="margin-top:5px"><button class="ed-btn wide" onclick="edTestDrive()" style="background:#1a4a6a;border-color:#2a7aaa;color:#fff">▶ TEST DRIVE</button></div>
   <div class="ed-btns" style="margin-top:5px;margin-bottom:8px"><button class="ed-btn back-btn wide" onclick="exitEditor()">BACK TO GARAGE</button></div>
   <div id="editorStatus">Click on the grass to place points.</div>
 </div>
@@ -1850,7 +1851,7 @@ if(selWeather==='night'||selWeather==='night_dark'){
   }
 }
 builtTrack=selTrack;builtWeather=selWeather;bestLT=Infinity;lastLT=0;bestGhost=[];ghostPlaying=false;_buildColGrid();_mmBounds=null;_mmTrackIdx=-1}
-function initRace(){if(rInit&&builtTrack===selTrack&&builtWeather===selWeather)return;if(!rInit){rInit=true;_perfBasePR=PERF.pixelRatio;_perfCurPR=PERF.pixelRatio;ren.setPixelRatio(PERF.pixelRatio);ren.toneMappingExposure=1.08;ren.shadowMap.enabled=PERF.shadows;ren.shadowMap.type=PERF.shadowSoft?THREE.PCFSoftShadowMap:THREE.PCFShadowMap;cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,2600);clk=new THREE.Clock();mirrorCam=new THREE.PerspectiveCamera(55,340/80,1,800);mmx=document.getElementById('mmC').getContext('2d');addEventListener('keydown',function(e){if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;KY[e.key.toLowerCase()]=true;if(e.key==='Escape'&&missileMode==='aim'){cancelMissileAim();e.preventDefault();return}if(e.key==='Escape'&&reviewMode){exitReview();e.preventDefault();return}if(e.key==='Escape'&&mpSpectating){mpSpectating=false;mpFinishCountdown=0;var _sfb=document.getElementById('mpFinishBanner');if(_sfb)_sfb.classList.remove('show');var _ssb=document.getElementById('spectBanner');if(_ssb)_ssb.classList.remove('show');e.preventDefault();return}if(e.key==='Escape'&&racing){racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()};if(e.key.toLowerCase()==='g')toggleGhost();if(e.key.toLowerCase()==='e'&&racing)activateShield();if(e.key.toLowerCase()==='h')toggleHeadlights();if(e.key.toLowerCase()==='p'&&racing)toggleTireInfo();if(e.key.toLowerCase()==='f'&&racing)toggleFullscreen();if(racing&&mpConn&&e.key>='1'&&e.key<='4')sendEmote(parseInt(e.key,10)-1);e.preventDefault()});addEventListener('keyup',function(e){if(!e.key)return;KY[e.key.toLowerCase()]=false});addEventListener('resize',function(){if(cam){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}});buildScene();rLoop()}else{buildScene()}}
+function initRace(){if(rInit&&builtTrack===selTrack&&builtWeather===selWeather)return;if(!rInit){rInit=true;_perfBasePR=PERF.pixelRatio;_perfCurPR=PERF.pixelRatio;ren.setPixelRatio(PERF.pixelRatio);ren.toneMappingExposure=1.08;ren.shadowMap.enabled=PERF.shadows;ren.shadowMap.type=PERF.shadowSoft?THREE.PCFSoftShadowMap:THREE.PCFShadowMap;cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,2600);clk=new THREE.Clock();mirrorCam=new THREE.PerspectiveCamera(55,340/80,1,800);mmx=document.getElementById('mmC').getContext('2d');addEventListener('keydown',function(e){if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;KY[e.key.toLowerCase()]=true;if(e.key==='Escape'&&missileMode==='aim'){cancelMissileAim();e.preventDefault();return}if(e.key==='Escape'&&reviewMode){exitReview();e.preventDefault();return}if(e.key==='Escape'&&mpSpectating){mpSpectating=false;mpFinishCountdown=0;var _sfb=document.getElementById('mpFinishBanner');if(_sfb)_sfb.classList.remove('show');var _ssb=document.getElementById('spectBanner');if(_ssb)_ssb.classList.remove('show');e.preventDefault();return}if(e.key==='Escape'&&racing){racing=false;resetNuke();resetBlackout();resetMissiles();closePit();recentlyPitted=false;cleanupAI();cancelRaceLights();cancelQualifying();[sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0;});audioStarted=false;lobbyPlaying=false;if(lobbyFadeId){clearInterval(lobbyFadeId);lobbyFadeId=null;}if(edTestMode){edExitTestDrive();e.preventDefault();return}document.getElementById('hudScreen').classList.add('hide');showGarage();resetCar()};if(e.key.toLowerCase()==='g')toggleGhost();if(e.key.toLowerCase()==='e'&&racing)activateShield();if(e.key.toLowerCase()==='h')toggleHeadlights();if(e.key.toLowerCase()==='p'&&racing)toggleTireInfo();if(e.key.toLowerCase()==='f'&&racing)toggleFullscreen();if(racing&&mpConn&&e.key>='1'&&e.key<='4')sendEmote(parseInt(e.key,10)-1);e.preventDefault()});addEventListener('keyup',function(e){if(!e.key)return;KY[e.key.toLowerCase()]=false});addEventListener('resize',function(){if(cam){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}});buildScene();rLoop()}else{buildScene()}}
 
 // ── Procedural asphalt (publicly reproducible, no network needed) ───────────
 // Real photographic asphalt + a normal map derived from its luminance, so the
@@ -2002,7 +2003,8 @@ function mkTrack(grassCOverride){
   // visuals from snapped Kenney road tiles. Ground is a flat grass plane; the
   // tiles bring their own road + verges.
   if(TRACKS[selTrack].splineTrack||TRACKS[selTrack].tileTrack){
-    var pts=WP.map(function(p){return new THREE.Vector3(p[0],0,p[1])});spl=new THREE.CatmullRomCurve3(pts,true,'catmullrom',.5);tPts=spl.getPoints(2400);sd=[];for(var i=0;i<tPts.length;i++){var t=i/tPts.length,tn=spl.getTangent(t).normalize();sd.push({c:spl.getPoint(t),t:tn,n:new THREE.Vector3(-tn.z,0,tn.x)})}
+    var _spTens=TRACKS[selTrack].splineTrack?.3:.5;
+    var pts=WP.map(function(p){return new THREE.Vector3(p[0],0,p[1])});spl=new THREE.CatmullRomCurve3(pts,true,'catmullrom',_spTens);tPts=spl.getPoints(2400);sd=[];for(var i=0;i<tPts.length;i++){var t=i/tPts.length,tn=spl.getTangent(t).normalize();sd.push({c:spl.getPoint(t),t:tn,n:new THREE.Vector3(-tn.z,0,tn.x)})}
     var _twHalf=(TRACKS[selTrack].tw?TRACKS[selTrack].tw/2:13)+5;for(var _hi=0;_hi<sd.length;_hi++)sd[_hi].hw=_twHalf;
     _buildGroundH();
     trackLenM=0;for(var _tl=1;_tl<=tPts.length;_tl++){var _pa3=tPts[_tl-1],_pb3=tPts[_tl%tPts.length];trackLenM+=Math.sqrt((_pb3.x-_pa3.x)*(_pb3.x-_pa3.x)+(_pb3.z-_pa3.z)*(_pb3.z-_pa3.z))}trackLenM=Math.max(500,trackLenM);
@@ -2109,7 +2111,7 @@ function buildGroundGrid(cx,cz,size,seg,mat,yoff){
   var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
   var m=new THREE.Mesh(g,mat);m.receiveShadow=true;return m;
 }
-function mkTrackProcedural(grassCOverride){var pts=WP.map(function(p){return new THREE.Vector3(p[0],0,p[1])});spl=new THREE.CatmullRomCurve3(pts,true,'catmullrom',.5);tPts=spl.getPoints(2400);sd=[];for(var i=0;i<tPts.length;i++){var t=i/tPts.length,tn=spl.getTangent(t).normalize();sd.push({c:spl.getPoint(t),t:tn,n:new THREE.Vector3(-tn.z,0,tn.x)})}
+function mkTrackProcedural(grassCOverride){var _spT2=TRACKS[selTrack].splineTrack?.3:.5;var pts=WP.map(function(p){return new THREE.Vector3(p[0],0,p[1])});spl=new THREE.CatmullRomCurve3(pts,true,'catmullrom',_spT2);tPts=spl.getPoints(2400);sd=[];for(var i=0;i<tPts.length;i++){var t=i/tPts.length,tn=spl.getTangent(t).normalize();sd.push({c:spl.getPoint(t),t:tn,n:new THREE.Vector3(-tn.z,0,tn.x)})}
   // Gentle rolling elevation (periodic so the loop closes); per-track phase
   if(!TRACKS[selTrack].flat)(function(){var n=sd.length,se=selTrack*1.7+1;for(var ie=0;ie<n;ie++){var th=ie/n*Math.PI*2;var y=1.6*Math.sin(th*2+se)+0.9*Math.sin(th*3-se*1.3)+0.5*Math.sin(th*5+se*0.7);sd[ie].c.y=y;tPts[ie].y=y}})();
   _buildGroundH();
@@ -5968,9 +5970,9 @@ function edRebuildSpline(){
   // clicks the yellow start point. An open spline just extends the next segment.
   var pts3=edCtrlPts.map(function(p){return new THREE.Vector3(p.x,0,p.z)});
   if(edClosedLoop&&edCtrlPts.length>=3){
-    edSpline=new THREE.CatmullRomCurve3(pts3,true,'catmullrom',.5);
+    edSpline=new THREE.CatmullRomCurve3(pts3,true,'catmullrom',.3);
   }else{
-    edSpline=new THREE.CatmullRomCurve3(pts3,false,'catmullrom',.5);
+    edSpline=new THREE.CatmullRomCurve3(pts3,false,'catmullrom',.3);
   }
   edRebuildRoad();
   edUpdatePtColors();
@@ -5993,14 +5995,14 @@ function edUpdatePtColors(){
 // Self-intersection test on the centreline (figure-8 / crossing tracks are invalid)
 function edCheckOverlap(){
   if(!edSpline||!edClosedLoop)return false;
-  var M=140,pts=[];
+  var M=200,pts=[],SKP=6;
   for(var i=0;i<M;i++){var p=edSpline.getPoint(i/M);pts.push({x:p.x,z:p.z})}
   function ccw(a,b,c){return(c.z-a.z)*(b.x-a.x)>(b.z-a.z)*(c.x-a.x)}
   function inter(a,b,c,d){return ccw(a,c,d)!==ccw(b,c,d)&&ccw(a,b,c)!==ccw(a,b,d)}
   for(var i2=0;i2<M;i2++){
     var a=pts[i2],b=pts[(i2+1)%M];
-    for(var j=i2+2;j<M;j++){
-      if(i2===0&&j===M-1)continue; // skip the wrap-adjacent pair
+    for(var j=i2+SKP;j<M;j++){
+      if(Math.abs(j-i2)<SKP||(i2<SKP&&j>M-SKP))continue;
       var c=pts[j],d=pts[(j+1)%M];
       if(inter(a,b,c,d))return true;
     }
@@ -6093,21 +6095,27 @@ function edShowCurbPreview(startT,endT,side){
     edCurbPreviewMesh=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:0xffd23a,transparent:true,opacity:.55,side:THREE.DoubleSide}));edScene.add(edCurbPreviewMesh)}
 }
 
-// ── Pit lane preview ──
+// ── Pit lane preview (multi-point path) ──
+var edPitPts=[],edPitMarkers=[];
 function edRebuildPit(){
   if(edPitMesh){edScene.remove(edPitMesh);edPitMesh=null}
-  if(!edSpline||edPitEntry===null||edPitExit===null)return;
-  var N=200,hw=edRoadW/2,offset=hw+15;
+  edPitMarkers.forEach(function(m){edScene.remove(m)});edPitMarkers=[];
+  if(edPitPts.length<2)return;
+  // Draw markers at each pit point
+  edPitPts.forEach(function(p,i){
+    var col=i===0?0xff8800:(i===edPitPts.length-1?0xff8800:0xffcc44);
+    var sp=new THREE.Mesh(new THREE.SphereGeometry(2,8,6),new THREE.MeshBasicMaterial({color:col}));
+    sp.position.set(p.x,3,p.z);edScene.add(sp);edPitMarkers.push(sp);
+  });
+  // Build pit lane ribbon through the points using a CatmullRom spline
+  var pts3=edPitPts.map(function(p){return new THREE.Vector3(p.x,0,p.z)});
+  var pitSpline=new THREE.CatmullRomCurve3(pts3,false,'catmullrom',.3);
+  var N=200,phw=5;
   var rv=[],ri=[];
-  var t0=edPitEntry,t1=edPitExit;
-  if(t1<t0)t1+=1;
-  var dt=(t1-t0)/N;
   for(var i=0;i<=N;i++){
-    var t=(t0+dt*i)%1,pt=edSpline.getPoint(t),tn=edSpline.getTangent(t).normalize();
+    var t=i/N,pt=pitSpline.getPoint(t),tn=pitSpline.getTangent(t).normalize();
     var nx=-tn.z,nz=tn.x;
-    var blend=Math.sin(i/N*Math.PI);var lat=offset*blend;
-    var cx=pt.x+nx*lat,cz=pt.z+nz*lat,phw=5;
-    rv.push(cx-nx*phw,.55,cz-nz*phw,cx+nx*phw,.55,cz+nz*phw);
+    rv.push(pt.x-nx*phw,.55,pt.z-nz*phw,pt.x+nx*phw,.55,pt.z+nz*phw);
     if(i<N){var j=i*2;ri.push(j,j+1,j+2,j+1,j+3,j+2)}
   }
   var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(rv,3));
@@ -6115,6 +6123,8 @@ function edRebuildPit(){
   edPitMesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0x3a3d42,roughness:.9,transparent:true,opacity:.7}));
   edScene.add(edPitMesh);
 }
+function edAddPitPt(x,z){edPitPts.push({x:x,z:z});edRebuildPit();edBuildContextUI()}
+function edClearPit(){edPitPts=[];edPitEntry=null;edPitExit=null;edRebuildPit();edBuildContextUI()}
 
 // ── Control point management ──
 function edAddPt(x,z){
@@ -6142,7 +6152,7 @@ function edMovePt(idx,x,z){
 }
 function edClearAllPts(){
   edPtMeshes.forEach(function(m){edScene.remove(m)});edPtMeshes=[];
-  edCtrlPts=[];edCurbSegs=[];edPitEntry=null;edPitExit=null;edClosedLoop=false;
+  edCtrlPts=[];edCurbSegs=[];edPitEntry=null;edPitExit=null;edPitPts=[];edClosedLoop=false;
   edSelectedPtIdx=-1;edSelectedPropIdx=-1;
   edRebuildSpline();edRebuildPit();
 }
@@ -6205,7 +6215,7 @@ function edSetMode(mode){
   if(sub){
     if(mode==='draw')sub.textContent='Click to add points · click the yellow point to close';
     else if(mode==='curb')sub.textContent='Click track edge to place curb start, then end';
-    else if(mode==='pit')sub.textContent='Click track for pit entry, then exit';
+    else if(mode==='pit')sub.textContent='Click to place pit lane path points';
     else sub.textContent='Place scenery props on the grass';
   }
   // Update hint bar
@@ -6213,7 +6223,7 @@ function edSetMode(mode){
   if(hb){
     if(mode==='draw')hb.innerHTML='<kbd>Click</kbd> add point · <kbd>Click yellow</kbd> close loop · <kbd>Delete</kbd> remove last · <kbd>Drag point</kbd> move · <kbd>Drag</kbd> orbit';
     else if(mode==='curb')hb.innerHTML='<kbd>Click</kbd> curb start/end · <kbd>Right-click</kbd> remove curb · <kbd>Drag</kbd> orbit';
-    else if(mode==='pit')hb.innerHTML='<kbd>Click</kbd> set pit entry/exit · <kbd>Drag</kbd> orbit';
+    else if(mode==='pit')hb.innerHTML='<kbd>Click</kbd> add pit path points · <kbd>Drag</kbd> orbit';
     else hb.innerHTML='<kbd>Click</kbd> place prop · <kbd>Delete</kbd> remove · <kbd>R</kbd>/<kbd>Q</kbd> rotate · <kbd>Drag</kbd> orbit';
   }
   // Show/hide grid for props mode
@@ -6255,15 +6265,17 @@ function edBuildContextUI(){
     });
   }else if(edMode==='pit'){
     var h3=document.createElement('div');h3.className='ed-hint-text';
-    if(!edSpline){h3.textContent='Draw a track first (use DRAW mode).';h3.style.color='#ff7a7a'}
-    else if(edPitEntry===null)h3.textContent='Click on the track where the PIT ENTRY should be.';
-    else if(edPitExit===null)h3.textContent='Click on the track where the PIT EXIT should be.';
-    else h3.textContent='Pit lane set! Entry and exit are marked on the track.';
+    if(edPitPts.length===0)h3.textContent='Click to place pit lane points. First point = entry, last = exit. Minimum 2 points.';
+    else if(edPitPts.length===1)h3.textContent='1 point placed. Click to add more pit path points.';
+    else h3.textContent=edPitPts.length+' pit points — path is shown on track.';
     box.appendChild(h3);
-    if(edPitEntry!==null||edPitExit!==null){
+    if(edPitPts.length>0){
       var btns3=document.createElement('div');btns3.className='ed-btns';btns3.style.marginTop='4px';
-      var clr=document.createElement('button');clr.className='ed-btn';clr.textContent='Clear Pit Lane';
-      clr.onclick=function(){edPitEntry=null;edPitExit=null;edRebuildPit();edBuildContextUI()};
+      var undo=document.createElement('button');undo.className='ed-btn';undo.textContent='Undo Last';
+      undo.onclick=function(){edPitPts.pop();edRebuildPit();edBuildContextUI()};
+      btns3.appendChild(undo);
+      var clr=document.createElement('button');clr.className='ed-btn';clr.textContent='Clear Pit';
+      clr.onclick=edClearPit;
       btns3.appendChild(clr);box.appendChild(btns3);
     }
   }else{
@@ -6410,10 +6422,8 @@ function initEditor(){
         edCurbSegs.push({startT:a,endT:b,side:edCurbClickState.side});
         edCurbClickState=null;edClearCurbPreview();edRebuildCurbs();edBuildContextUI()}
     }else if(edMode==='pit'){
-      var g4=edGroundAt(e);if(!g4||!edSpline)return;
-      var t2=edNearestSplineT(g4.x,g4.z);if(t2<0)return;
-      if(edPitEntry===null){edPitEntry=t2;edBuildContextUI()}
-      else if(edPitExit===null){edPitExit=t2;edRebuildPit();edBuildContextUI()}
+      var g4=edGroundAt(e);if(!g4)return;
+      edAddPitPt(g4.x,g4.z);
     }else if(edMode==='props'){
       var c2=edCellAt(e);if(!c2)return;
       if(!edSelectedAsset){edRemoveProp(c2.i,c2.j);return}
@@ -6517,7 +6527,8 @@ function showEditor(trackData){
     edCurbSegs=(trackData.curbs||[]).slice();
     edPitEntry=trackData.pitEntry!=null?trackData.pitEntry:null;
     edPitExit=trackData.pitExit!=null?trackData.pitExit:null;
-    edClosedLoop=edCtrlPts.length>=3; // saved tracks are already closed circuits
+    edPitPts=(trackData.pitPts||[]).map(function(p){return{x:p[0],z:p[1]}});
+    edClosedLoop=edCtrlPts.length>=3;
     edRebuildSpline();edRebuildCurbs();edRebuildPit();
     if(trackData.props)trackData.props.forEach(function(pd){edPlaceProp(pd.i,pd.j,pd.file,pd.rot,pd.scale)});
     if(edCtrlPts.length){var sx=0,sz=0;edCtrlPts.forEach(function(p){sx+=p.x;sz+=p.z});
@@ -6546,9 +6557,53 @@ function showEditor(trackData){
   }
   edRun=true;edRenderLoop();
 }
+var edTestMode=false;
+function edTestDrive(){
+  if(edCtrlPts.length<3){alert('Need at least 3 points.');return}
+  if(!edClosedLoop){alert('Close the loop first — click the yellow start point.');return}
+  if(!edSpline){alert('No track to test.');return}
+  // Build a temporary track object (same format as edSaveTrack but don't persist)
+  var sampleCount=Math.max(60,Math.floor(edSpline.getLength()/5));
+  var wp=[];for(var i=0;i<sampleCount;i++){var p=edSpline.getPoint(i/sampleCount);wp.push([edRound2(p.x),edRound2(p.z)])}
+  var ctrlPts=edCtrlPts.map(function(p){return[edRound2(p.x),edRound2(p.z)]});
+  var propList=edProps.map(function(p){return{i:p.i,j:p.j,file:p.file,rot:p.rot,scale:p.scale||1}});
+  var tmpTrack={
+    id:'_test_'+Date.now(),name:'TEST DRIVE',splineTrack:true,flat:true,
+    sky:0x6db4e8,fog:0x86b8d8,ambI:.55,sunI:.95,sunC:0xfff4e0,hemiSky:0x88bbee,hemiGnd:0x4a6644,grass:0x3a7a35,
+    ctrlPts:ctrlPts,roadWidth:edRoadW,tw:edRoadW,
+    curbs:edCurbSegs.slice(),pitEntry:edPitEntry,pitExit:edPitExit,
+    pitPts:edPitPts.map(function(p){return[edRound2(p.x),edRound2(p.z)]}),
+    sf:wp[0],props:propList,wp:wp
+  };
+  // Temporarily inject into TRACKS and select it
+  edTestMode=true;
+  TRACKS.push(tmpTrack);
+  selTrack=TRACKS.length-1;
+  selWeather='clear';builtTrack=-1;
+  // Hide editor, show HUD
+  edRun=false;
+  document.getElementById('editorScreen').classList.add('hide');
+  startDrive();
+}
+function edExitTestDrive(){
+  // Remove the temp track and return to editor
+  if(edTestMode){
+    racing=false;edTestMode=false;
+    [sndEngine,sndCoast,sndCoast2,sndBrake].forEach(function(s){s.volume=0});
+    audioStarted=false;
+    cleanupAI();cancelRaceLights();cancelQualifying();
+    TRACKS.pop();
+    selTrack=Math.min(selTrack,TRACKS.length-1);
+    document.getElementById('hudScreen').classList.add('hide');
+    document.getElementById('editorScreen').classList.remove('hide');
+    editorActive=true;edRun=true;
+    edRenderer.setSize(innerWidth,innerHeight);
+    edCam.aspect=innerWidth/innerHeight;edCam.updateProjectionMatrix();edUpdateCam();
+    edRenderLoop();
+  }
+}
 function exitEditor(){
   editorActive=false;edRun=false;
-  // Clean up road edge lines
   if(edScene){var toRm=[];edScene.children.forEach(function(c){if(c.userData&&c.userData._edRoadEdge)toRm.push(c)});toRm.forEach(function(c){edScene.remove(c)})}
   document.getElementById('editorScreen').classList.add('hide');showGarage();
 }
@@ -6575,6 +6630,7 @@ function edSaveTrack(){
     ctrlPts:ctrlPts,roadWidth:edRoadW,tw:edRoadW,
     curbs:edCurbSegs.slice(),
     pitEntry:edPitEntry,pitExit:edPitExit,
+    pitPts:edPitPts.map(function(p){return[edRound2(p.x),edRound2(p.z)]}),
     sf:wp[0],props:propList,wp:wp
   };
   var tracks=getUserTracks();
