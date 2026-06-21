@@ -6579,7 +6579,7 @@ function edTestDrive(){
   edTestMode=true;
   TRACKS.push(tmpTrack);
   selTrack=TRACKS.length-1;
-  selWeather='clear';builtTrack=-1;
+  if(!WEATHER[selWeather])selWeather='dry_bright';builtTrack=-1;
   // Hide editor, show HUD
   edRun=false;
   document.getElementById('editorScreen').classList.add('hide');
