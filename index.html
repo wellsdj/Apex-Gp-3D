@@ -5788,6 +5788,8 @@ var edProps=[],edCurRot=0,edRoadW=26,edMode='draw';
 var edPtMeshes=[],edLineMesh=null,edSplineMesh=null;
 var edDragging=null,edClosedLoop=false;
 var edLineGroup=null,edGrid=null,edHover=null;
+var edSelectedPtIdx=-1,edSelectedPropIdx=-1;
+var edPropPreview=null,edPropPreviewFile=null;
 
 // Props asset catalogue (scenery only — road drawing is spline-based now)
 var ED_CATS={border:'BORDERS',scenery:'SCENERY',pits:'PITS'};
@@ -5965,7 +5967,8 @@ function edCloseLoop(){
 function edUpdatePtColors(){
   edPtMeshes.forEach(function(m,i){
     var col,sc;
-    if(i===0){col=0xffe000;sc=1.8}
+    if(i===edSelectedPtIdx){col=0x88ccff;sc=1.5}
+    else if(i===0){col=0xffe000;sc=1.8}
     else if(!edClosedLoop&&i===edPtMeshes.length-1){col=0xff3030;sc=1.25}
     else{col=0x2f8fff;sc=1}
     m.material.color.setHex(col);m.scale.setScalar(sc);
@@ -6106,6 +6109,7 @@ function edMovePt(idx,x,z){
 function edClearAllPts(){
   edPtMeshes.forEach(function(m){edScene.remove(m)});edPtMeshes=[];
   edCtrlPts=[];edCurbSegs=[];edPitEntry=null;edPitExit=null;edClosedLoop=false;
+  edSelectedPtIdx=-1;edSelectedPropIdx=-1;
   edRebuildSpline();edRebuildPit();
 }
 
@@ -6173,14 +6177,17 @@ function edSetMode(mode){
   // Update hint bar
   var hb=document.getElementById('editorHint');
   if(hb){
-    if(mode==='draw')hb.innerHTML='<kbd>Click</kbd> add point · <kbd>Click yellow</kbd> close loop · <kbd>Right-click</kbd> delete · <kbd>Drag point</kbd> move · <kbd>Drag</kbd> orbit';
+    if(mode==='draw')hb.innerHTML='<kbd>Click</kbd> add point · <kbd>Click yellow</kbd> close loop · <kbd>Delete</kbd> remove last · <kbd>Drag point</kbd> move · <kbd>Drag</kbd> orbit';
     else if(mode==='curb')hb.innerHTML='<kbd>Click</kbd> curb start/end · <kbd>Right-click</kbd> remove curb · <kbd>Drag</kbd> orbit';
     else if(mode==='pit')hb.innerHTML='<kbd>Click</kbd> set pit entry/exit · <kbd>Drag</kbd> orbit';
-    else hb.innerHTML='<kbd>Click</kbd> place prop · <kbd>Right-click</kbd> delete prop · <kbd>R</kbd>/<kbd>Q</kbd> rotate · <kbd>Drag</kbd> orbit';
+    else hb.innerHTML='<kbd>Click</kbd> place prop · <kbd>Delete</kbd> remove · <kbd>R</kbd>/<kbd>Q</kbd> rotate · <kbd>Drag</kbd> orbit';
   }
   // Show/hide grid for props mode
   if(edGrid)edGrid.visible=(mode==='props');
   if(edHover)edHover.visible=false;
+  edSelectedPtIdx=-1;edHighlightProp(-1);
+  if(mode==='props')edUpdatePropPreview();
+  else{if(edPropPreview){edScene.remove(edPropPreview);edPropPreview=null;edPropPreviewFile=null}}
   edBuildContextUI();
 }
 var edCurbClickState=null; // {startT, side} when waiting for second click
@@ -6241,7 +6248,7 @@ function edBuildContextUI(){
       var thumb=document.createElement('div');thumb.className='ed-asset-thumb';
       d.appendChild(thumb);
       var sp=document.createElement('span');sp.textContent=a.name;d.appendChild(sp);
-      d.onclick=function(){edSelectedAsset=a;edBuildContextUI()};
+      d.onclick=function(){edSelectedAsset=a;edUpdatePropPreview();edBuildContextUI()};
       list.appendChild(d);
       edRenderThumb(a.file,thumb);
     });
@@ -6253,7 +6260,7 @@ function edBuildContextUI(){
     // Delete mode
     var db=document.createElement('div');db.className='ed-btns';db.style.marginTop='4px';
     var del2=document.createElement('button');del2.className='ed-btn'+(edSelectedAsset===null?' erase-on':'');
-    del2.textContent='🗑 DELETE MODE';del2.onclick=function(){edSelectedAsset=null;edBuildContextUI()};
+    del2.textContent='🗑 DELETE MODE';del2.onclick=function(){edSelectedAsset=null;edUpdatePropPreview();edBuildContextUI()};
     db.appendChild(del2);box.appendChild(db);
   }
 }
@@ -6291,11 +6298,13 @@ function initEditor(){
   });
   edCanvas.addEventListener('mousemove',function(e){
     if(!editorActive)return;
-    // Props mode: show grid hover
+    // Props mode: show grid hover and prop preview at cursor
     if(edMode==='props'){
       var c=edCellAt(e);
-      if(c){edHover.visible=true;edHover.position.set(c.i*edGeff(),.05,c.j*edGeff())}else edHover.visible=false;
-    }
+      if(c){edHover.visible=true;edHover.position.set(c.i*edGeff(),.05,c.j*edGeff());
+        if(edPropPreview){edPropPreview.visible=true;edPropPreview.position.set(c.i*edGeff(),0,c.j*edGeff());edPropPreview.rotation.y=edCurRot*Math.PI/2}
+      }else{edHover.visible=false;if(edPropPreview)edPropPreview.visible=false}
+    }else{if(edPropPreview)edPropPreview.visible=false}
     if(dragging&&panLast){
       var dx=e.clientX-panLast.x,dy=e.clientY-panLast.y;
       if(Math.abs(dx)+Math.abs(dy)>3)dragMoved=true;
@@ -6324,16 +6333,19 @@ function initEditor(){
     }
     if(ptDragIdx>=0){
       var wasIdx=ptDragIdx,didMove=dragMoved;ptDragIdx=-1;dragging=false;
+      if(!didMove){edSelectedPtIdx=wasIdx;edSelectedPropIdx=-1}
       edUpdatePtColors();
-      // Clicking (no drag) the yellow start point closes the loop
       if(!didMove&&wasIdx===0&&!edClosedLoop&&edCtrlPts.length>=3)edCloseLoop();
       return;
     }
     dragging=false;if(dragMoved){panLast=null;return}panLast=null;
     // Click actions per mode
+    edSelectedPtIdx=-1;edHighlightProp(-1);
     if(edMode==='draw'){
       var g2=edGroundAt(e);if(!g2)return;
-      if(edClosedLoop)return; // loop is closed — drag points or right-click to delete
+      var clickedPt=edHitPt(e);
+      if(clickedPt>=0){edSelectedPtIdx=clickedPt;edSelectedPropIdx=-1;edUpdatePtColors();return}
+      if(edClosedLoop)return;
       edAddPt(g2.x,g2.z);
     }else if(edMode==='curb'){
       var g3=edGroundAt(e);if(!g3||!edSpline)return;
@@ -6350,6 +6362,8 @@ function initEditor(){
     }else if(edMode==='props'){
       var c2=edCellAt(e);if(!c2)return;
       if(!edSelectedAsset){edRemoveProp(c2.i,c2.j);return}
+      var hitP=edHitProp(e);
+      if(hitP>=0){edSelectedPtIdx=-1;edHighlightProp(hitP);return}
       edPlaceProp(c2.i,c2.j,edSelectedAsset.file,edCurRot);
     }
   });
@@ -6378,6 +6392,44 @@ function edNearestPt(x,z){
   var best=-1,bestD=400;
   for(var i=0;i<edCtrlPts.length;i++){var d=Math.hypot(edCtrlPts[i].x-x,edCtrlPts[i].z-z);if(d<bestD){bestD=d;best=i}}
   return best;
+}
+function edUpdatePropPreview(){
+  if(edPropPreview){edScene.remove(edPropPreview);edPropPreview=null}
+  edPropPreviewFile=null;
+  if(edMode!=='props'||!edSelectedAsset)return;
+  edPropPreviewFile=edSelectedAsset.file;
+  edLoadModel(edSelectedAsset.file).then(function(tmpl){
+    if(edPropPreviewFile!==edSelectedAsset.file)return;
+    var obj=tmpl.clone(true);obj.scale.setScalar(edGeff());
+    obj.rotation.y=edCurRot*Math.PI/2;
+    obj.traverse(function(c){if(c.isMesh){
+      var mats=Array.isArray(c.material)?c.material:[c.material];
+      c.material=mats.map(function(m){var nm=m.clone();nm.transparent=true;nm.opacity=0.55;return nm});
+    }});
+    obj.visible=false;
+    edScene.add(obj);edPropPreview=obj;
+  });
+}
+function edHighlightProp(idx){
+  if(edSelectedPropIdx>=0&&edSelectedPropIdx<edProps.length&&edProps[edSelectedPropIdx].obj){
+    edProps[edSelectedPropIdx].obj.traverse(function(c){if(c.isMesh){
+      var mats=Array.isArray(c.material)?c.material:[c.material];
+      mats.forEach(function(m){if(m._origColor){m.color.copy(m._origColor);delete m._origColor}});
+    }});
+  }
+  edSelectedPropIdx=idx;
+  if(idx>=0&&idx<edProps.length&&edProps[idx].obj){
+    edProps[idx].obj.traverse(function(c){if(c.isMesh){
+      var mats=Array.isArray(c.material)?c.material:[c.material];
+      mats.forEach(function(m){if(!m._origColor)m._origColor=m.color.clone();m.color.setHex(0x88ccff)});
+    }});
+  }
+}
+function edHitProp(ev){
+  if(!edProps.length)return-1;
+  var c=edCellAt(ev);if(!c)return-1;
+  for(var i=edProps.length-1;i>=0;i--){if(edProps[i].i===c.i&&edProps[i].j===c.j)return i}
+  return-1;
 }
 
 // ── Show / save / exit ──
@@ -6482,8 +6534,19 @@ addEventListener('keydown',function(e){
   if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;
   var k=e.key.toLowerCase();
   if(k==='z'&&(e.ctrlKey||e.metaKey)){e.preventDefault();if(edCtrlPts.length>0)edRemovePt(edCtrlPts.length-1)}
-  else if(k==='r'&&!e.ctrlKey&&!e.metaKey&&edMode==='props'){e.preventDefault();edCurRot=(edCurRot+3)%4;edBuildContextUI()}
-  else if(k==='q'&&!e.ctrlKey&&!e.metaKey&&edMode==='props'){e.preventDefault();edCurRot=(edCurRot+1)%4;edBuildContextUI()}
+  else if(k==='r'&&!e.ctrlKey&&!e.metaKey&&edMode==='props'){e.preventDefault();edCurRot=(edCurRot+3)%4;if(edPropPreview)edPropPreview.rotation.y=edCurRot*Math.PI/2;edBuildContextUI()}
+  else if(k==='q'&&!e.ctrlKey&&!e.metaKey&&edMode==='props'){e.preventDefault();edCurRot=(edCurRot+1)%4;if(edPropPreview)edPropPreview.rotation.y=edCurRot*Math.PI/2;edBuildContextUI()}
+  else if(k==='delete'||k==='backspace'){
+    e.preventDefault();
+    if(edMode==='draw'){if(edCtrlPts.length>0){edRemovePt(edCtrlPts.length-1);edSelectedPtIdx=-1}}
+    else if(edMode==='props'){
+      if(edSelectedPropIdx>=0&&edSelectedPropIdx<edProps.length){
+        var sp=edProps[edSelectedPropIdx];if(sp.obj)edScene.remove(sp.obj);edProps.splice(edSelectedPropIdx,1);edSelectedPropIdx=-1;edUpdateStatus();
+      }else if(edProps.length>0){
+        var lp=edProps[edProps.length-1];if(lp.obj)edScene.remove(lp.obj);edProps.pop();edUpdateStatus();
+      }
+    }
+  }
   else if(k==='1'){edSetMode('draw')}
   else if(k==='2'){edSetMode('curb')}
   else if(k==='3'){edSetMode('pit')}
