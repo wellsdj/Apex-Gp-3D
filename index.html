@@ -641,7 +641,8 @@ body.mobile #spdOutlineSvg{display:none}
 .ed-asset-list{flex:1;overflow-y:auto;border:1px solid #1c2530;border-radius:8px;background:#0c0f15;margin-bottom:8px;min-height:0;display:grid;grid-template-columns:repeat(2,1fr);gap:7px;padding:7px;align-content:start}
 .ed-asset-list::-webkit-scrollbar{width:6px}
 .ed-asset-list::-webkit-scrollbar-thumb{background:#2a3340;border-radius:3px}
-.ed-asset-item{font-size:10px;color:#aebccb;cursor:pointer;border:1px solid #232d3a;border-radius:8px;display:flex;flex-direction:column;align-items:center;padding:0 0 5px;text-align:center;background:#12161e;line-height:1.2;min-width:0;overflow:hidden}
+.ed-asset-item{font-size:11px;color:#cfe0ee;cursor:pointer;border:1px solid #232d3a;border-radius:8px;display:flex;flex-direction:column;align-items:center;padding:0 0 6px;text-align:center;background:#12161e;line-height:1.3;min-width:0;overflow:hidden}
+.ed-asset-item span{display:block;padding:2px 4px;word-break:break-word}
 .ed-asset-item:hover{background:#1c2430;color:#fff;border-color:#3a4a5c}
 .ed-asset-item.on{background:rgba(47,109,240,.22);color:#7fd1ff;border-color:rgba(95,150,255,.7);box-shadow:0 0 0 1px rgba(95,150,255,.4) inset}
 .ed-asset-thumb{width:100%;height:74px;background:radial-gradient(ellipse at 50% 38%,#243042 0%,#10141c 80%);background-size:cover;border-radius:7px 7px 0 0;margin-bottom:4px;display:block}
@@ -2112,6 +2113,8 @@ function buildGroundGrid(cx,cz,size,seg,mat,yoff){
   var m=new THREE.Mesh(g,mat);m.receiveShadow=true;return m;
 }
 function mkTrackProcedural(grassCOverride){var _spT2=TRACKS[selTrack].splineTrack?.3:.5;var pts=WP.map(function(p){return new THREE.Vector3(p[0],0,p[1])});spl=new THREE.CatmullRomCurve3(pts,true,'catmullrom',_spT2);tPts=spl.getPoints(2400);sd=[];for(var i=0;i<tPts.length;i++){var t=i/tPts.length,tn=spl.getTangent(t).normalize();sd.push({c:spl.getPoint(t),t:tn,n:new THREE.Vector3(-tn.z,0,tn.x)})}
+  // Apply user track width to the global TW so barriers, curbs, road ribbon all use it
+  if(TRACKS[selTrack].tw){TW=TRACKS[selTrack].tw;WL=TW/2+CWW+3.5}
   // Gentle rolling elevation (periodic so the loop closes); per-track phase
   if(!TRACKS[selTrack].flat)(function(){var n=sd.length,se=selTrack*1.7+1;for(var ie=0;ie<n;ie++){var th=ie/n*Math.PI*2;var y=1.6*Math.sin(th*2+se)+0.9*Math.sin(th*3-se*1.3)+0.5*Math.sin(th*5+se*0.7);sd[ie].c.y=y;tPts[ie].y=y}})();
   _buildGroundH();
@@ -5893,23 +5896,29 @@ function edInitThumbs(){
 // Thumbnails share one offscreen renderer/scene, so rendering many at once
 // (a long scenery list) lets async clones collide on the same canvas and most
 // come back blank. Queue them and render strictly one at a time.
+// After each render we find the CURRENT DOM element (by data-file), because
+// edBuildContextUI recreates all elements whenever a tab switches.
 var edThumbQueue=[],edThumbBusy=false;
+function edApplyThumbToDOM(file,url){
+  var els=document.querySelectorAll('.ed-asset-item[data-file="'+file+'"] .ed-asset-thumb');
+  for(var i=0;i<els.length;i++){els[i].style.backgroundImage='url('+url+')';els[i].classList.add('has-img')}
+}
 function edRenderThumb(file,el){
   if(edThumbCache[file]){el.style.backgroundImage='url('+edThumbCache[file]+')';el.classList.add('has-img');return}
-  edThumbQueue.push({file:file,el:el});
+  edThumbQueue.push({file:file});
   edThumbPump();
 }
 function edThumbPump(){
   if(edThumbBusy||!edThumbQueue.length)return;
   var job=edThumbQueue.shift();
-  // Element may have been re-rendered (tab switch) — skip stale jobs whose
-  // file already cached, but always continue draining the queue.
-  if(edThumbCache[job.file]){if(job.el){job.el.style.backgroundImage='url('+edThumbCache[job.file]+')';job.el.classList.add('has-img')}return edThumbPump()}
+  if(edThumbCache[job.file]){edApplyThumbToDOM(job.file,edThumbCache[job.file]);return edThumbPump()}
   edThumbBusy=true;
   if(!edThumbRenderer)edInitThumbs();
   edLoadModel(job.file).then(function(tmpl){
     try{
       var clone=tmpl.clone(true);clone.scale.setScalar(1);
+      // Clear anything left over from a previous render
+      while(edThumbScene.children.length>3)edThumbScene.remove(edThumbScene.children[edThumbScene.children.length-1]);
       edThumbScene.add(clone);
       var box=new THREE.Box3().setFromObject(clone);
       var center=box.getCenter(new THREE.Vector3());
@@ -5922,9 +5931,10 @@ function edThumbPump(){
       var url=edThumbRenderer.domElement.toDataURL('image/png');
       edThumbScene.remove(clone);
       edThumbCache[job.file]=url;
-      if(job.el){job.el.style.backgroundImage='url('+url+')';job.el.classList.add('has-img')}
+      edApplyThumbToDOM(job.file,url);
     }catch(err){console.warn('thumb render failed',job.file,err)}
-    edThumbBusy=false;edThumbPump();
+    edThumbBusy=false;
+    setTimeout(edThumbPump,10);
   },function(){edThumbBusy=false;edThumbPump()});
 }
 
@@ -6015,7 +6025,7 @@ function edRebuildRoad(){
   if(edSplineMesh){edScene.remove(edSplineMesh);edSplineMesh=null}
   edEdgeLines.forEach(function(l){edScene.remove(l)});edEdgeLines=[];
   if(!edSpline){edUpdateStatus();return}
-  var N=600,hw=edRoadW/2;
+  var N=800,hw=edRoadW/2;
   // smooth spline preview line
   var sv=[];for(var si=0;si<=N;si++){var p=edSpline.getPoint(si/N);sv.push(p.x,1.2,p.z)}
   var sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(sv,3));
