@@ -5937,28 +5937,62 @@ function edRebuildSpline(){
   if(edSplineMesh){edScene.remove(edSplineMesh);edSplineMesh=null}
   if(edLineMesh){edScene.remove(edLineMesh);edLineMesh=null}
   if(edRoadMesh){edScene.remove(edRoadMesh);edRoadMesh=null}
-  edSpline=null;edClosedLoop=false;
-  if(edCtrlPts.length<2){edUpdateStatus();return}
-  // polyline through control points
+  edSpline=null;
+  if(edCtrlPts.length<3)edClosedLoop=false;
+  if(edCtrlPts.length<2){edUpdateStatus();edUpdatePtColors();return}
+  // polyline through control points (only join back to start once closed)
   var lv=[];edCtrlPts.forEach(function(p){lv.push(p.x,.5,p.z)});
-  if(edCtrlPts.length>=3){lv.push(edCtrlPts[0].x,.5,edCtrlPts[0].z)}
+  if(edClosedLoop&&edCtrlPts.length>=3){lv.push(edCtrlPts[0].x,.5,edCtrlPts[0].z)}
   var lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.Float32BufferAttribute(lv,3));
   edLineMesh=new THREE.Line(lg,new THREE.LineBasicMaterial({color:0x446688,transparent:true,opacity:.4}));
   edScene.add(edLineMesh);
-  if(edCtrlPts.length<3){edUpdateStatus();return}
-  // auto-close check
-  var first=edCtrlPts[0],last=edCtrlPts[edCtrlPts.length-1];
-  var closeDist=Math.hypot(first.x-last.x,first.z-last.z);
-  edClosedLoop=true; // CatmullRom closed loop always
-  // build CatmullRom spline
+  // build CatmullRom spline: OPEN while drawing, CLOSED only after the user
+  // clicks the yellow start point. An open spline just extends the next segment.
   var pts3=edCtrlPts.map(function(p){return new THREE.Vector3(p.x,0,p.z)});
-  edSpline=new THREE.CatmullRomCurve3(pts3,true,'catmullrom',.5);
+  if(edClosedLoop&&edCtrlPts.length>=3){
+    edSpline=new THREE.CatmullRomCurve3(pts3,true,'catmullrom',.5);
+  }else{
+    edSpline=new THREE.CatmullRomCurve3(pts3,false,'catmullrom',.5);
+  }
   edRebuildRoad();
+  edUpdatePtColors();
+}
+function edCloseLoop(){
+  if(edCtrlPts.length<3||edClosedLoop)return;
+  edClosedLoop=true;edRebuildSpline();
+}
+// Point colours: first = yellow & big (the close target), newest = red, rest = blue
+function edUpdatePtColors(){
+  edPtMeshes.forEach(function(m,i){
+    var col,sc;
+    if(i===0){col=0xffe000;sc=1.8}
+    else if(!edClosedLoop&&i===edPtMeshes.length-1){col=0xff3030;sc=1.25}
+    else{col=0x2f8fff;sc=1}
+    m.material.color.setHex(col);m.scale.setScalar(sc);
+  });
+}
+// Self-intersection test on the centreline (figure-8 / crossing tracks are invalid)
+function edCheckOverlap(){
+  if(!edSpline||!edClosedLoop)return false;
+  var M=140,pts=[];
+  for(var i=0;i<M;i++){var p=edSpline.getPoint(i/M);pts.push({x:p.x,z:p.z})}
+  function ccw(a,b,c){return(c.z-a.z)*(b.x-a.x)>(b.z-a.z)*(c.x-a.x)}
+  function inter(a,b,c,d){return ccw(a,c,d)!==ccw(b,c,d)&&ccw(a,b,c)!==ccw(a,b,d)}
+  for(var i2=0;i2<M;i2++){
+    var a=pts[i2],b=pts[(i2+1)%M];
+    for(var j=i2+2;j<M;j++){
+      if(i2===0&&j===M-1)continue; // skip the wrap-adjacent pair
+      var c=pts[j],d=pts[(j+1)%M];
+      if(inter(a,b,c,d))return true;
+    }
+  }
+  return false;
 }
 
 function edRebuildRoad(){
   if(edRoadMesh){edScene.remove(edRoadMesh);edRoadMesh=null}
   if(edSplineMesh){edScene.remove(edSplineMesh);edSplineMesh=null}
+  edEdgeLines.forEach(function(l){edScene.remove(l)});edEdgeLines=[];
   if(!edSpline){edUpdateStatus();return}
   var N=600,hw=edRoadW/2;
   // smooth spline preview line
@@ -5981,7 +6015,8 @@ function edRebuildRoad(){
   rg.setAttribute('uv',new THREE.Float32BufferAttribute(ruv,2));
   rg.setIndex(ri);rg.computeVertexNormals();
   if(!edRoadTex)edRoadTex=edMkRoadTexture();
-  edRoadMesh=new THREE.Mesh(rg,new THREE.MeshStandardMaterial({map:edRoadTex,roughness:.9,metalness:0}));
+  var overlap=edCheckOverlap();
+  edRoadMesh=new THREE.Mesh(rg,new THREE.MeshStandardMaterial({map:edRoadTex,color:overlap?0xff6a5a:0xffffff,roughness:.9,metalness:0}));
   edRoadMesh.receiveShadow=true;edScene.add(edRoadMesh);
   // edge lines (white)
   for(var side=-1;side<=1;side+=2){
@@ -5989,12 +6024,12 @@ function edRebuildRoad(){
       ev.push(ep.x+(-etn.z)*side*(hw-.4),.9,ep.z+etn.x*side*(hw-.4))}
     var eg=new THREE.BufferGeometry();eg.setAttribute('position',new THREE.Float32BufferAttribute(ev,3));
     var el=new THREE.Line(eg,new THREE.LineBasicMaterial({color:0xffffff}));
-    el.userData._edRoadEdge=true;edScene.add(el);
+    el.userData._edRoadEdge=true;edScene.add(el);edEdgeLines.push(el);
   }
   edRebuildCurbs();
   edUpdateStatus();
 }
-var edRoadTex=null;
+var edRoadTex=null,edEdgeLines=[];
 
 // ── Curbs ──
 function edRebuildCurbs(){
@@ -6059,6 +6094,7 @@ function edRemovePt(idx){
   if(edPtMeshes[idx])edScene.remove(edPtMeshes[idx]);
   edPtMeshes.splice(idx,1);
   edPtMeshes.forEach(function(m,i){m.userData._edPtIdx=i});
+  if(edCtrlPts.length<3)edClosedLoop=false;
   edRebuildSpline();
 }
 function edMovePt(idx,x,z){
@@ -6069,7 +6105,7 @@ function edMovePt(idx,x,z){
 }
 function edClearAllPts(){
   edPtMeshes.forEach(function(m){edScene.remove(m)});edPtMeshes=[];
-  edCtrlPts=[];edCurbSegs=[];edPitEntry=null;edPitExit=null;
+  edCtrlPts=[];edCurbSegs=[];edPitEntry=null;edPitExit=null;edClosedLoop=false;
   edRebuildSpline();edRebuildPit();
 }
 
@@ -6113,8 +6149,10 @@ function edClickSide(x,z,t){
 function edUpdateStatus(){
   var st=document.getElementById('editorStatus');if(!st)return;
   var n=edCtrlPts.length,pn=edProps.length;
-  if(n<3)st.innerHTML='<b>'+n+'</b> points · <span class="ebad">Need 3+ points for a track</span>';
-  else st.innerHTML='<b>'+n+'</b> points · <b>'+pn+'</b> props · <span class="eok">CLOSED LOOP ✓</span>';
+  if(n<3){st.innerHTML='<b>'+n+'</b> points · <span class="ebad">Add at least 3 points</span>';return}
+  if(!edClosedLoop){st.innerHTML='<b>'+n+'</b> points · <span class="ebad">Open path — click the YELLOW start point to close the loop</span>';return}
+  if(edCheckOverlap()){st.innerHTML='<b>'+n+'</b> points · <span class="ebad">⚠ Track OVERLAPS itself — move points apart</span>';return}
+  st.innerHTML='<b>'+n+'</b> points · <b>'+pn+'</b> props · <span class="eok">CLOSED LOOP ✓</span>';
 }
 
 // ── Mode switching and context UI ──
@@ -6127,7 +6165,7 @@ function edSetMode(mode){
   // Update subtitle hint
   var sub=document.getElementById('edSubtitle');
   if(sub){
-    if(mode==='draw')sub.textContent='Click to add points · Drag to move · Right-click to delete';
+    if(mode==='draw')sub.textContent='Click to add points · click the yellow point to close';
     else if(mode==='curb')sub.textContent='Click track edge to place curb start, then end';
     else if(mode==='pit')sub.textContent='Click track for pit entry, then exit';
     else sub.textContent='Place scenery props on the grass';
@@ -6135,7 +6173,7 @@ function edSetMode(mode){
   // Update hint bar
   var hb=document.getElementById('editorHint');
   if(hb){
-    if(mode==='draw')hb.innerHTML='<kbd>Click</kbd> add point · <kbd>Right-click</kbd> delete point · <kbd>Drag point</kbd> move · <kbd>Drag</kbd> orbit · <kbd>Scroll</kbd> zoom';
+    if(mode==='draw')hb.innerHTML='<kbd>Click</kbd> add point · <kbd>Click yellow</kbd> close loop · <kbd>Right-click</kbd> delete · <kbd>Drag point</kbd> move · <kbd>Drag</kbd> orbit';
     else if(mode==='curb')hb.innerHTML='<kbd>Click</kbd> curb start/end · <kbd>Right-click</kbd> remove curb · <kbd>Drag</kbd> orbit';
     else if(mode==='pit')hb.innerHTML='<kbd>Click</kbd> set pit entry/exit · <kbd>Drag</kbd> orbit';
     else hb.innerHTML='<kbd>Click</kbd> place prop · <kbd>Right-click</kbd> delete prop · <kbd>R</kbd>/<kbd>Q</kbd> rotate · <kbd>Drag</kbd> orbit';
@@ -6150,7 +6188,7 @@ function edBuildContextUI(){
   var box=document.getElementById('edContextBox');if(!box)return;box.innerHTML='';
   if(edMode==='draw'){
     var h=document.createElement('div');h.className='ed-hint-text';
-    h.textContent='Click anywhere on the grass to add control points. The road draws through them in a smooth loop.';
+    h.innerHTML='Click the grass to add points — each new point extends the road. When you\'re ready to finish, click the <span style="color:#ffe000;font-weight:700">YELLOW</span> start point to join the loop. Newest point is <span style="color:#ff5050;font-weight:700">red</span>.';
     box.appendChild(h);
     var btns=document.createElement('div');btns.className='ed-btns';
     var ub=document.createElement('button');ub.className='ed-btn';ub.textContent='Undo Last Point';
@@ -6249,7 +6287,7 @@ function initEditor(){
   edCanvas.addEventListener('mousedown',function(e){
     if(!editorActive)return;if(e.button===2)return;
     dragging=true;dragMoved=false;panLast={x:e.clientX,y:e.clientY};
-    if(edMode==='draw'){ptDragIdx=edHitPt(e);if(ptDragIdx>=0){edPtMeshes[ptDragIdx].material.color.setHex(0xffee00);return}}
+    if(edMode==='draw'){ptDragIdx=edHitPt(e);if(ptDragIdx>=0){edPtMeshes[ptDragIdx].material.color.setHex(0xffffff);return}}
   });
   edCanvas.addEventListener('mousemove',function(e){
     if(!editorActive)return;
@@ -6284,11 +6322,19 @@ function initEditor(){
       else if(edMode==='props'){var c0=edCellAt(e);if(c0)edRemoveProp(c0.i,c0.j)}
       dragging=false;return;
     }
-    if(ptDragIdx>=0){edPtMeshes[ptDragIdx].material.color.setHex(0x00e0ff);ptDragIdx=-1;dragging=false;return}
+    if(ptDragIdx>=0){
+      var wasIdx=ptDragIdx,didMove=dragMoved;ptDragIdx=-1;dragging=false;
+      edUpdatePtColors();
+      // Clicking (no drag) the yellow start point closes the loop
+      if(!didMove&&wasIdx===0&&!edClosedLoop&&edCtrlPts.length>=3)edCloseLoop();
+      return;
+    }
     dragging=false;if(dragMoved){panLast=null;return}panLast=null;
     // Click actions per mode
     if(edMode==='draw'){
-      var g2=edGroundAt(e);if(!g2)return;edAddPt(g2.x,g2.z);
+      var g2=edGroundAt(e);if(!g2)return;
+      if(edClosedLoop)return; // loop is closed — drag points or right-click to delete
+      edAddPt(g2.x,g2.z);
     }else if(edMode==='curb'){
       var g3=edGroundAt(e);if(!g3||!edSpline)return;
       var t=edNearestSplineT(g3.x,g3.z);if(t<0)return;
@@ -6356,6 +6402,7 @@ function showEditor(trackData){
     edCurbSegs=(trackData.curbs||[]).slice();
     edPitEntry=trackData.pitEntry!=null?trackData.pitEntry:null;
     edPitExit=trackData.pitExit!=null?trackData.pitExit:null;
+    edClosedLoop=edCtrlPts.length>=3; // saved tracks are already closed circuits
     edRebuildSpline();edRebuildCurbs();edRebuildPit();
     if(trackData.props)trackData.props.forEach(function(pd){edPlaceProp(pd.i,pd.j,pd.file,pd.rot)});
     if(edCtrlPts.length){var sx=0,sz=0;edCtrlPts.forEach(function(p){sx+=p.x;sz+=p.z});
@@ -6370,6 +6417,7 @@ function showEditor(trackData){
     edClearAllPts();
     var step=Math.max(1,Math.floor(trackData.wp.length/20));
     for(var wi=0;wi<trackData.wp.length;wi+=step){edAddPt(trackData.wp[wi][0],trackData.wp[wi][1])}
+    edClosedLoop=edCtrlPts.length>=3;edRebuildSpline();
     if(trackData.props)trackData.props.forEach(function(pd){edPlaceProp(pd.i,pd.j,pd.file,pd.rot)});
     if(edCtrlPts.length){var sx2=0,sz2=0;edCtrlPts.forEach(function(p){sx2+=p.x;sz2+=p.z});
       edCamTarget.x=sx2/edCtrlPts.length;edCamTarget.z=sz2/edCtrlPts.length;edUpdateCam()}
@@ -6393,7 +6441,9 @@ function exitEditor(){
 function edRound2(n){return Math.round(n*10)/10}
 function edSaveTrack(){
   if(edCtrlPts.length<3){alert('Need at least 3 points to form a track.');return}
+  if(!edClosedLoop){alert('Close the loop first — click the YELLOW start point so the circuit joins up.');return}
   if(!edSpline){alert('No track to save.');return}
+  if(edCheckOverlap()){alert('The track overlaps itself. Move points apart so the road never crosses, then save.');return}
   var name=(document.getElementById('edTrackName').value||'MY CIRCUIT').toUpperCase().trim();
   if(!name)name='MY CIRCUIT';
   // Sample waypoints from spline
