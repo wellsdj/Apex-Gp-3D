@@ -41,7 +41,36 @@
   .btn.ghost { background:none; box-shadow:none; border:2px solid rgba(255,255,255,.35);
     font-size:14px; padding:10px; }
   .btn.ghost:hover { box-shadow:none; border-color:#fff; background:rgba(255,255,255,.08); }
-  #menu .foot { position:absolute; bottom:18px; color:rgba(255,255,255,.45); font-size:12px; letter-spacing:1px; }
+  #menu .foot { position:absolute; bottom:14px; color:rgba(255,255,255,.45); font-size:12px; letter-spacing:1px; }
+  #menu { overflow-y:auto; }
+  #menu h1 { font-size:clamp(34px, 5.5vw, 62px); }
+  .menuGrid { display:flex; gap:16px; margin-top:24px; flex-wrap:wrap; justify-content:center;
+    max-width:min(960px, 94vw); }
+  .panel { background:rgba(13,19,30,.86); border:1px solid rgba(255,255,255,.12); border-radius:16px;
+    padding:18px 20px; width:280px; box-shadow:0 14px 40px rgba(0,0,0,.45); text-align:left; }
+  .panel h3 { color:#8fd8a0; font-size:12px; letter-spacing:3px; margin-bottom:14px; text-transform:uppercase; }
+  .panel .btn.ghost { width:100%; margin-top:4px; }
+  .optRow { margin-bottom:13px; }
+  .optRow label { display:block; font-size:10.5px; color:#93a5b8; letter-spacing:2px;
+    text-transform:uppercase; margin-bottom:5px; }
+  .seg { display:flex; border:1px solid rgba(255,255,255,.18); border-radius:9px; overflow:hidden; }
+  .seg button { flex:1; background:none; border:none; color:#b9c6d4; padding:7px 4px; font-size:12px;
+    font-weight:800; letter-spacing:1px; cursor:pointer; transition:background .12s; }
+  .seg button.on { background:linear-gradient(180deg,#2ea84f,#1c7d38); color:#fff; }
+  .seg button:not(.on):hover { background:rgba(255,255,255,.08); }
+  .seg button:focus-visible { outline:2px solid #8fd8a0; outline-offset:-2px; }
+  .tName { width:100%; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.18);
+    border-radius:9px; color:#fff; font-weight:800; letter-spacing:2px; padding:9px 11px;
+    font-size:14px; text-transform:uppercase; margin-bottom:13px; font-family:inherit; }
+  .tName:focus { outline:none; border-color:#8fd8a0; }
+  .swatches { display:grid; grid-template-columns:repeat(5, 1fr); gap:9px; }
+  .sw { aspect-ratio:1; border-radius:50%; border:2px solid rgba(255,255,255,.25); cursor:pointer;
+    transition:transform .1s; }
+  .sw:hover { transform:scale(1.12); }
+  .sw.on { border-color:#fff; box-shadow:0 0 0 3px rgba(255,255,255,.4); }
+  .sw.taken { opacity:.25; cursor:not-allowed; transform:none; }
+  .playRow { display:flex; gap:14px; margin-top:22px; flex-wrap:wrap; justify-content:center; }
+  .playRow .btn { min-width:230px; }
 
   /* ---------- HOW TO PLAY ---------- */
   #howto { background:rgba(4,6,10,.82); backdrop-filter:blur(3px); }
@@ -109,9 +138,9 @@
 <!-- HUD -->
 <div id="hud" class="hidden">
   <div id="scoreboard">
-    <div class="team red">RED</div>
+    <div class="team red" id="sbRed">RED</div>
     <div class="nums"><span id="sRed">0</span> – <span id="sBlue">0</span></div>
-    <div class="team blue">BLUE</div>
+    <div class="team blue" id="sbBlue">BLUE</div>
   </div>
   <div id="turnchip" class="red">RED'S TURN</div>
 </div>
@@ -123,12 +152,30 @@
   <div class="badge">⚽ Flick Table Football ⚽</div>
   <h1>SUBUSIO<br><span class="em">LITTLE GAME</span></h1>
   <div class="sub">Full football rules&nbsp;·&nbsp;Two halves&nbsp;·&nbsp;Corners, throw-ins, fouls &amp; penalties</div>
-  <div class="btnCol">
-    <button class="btn" id="btnAI">vs Computer</button>
-    <button class="btn blue" id="btnPVP">2 Players</button>
-    <button class="btn ghost" id="btnHow">How to Play</button>
+  <div class="menuGrid">
+    <div class="panel">
+      <h3>Match Setup</h3>
+      <div class="optRow"><label>Difficulty</label><div class="seg" id="segDiff"></div></div>
+      <div class="optRow"><label>Half length</label><div class="seg" id="segLen"></div></div>
+      <div class="optRow"><label>Dribble touch limit</label><div class="seg" id="segTouch"></div></div>
+      <button class="btn ghost" id="btnHow">How to Play</button>
+    </div>
+    <div class="panel">
+      <h3>Your Team</h3>
+      <input class="tName" id="nameRed" maxlength="10" spellcheck="false" aria-label="Your team name">
+      <div class="swatches" id="swRed"></div>
+    </div>
+    <div class="panel">
+      <h3>Away Team</h3>
+      <input class="tName" id="nameBlue" maxlength="10" spellcheck="false" aria-label="Away team name">
+      <div class="swatches" id="swBlue"></div>
+    </div>
   </div>
-  <div class="foot">Two 2-minute halves · dribble it, pass it, score!</div>
+  <div class="playRow">
+    <button class="btn" id="btnAI">Play vs Computer</button>
+    <button class="btn blue" id="btnPVP">2 Players</button>
+  </div>
+  <div class="foot">Dribble it, pass it, score — the keeper is in your hands</div>
 </div>
 
 <!-- HOW TO PLAY -->
@@ -138,11 +185,12 @@
     <ul>
       <li><b>Click &amp; hold</b> one of your players, <b>pull back</b> for power, release to flick it at the ball.</li>
       <li><b>Dribble:</b> if your flicked player touches the ball, you <b>keep your turn</b>. Gentle touches let you work the ball upfield.</li>
-      <li><b>Max 3 touches</b> in a row by the same player — then you must pass. A 4th touch is a <b>foul</b>: free kick where it happened.</li>
+      <li><b>Limited touches</b> in a row by the same player (2–4, set on the home screen) — then you must pass. One touch too many is a <b>foul</b>: free kick where it happened.</li>
       <li>Hitting an opponent <b>before touching the ball</b> is a foul → <b>free kick</b>. In your own box it's a <b>PENALTY</b>.</li>
       <li>Ball over the sideline: <b>throw-in</b>. Over the goal line: <b>corner</b> or goal kick, by last touch.</li>
       <li>Restart power varies: <b>throw-ins are weak</b>, corners stronger, goal kicks go long — and each player throws a little differently.</li>
-      <li><b>Your keeper is special:</b> grab it with the mouse at any time and slide it along the goal — but it can only move so fast, and it never leaves its line.</li>
+      <li><b>Your keeper is special:</b> grab it with the mouse at any time and slide it along the goal — but it can only move so fast, and it never leaves its line. The computer's keeper plays by the same limits: it reacts late and dives imperfectly.</li>
+      <li>Set <b>difficulty, half length, touch limit, team names and kit colours</b> on the home screen.</li>
       <li><b>Kick-offs must be passed backwards</b> — at the start, after goals, and at half time.</li>
       <li>Two halves with a running clock. <b>Match stats</b> at half time and full time.</li>
     </ul>
@@ -156,7 +204,7 @@
     <div id="stTitle">HALF TIME</div>
     <div id="stResult"></div>
     <div id="stScore">
-      <span class="tn red">RED</span><span class="sn" id="stScoreN">0 – 0</span><span class="tn blue">BLUE</span>
+      <span class="tn red" id="tnRed">RED</span><span class="sn" id="stScoreN">0 – 0</span><span class="tn blue" id="tnBlue">BLUE</span>
     </div>
     <table id="stTable"></table>
     <button class="btn" id="btnHalf">Start 2nd Half</button>
@@ -188,14 +236,70 @@ const PR = 15, BR = 9;                             // player / ball radius
 const MAXDRAG = 175;                               // pull distance for a full-power flick
 const FIELD_POW = 370;                             // max flick power in open play
 const GK_SPEED = 165;                              // keeper max slide speed (px/s)
-const HALF_REAL = 120;                             // real seconds per half (≈45 game minutes)
-const MAX_TOUCHES = 3;                             // dribble limit per player
+let MAX_TOUCHES = 3;                               // dribble limit per player (home-screen option)
 
 const TEAM = {
   red:  { main:'#e2434b', dark:'#8e1e26', lite:'#ff7a80', gk:'#f0a028', label:'RED',  attacks:+1 },
   blue: { main:'#3f7de0', dark:'#1d3f85', lite:'#84aef2', gk:'#37b46e', label:'BLUE', attacks:-1 },
 };
 const other = t => t === 'red' ? 'blue' : 'red';
+
+/* ---------- settings & team customization ---------- */
+const KITS = ['#e2434b','#3f7de0','#59c1e8','#35b06a','#f28c2e','#9b59d0','#e85f9c','#e8c93f','#e8e8e8','#454c58'];
+const DIFF = {
+  easy:   { wobble:0.16, gkErr:1.7,  gkDelay:0.38, gkSpd:0.85 },
+  normal: { wobble:0.09, gkErr:1.0,  gkDelay:0.22, gkSpd:1.0  },
+  hard:   { wobble:0.05, gkErr:0.55, gkDelay:0.12, gkSpd:1.1  },
+};
+let settings = {
+  diff:'normal', halfLen:120, touches:3,
+  names:{ red:'RED', blue:'BLUE' },
+  kits:{ red:KITS[0], blue:KITS[1] },
+};
+try { Object.assign(settings, JSON.parse(localStorage.getItem('subusio') || '{}')); } catch (e) {}
+function saveSettings() { try { localStorage.setItem('subusio', JSON.stringify(settings)); } catch (e) {} }
+
+function mix(a, b, t) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const ch = s => Math.round(((pa >> s) & 255) * (1 - t) + ((pb >> s) & 255) * t);
+  return '#' + ((1 << 24) | (ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).slice(1);
+}
+function cdist(a, b) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  return Math.abs(((pa >> 16) & 255) - ((pb >> 16) & 255)) +
+         Math.abs(((pa >> 8) & 255) - ((pb >> 8) & 255)) +
+         Math.abs((pa & 255) - (pb & 255));
+}
+function applyKits() {
+  for (const t of ['red', 'blue']) {
+    const base = settings.kits[t];
+    TEAM[t].main = base;
+    TEAM[t].dark = mix(base, '#000000', 0.48);
+    TEAM[t].lite = mix(base, '#ffffff', 0.42);
+  }
+  // keepers wear a kit that clashes with neither team
+  const gkOpts = ['#f0a028', '#37b46e', '#e8e8e8', '#9b59d0', '#e2434b'];
+  const used = [TEAM.red.main, TEAM.blue.main];
+  for (const t of ['red', 'blue']) {
+    TEAM[t].gk = gkOpts.find(c => used.every(u => cdist(c, u) > 140)) || '#f0a028';
+    used.push(TEAM[t].gk);
+  }
+}
+function applyNames() {
+  TEAM.red.label  = (settings.names.red  || 'RED').toUpperCase().slice(0, 10);
+  TEAM.blue.label = (settings.names.blue || 'BLUE').toUpperCase().slice(0, 10);
+}
+function applyTeamStyles() {
+  for (const t of ['red', 'blue']) {
+    const grad = `linear-gradient(180deg, ${TEAM[t].main}, ${TEAM[t].dark})`;
+    const sb = $(t === 'red' ? 'sbRed' : 'sbBlue');
+    const tn = $(t === 'red' ? 'tnRed' : 'tnBlue');
+    sb.textContent = TEAM[t].label; sb.style.background = grad;
+    sb.style.color = TEAM[t].main === '#e8e8e8' ? '#222' : '#fff';
+    tn.textContent = TEAM[t].label; tn.style.background = grad;
+    tn.style.color = sb.style.color;
+  }
+}
 
 /* ---------- state ---------- */
 let mode = 'demo';            // 'demo' | 'ai' | 'pvp'
@@ -378,6 +482,53 @@ function collidePair(a, b, nowTouching) {
 function humanControlsGK(team) {
   return phase === 'play' && mode !== 'demo' && !statsView && (mode === 'pvp' || team === 'red');
 }
+const gkBrain = {
+  red:  { reacting:false, delay:0, err:0, yp:CY },
+  blue: { reacting:false, delay:0, err:0, yp:CY },
+};
+
+function aiKeeperTarget(gk, dt) {
+  // The computer keeper is human, not a wall: it only reacts when a shot is
+  // actually coming (or the opponent is lining one up), it needs a moment to
+  // react, and it dives with an error that grows with shot speed. Easy rollers
+  // get saved; a good hit beats it.
+  const D = DIFF[settings.diff] || DIFF.normal;
+  const brain = gkBrain[gk.team];
+  const ownGoalX = TEAM[gk.team].attacks > 0 ? PITCH.x : PITCH.x + PITCH.w;
+
+  // is the ball travelling toward our goal mouth?
+  let shot = false;
+  const dir = Math.sign(ownGoalX - ball.x) || 1;
+  if (ball.vx * dir > 130) {
+    const t = (ownGoalX - ball.x) / ball.vx;
+    if (t > 0 && t < 2.2) {
+      const yp = ball.y + ball.vy * t * 0.85;
+      if (Math.abs(yp - CY) < GOAL.w / 2 + 70) {
+        shot = true;
+        brain.yp = yp;
+        if (!brain.reacting) {
+          brain.reacting = true;
+          brain.delay = D.gkDelay + Math.random() * 0.12;
+          const speed = Math.hypot(ball.vx, ball.vy);
+          brain.err = (Math.random() < 0.5 ? -1 : 1) * Math.random() *
+                      (12 + Math.min(70, speed * 0.09)) * D.gkErr;
+        }
+      }
+    }
+  }
+  if (shot) {
+    brain.delay -= dt;
+    if (brain.delay > 0) return { ty: gk.y, spd: 0 };            // still reacting
+    return { ty: brain.yp + brain.err, spd: GK_SPEED * D.gkSpd };
+  }
+  brain.reacting = false;
+  // opponent has the ball near our goal → shade toward it, lazily
+  const nearUs = Math.abs(ball.x - ownGoalX) < PITCH.w * 0.42;
+  if (nearUs && turn !== gk.team)
+    return { ty: CY + (ball.y - CY) * 0.5, spd: GK_SPEED * 0.45 };
+  return { ty: CY, spd: GK_SPEED * 0.4 };                        // wander back to centre
+}
+
 function updateKeepers(dt) {
   if (!ball) return;
   for (const gk of players) {
@@ -386,10 +537,12 @@ function updateKeepers(dt) {
     const gx = atk > 0 ? PITCH.x + PR + 3 : PITCH.x + PITCH.w - PR - 3;
     const aiOwned = mode === 'demo' || (mode === 'ai' && gk.team === 'blue');
     const lim = GOAL.w / 2 + 18;
-    let ty = aiOwned ? ball.y : (gk.targetY ?? gk.y);
+    let ty, spd;
+    if (aiOwned) ({ ty, spd } = aiKeeperTarget(gk, dt));
+    else { ty = gk.targetY ?? gk.y; spd = GK_SPEED; }
     ty = Math.min(Math.max(ty, CY - lim), CY + lim);
     const dy = ty - gk.y;
-    const mv = Math.sign(dy) * Math.min(Math.abs(dy), GK_SPEED * dt);
+    const mv = Math.sign(dy) * Math.min(Math.abs(dy), spd * dt);
     gk.y += mv; gk.x = gx;
     gk.vy = dt > 0 ? mv / dt : 0; gk.vx = 0;
   }
@@ -626,7 +779,7 @@ function endCelebration() {
 
 /* ---------- halves & stats ---------- */
 function gameMinute() {
-  const m = Math.min(45, Math.floor(45 * halfClock / HALF_REAL));
+  const m = Math.min(45, Math.floor(45 * halfClock / settings.halfLen));
   return half === 2 ? 45 + m : m;
 }
 
@@ -741,7 +894,7 @@ function aiFlick(team) {
   if (!best) return;
   let dx = cx - best.x, dy = cy - best.y;
   const dist = Math.hypot(dx, dy) || 1;
-  const wob = (Math.random() - 0.5) * 0.09;
+  const wob = (Math.random() - 0.5) * ((DIFF[settings.diff] || DIFF.normal).wobble * 2);
   const c = Math.cos(wob), s = Math.sin(wob);
   const rx = dx * c - dy * s, ry = dx * s + dy * c;
   const power = kickoffPending
@@ -770,9 +923,8 @@ const fans = [];
         const y = st.horiz ? st.y + deep : st.y + along;
         if ((st.horiz && along > st.w) || (!st.horiz && along > st.h)) continue;
         const team = Math.random() < 0.22 ? null : (x < W / 2 ? 'red' : 'blue');
-        const col = team ? (Math.random() < 0.7 ? TEAM[team].main : TEAM[team].lite)
-                         : kit[(Math.random() * kit.length) | 0];
-        fans.push({ x, y, col, phase: Math.random() * 7, zeal: 0.6 + Math.random() * 0.9, team });
+        fans.push({ x, y, phase: Math.random() * 7, zeal: 0.6 + Math.random() * 0.9, team,
+          variant: Math.random(), kitCol: kit[(Math.random() * kit.length) | 0] });
       }
     }
   }
@@ -802,7 +954,7 @@ function drawStadium() {
       const boost = (f.team === celebrate.team || !f.team) ? 1 : 0.25;
       dy -= Math.abs(Math.sin(time * 9 + f.phase)) * 9 * f.zeal * boost;
     }
-    ctx.fillStyle = f.col;
+    ctx.fillStyle = f.team ? (f.variant < 0.7 ? TEAM[f.team].main : TEAM[f.team].lite) : f.kitCol;
     ctx.fillRect(f.x - 2.5, f.y + dy - 3, 5, 6.5);
     ctx.beginPath(); ctx.arc(f.x, f.y + dy - 5.5, 2.6, 0, 7); ctx.fill();
     if (celebrate && (f.team === celebrate.team || !f.team)) {
@@ -1060,8 +1212,9 @@ function updateHUD() {
   $('sRed').textContent = score.red;
   $('sBlue').textContent = score.blue;
   const chip = $('turnchip');
-  chip.className = turn;
-  if (mode === 'ai') chip.textContent = turn === 'red' ? 'YOUR TURN — FLICK A RED PLAYER' : 'COMPUTER IS THINKING…';
+  chip.style.background = `linear-gradient(180deg, ${TEAM[turn].main}, ${TEAM[turn].dark})`;
+  chip.style.color = TEAM[turn].main === '#e8e8e8' ? '#222' : '#fff';
+  if (mode === 'ai') chip.textContent = turn === 'red' ? 'YOUR TURN — FLICK A PLAYER' : 'COMPUTER IS THINKING…';
   else chip.textContent = TEAM[turn].label + "'S TURN";
 }
 function setOverlays() {
@@ -1075,6 +1228,8 @@ function setOverlays() {
 
 function startGame(m) {
   mode = m; phase = 'play';
+  applyKits(); applyNames(); applyTeamStyles();
+  MAX_TOUCHES = settings.touches;
   score = { red:0, blue:0 };
   stats = newStats();
   half = 1; halfClock = 0; halfEndPending = false; statsView = null;
@@ -1111,6 +1266,65 @@ $('btnHalf').onclick = () => {
   setOverlays(); updateHUD();
 };
 window.addEventListener('keydown', e => { if (e.key === 'Escape' && phase === 'play') startDemo(); });
+
+/* ---------- home-screen controls ---------- */
+function buildSeg(id, opts, cur, cb) {
+  const el = $(id); el.innerHTML = '';
+  for (const [v, label] of opts) {
+    const b = document.createElement('button');
+    b.textContent = label;
+    if (String(v) === String(cur)) b.classList.add('on');
+    b.onclick = () => {
+      [...el.children].forEach(c => c.classList.remove('on'));
+      b.classList.add('on');
+      cb(v); saveSettings();
+    };
+    el.appendChild(b);
+  }
+}
+const swRender = {};
+function buildSwatches(id, team) {
+  const el = $(id);
+  swRender[team] = () => {
+    el.innerHTML = '';
+    for (const c of KITS) {
+      const d = document.createElement('div');
+      d.className = 'sw';
+      d.style.background = c;
+      if (settings.kits[team] === c) d.classList.add('on');
+      else if (settings.kits[other(team)] === c) d.classList.add('taken');
+      d.onclick = () => {
+        if (settings.kits[other(team)] === c) return;   // the other team wears this
+        settings.kits[team] = c;
+        applyKits(); applyTeamStyles(); saveSettings();
+        swRender.red(); swRender.blue();
+      };
+      el.appendChild(d);
+    }
+  };
+  swRender[team]();
+}
+function buildMenuControls() {
+  buildSeg('segDiff', [['easy','EASY'], ['normal','NORMAL'], ['hard','HARD']],
+    settings.diff, v => { settings.diff = v; });
+  buildSeg('segLen', [[60,'1:00'], [120,'2:00'], [180,'3:00']],
+    settings.halfLen, v => { settings.halfLen = +v; });
+  buildSeg('segTouch', [[2,'2'], [3,'3'], [4,'4']],
+    settings.touches, v => { settings.touches = +v; MAX_TOUCHES = +v; });
+  buildSwatches('swRed', 'red');
+  buildSwatches('swBlue', 'blue');
+  for (const team of ['red', 'blue']) {
+    const inp = $(team === 'red' ? 'nameRed' : 'nameBlue');
+    inp.value = settings.names[team];
+    inp.addEventListener('input', () => {
+      settings.names[team] = inp.value;
+      applyNames(); applyTeamStyles(); saveSettings();
+    });
+  }
+}
+buildMenuControls();
+applyKits(); applyNames(); applyTeamStyles();
+MAX_TOUCHES = settings.touches;
 
 /* ---------- input ---------- */
 function resize() {
@@ -1195,7 +1409,7 @@ function frame(now) {
   // match clock
   if (phase === 'play' && mode !== 'demo' && !celebrate && !statsView) {
     halfClock += dt;
-    if (halfClock >= HALF_REAL) halfEndPending = true;
+    if (halfClock >= settings.halfLen) halfEndPending = true;
     $('clock').textContent = (half === 1 ? '1ST' : '2ND') + ' HALF · ' + gameMinute() + "'";
   }
 
