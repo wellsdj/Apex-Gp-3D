@@ -69,8 +69,24 @@
   .sw:hover { transform:scale(1.12); }
   .sw.on { border-color:#fff; box-shadow:0 0 0 3px rgba(255,255,255,.4); }
   .sw.taken { opacity:.25; cursor:not-allowed; transform:none; }
-  .playRow { display:flex; gap:14px; margin-top:22px; flex-wrap:wrap; justify-content:center; }
+  .playRow { display:flex; gap:14px; margin-top:22px; flex-wrap:wrap; justify-content:center;
+    align-items:center; }
   .playRow .btn { min-width:230px; }
+  .playRow .btn.ghost { min-width:0; }
+
+  /* settings & teams modal */
+  #custom { background:rgba(4,6,10,.84); backdrop-filter:blur(4px); overflow-y:auto; }
+  #custom .modalCard { display:flex; flex-direction:column; align-items:center;
+    background:rgba(13,19,30,.92); border:1px solid rgba(255,255,255,.14); border-radius:20px;
+    padding:26px 30px; box-shadow:0 26px 70px rgba(0,0,0,.6); max-width:min(980px,95vw);
+    max-height:92vh; overflow-y:auto;
+    animation:modalIn .32s cubic-bezier(.2,1.3,.4,1) both; }
+  #custom h2 { color:#ffd94d; font-style:italic; letter-spacing:3px; font-size:24px; }
+  @keyframes modalIn { from { transform:translateY(24px) scale(.92); opacity:0; }
+                       to   { transform:none; opacity:1; } }
+  @media (prefers-reduced-motion: reduce) {
+    #custom .modalCard, #menu h1 { animation:none; }
+  }
 
   /* ---------- HOW TO PLAY ---------- */
   #howto { background:rgba(4,6,10,.82); backdrop-filter:blur(3px); }
@@ -104,6 +120,11 @@
     padding:7px 14px; border-radius:9px; font-size:12px; font-weight:700; letter-spacing:1.5px;
     cursor:pointer; }
   #menuBtn:hover { background:rgba(30,40,60,.9); color:#fff; }
+  #takeBtn { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); z-index:6;
+    background:linear-gradient(180deg,#2ea84f,#1c7d38); color:#fff; border:none; border-radius:11px;
+    padding:11px 26px; font-size:15px; font-weight:800; letter-spacing:2px; cursor:pointer;
+    box-shadow:0 4px 0 #124f24, 0 10px 24px rgba(0,0,0,.5); font-variant-numeric:tabular-nums; }
+  #takeBtn:hover { filter:brightness(1.12); }
   #clock { position:absolute; top:12px; right:16px; z-index:5; color:#ffd94d;
     font-size:14px; letter-spacing:1.5px; font-weight:800; padding:8px 12px;
     background:rgba(10,14,22,.75); border:1px solid rgba(255,255,255,.14); border-radius:9px;
@@ -146,36 +167,48 @@
 </div>
 <button id="menuBtn" class="hidden">◄ MENU</button>
 <div id="clock" class="hidden">1ST HALF · 0'</div>
+<button id="takeBtn" class="hidden">TAKE IT NOW — 20s</button>
 
 <!-- HOME SCREEN -->
 <div id="menu" class="overlay">
   <div class="badge">⚽ Flick Table Football ⚽</div>
   <h1>SUBUSIO<br><span class="em">LITTLE GAME</span></h1>
   <div class="sub">Full football rules&nbsp;·&nbsp;Two halves&nbsp;·&nbsp;Corners, throw-ins, fouls &amp; penalties</div>
-  <div class="menuGrid">
-    <div class="panel">
-      <h3>Match Setup</h3>
-      <div class="optRow"><label>Difficulty</label><div class="seg" id="segDiff"></div></div>
-      <div class="optRow"><label>Half length</label><div class="seg" id="segLen"></div></div>
-      <div class="optRow"><label>Dribble touch limit</label><div class="seg" id="segTouch"></div></div>
-      <button class="btn ghost" id="btnHow">How to Play</button>
-    </div>
-    <div class="panel">
-      <h3>Your Team</h3>
-      <input class="tName" id="nameRed" maxlength="10" spellcheck="false" aria-label="Your team name">
-      <div class="swatches" id="swRed"></div>
-    </div>
-    <div class="panel">
-      <h3>Away Team</h3>
-      <input class="tName" id="nameBlue" maxlength="10" spellcheck="false" aria-label="Away team name">
-      <div class="swatches" id="swBlue"></div>
-    </div>
-  </div>
-  <div class="playRow">
+  <div class="playRow" style="margin-top:36px; flex-direction:column;">
     <button class="btn" id="btnAI">Play vs Computer</button>
     <button class="btn blue" id="btnPVP">2 Players</button>
   </div>
+  <div class="playRow" style="margin-top:14px;">
+    <button class="btn ghost" id="btnCustom">⚙ Settings &amp; Teams</button>
+    <button class="btn ghost" id="btnHow">How to Play</button>
+  </div>
   <div class="foot">Dribble it, pass it, score — the keeper is in your hands</div>
+</div>
+
+<!-- SETTINGS & TEAM CUSTOMIZATION -->
+<div id="custom" class="overlay hidden">
+  <div class="modalCard">
+    <h2>SETTINGS &amp; TEAMS</h2>
+    <div class="menuGrid" style="margin-top:14px;">
+      <div class="panel">
+        <h3>Match Setup</h3>
+        <div class="optRow"><label>Difficulty</label><div class="seg" id="segDiff"></div></div>
+        <div class="optRow"><label>Half length (minutes)</label><div class="seg" id="segLen"></div></div>
+        <div class="optRow"><label>Dribble touch limit</label><div class="seg" id="segTouch"></div></div>
+      </div>
+      <div class="panel">
+        <h3>Your Team</h3>
+        <input class="tName" id="nameRed" maxlength="10" spellcheck="false" aria-label="Your team name">
+        <div class="swatches" id="swRed"></div>
+      </div>
+      <div class="panel">
+        <h3>Away Team</h3>
+        <input class="tName" id="nameBlue" maxlength="10" spellcheck="false" aria-label="Away team name">
+        <div class="swatches" id="swBlue"></div>
+      </div>
+    </div>
+    <button class="btn" id="btnCustomDone" style="margin-top:18px; min-width:240px;">Done</button>
+  </div>
 </div>
 
 <!-- HOW TO PLAY -->
@@ -184,9 +217,10 @@
     <h2>HOW TO PLAY</h2>
     <ul>
       <li><b>Click &amp; hold</b> one of your players, <b>pull back</b> for power, release to flick it at the ball.</li>
-      <li><b>Dribble:</b> if your flicked player touches the ball, you <b>keep your turn</b>. Gentle touches let you work the ball upfield.</li>
+      <li><b>Possession follows the last touch:</b> whoever touched the ball last flicks next — a deflection off an opponent hands them the ball. Gentle touches let you dribble upfield.</li>
       <li><b>Limited touches</b> in a row by the same player (2–4, set on the home screen) — then you must pass. One touch too many is a <b>foul</b>: free kick where it happened.</li>
-      <li>Hitting an opponent <b>before touching the ball</b> is a foul → <b>free kick</b>. In your own box it's a <b>PENALTY</b>.</li>
+      <li><b>Smashing</b> into an opponent before touching the ball is a foul → <b>free kick</b> (in your own box: <b>PENALTY</b>). A soft nudge is play on.</li>
+      <li><b>Throw-ins &amp; corners:</b> you get <b>20 seconds to reposition any of your players</b> first (drag them around, then press TAKE IT NOW). The pause is added to the half as stoppage time. The taker <b>can't touch the ball twice in a row</b> — someone else must touch it first.</li>
       <li>Ball over the sideline: <b>throw-in</b>. Over the goal line: <b>corner</b> or goal kick, by last touch.</li>
       <li>Restart power varies: <b>throw-ins are weak</b>, corners stronger, goal kicks go long — and each player throws a little differently.</li>
       <li><b>Your keeper is special:</b> grab it with the mouse at any time and slide it along the goal — but it can only move so fast, and it never leaves its line. The computer's keeper plays by the same limits: it reacts late and dives imperfectly.</li>
@@ -234,7 +268,7 @@ const SIX = { w: 48, h: 152 };                     // six-yard box
 const PEN_X = 88;                                  // penalty spot distance from goal line
 const PR = 15, BR = 9;                             // player / ball radius
 const MAXDRAG = 175;                               // pull distance for a full-power flick
-const FIELD_POW = 370;                             // max flick power in open play
+const FIELD_POW = 465;                             // max flick power in open play
 const GK_SPEED = 165;                              // keeper max slide speed (px/s)
 let MAX_TOUCHES = 3;                               // dribble limit per player (home-screen option)
 
@@ -252,11 +286,12 @@ const DIFF = {
   hard:   { wobble:0.05, gkErr:0.55, gkDelay:0.12, gkSpd:1.1  },
 };
 let settings = {
-  diff:'normal', halfLen:120, touches:3,
+  diff:'normal', halfLen:180, touches:3,
   names:{ red:'RED', blue:'BLUE' },
   kits:{ red:KITS[0], blue:KITS[1] },
 };
 try { Object.assign(settings, JSON.parse(localStorage.getItem('subusio') || '{}')); } catch (e) {}
+if (![180, 300, 420, 600].includes(settings.halfLen)) settings.halfLen = 180;   // 3–10 min halves
 function saveSettings() { try { localStorage.setItem('subusio', JSON.stringify(settings)); } catch (e) {} }
 
 function mix(a, b, t) {
@@ -325,6 +360,12 @@ let pendingRestart = null;   // {type:'kickoff'|'throwin'|'corner'|'goalkick'|'f
 let kickoffPending = false;
 let restartKind = null;      // 'throwin'|'corner'|'goalkick' → special power caps for the next flick
 let gkDrag = null;           // keeper currently held by the mouse
+let turnTouched = false;     // did anyone touch the ball during this turn's motion?
+let restartFlick = false;    // the next flick takes a restart (arms the double-touch rule)
+let restartTaker = null;     // { p, touched } — restart taker may not touch twice in a row
+let placing = null;          // { team, tLeft } — free repositioning before throw-ins/corners
+let moveDrag = null;         // piece being repositioned during the placing phase
+let stoppage = 0;            // real seconds of added time accrued this half
 let touchingBall = new Set();
 let stats = newStats();
 function newStats() {
@@ -372,6 +413,8 @@ function kickoff(kickTeam) {
   streak = { p:null, n:0 };
   kickoffPending = true; pendingRestart = null;
   restartKind = null; gkDrag = null;
+  turnTouched = false; restartTaker = null; restartFlick = true;
+  placing = null; moveDrag = null;
   touchingBall = new Set();
   updateHUD();
 }
@@ -468,9 +511,10 @@ function collidePair(a, b, nowTouching) {
       nowTouching.add(a);
     }
   } else if (a.type === 'p' && b.type === 'p') {
-    // flicked piece smashing an opponent before touching the ball = foul
+    // flicked piece SMASHING an opponent before touching the ball = foul;
+    // a soft nudge is play on — it takes a hard impact to concede
     if (activePiece && !activeTouched && !pendingRestart && !celebrate &&
-        (a === activePiece || b === activePiece)) {
+        -vn > 260 && (a === activePiece || b === activePiece)) {
       const opp = a === activePiece ? b : a;
       if (opp.team !== activePiece.team)
         foulAt(activePiece.team, (a.x + b.x) / 2, (a.y + b.y) / 2, 'FOUL!');
@@ -561,7 +605,22 @@ function powerCap(p) {
 function touchEvent(p) {
   ball.lastTeam = p.team;
   stats[p.team].touches++;
+  turnTouched = true;
   if (p === activePiece) activeTouched = true;
+
+  // restart double-touch: the taker may not touch twice in a row
+  if (restartTaker) {
+    if (p === restartTaker.p) {
+      if (restartTaker.touched) {
+        restartTaker = null;
+        foulAt(p.team, ball.x, ball.y, 'DOUBLE TOUCH —');
+        return;
+      }
+      restartTaker.touched = true;
+    } else {
+      restartTaker = null;      // someone else touched it — taker is free again
+    }
+  }
 
   // kick-off must be passed backwards
   if (kickoffPending && !pendingRestart) {
@@ -715,10 +774,12 @@ function applyRestart(r) {
     const p = nearestPiece(r.team, ball.x, ball.y, true);
     if (p) { p.x = ball.x; p.y = r.out === 'top' ? ball.y - (PR + BR + 4) : ball.y + (PR + BR + 4); }
   } else if (r.type === 'corner') {
+    // the taker stands OUTSIDE the pitch, behind the corner spot, ready to
+    // launch the ball into the box
     const p = nearestPiece(r.team, ball.x, ball.y, true);
     if (p) {
-      p.x = ball.x - Math.sign(ball.x - CX) * (PR + BR + 5);
-      p.y = ball.y - Math.sign(ball.y - CY) * (PR + BR + 5);
+      p.x = ball.x + Math.sign(ball.x - CX) * (PR + BR + 4) * 0.8;
+      p.y = ball.y + Math.sign(ball.y - CY) * (PR + BR + 4) * 0.8;
     }
   } else if (r.type === 'goalkick') {
     const p = nearestPiece(r.team, ball.x, ball.y, true);   // keeper stays on its line
@@ -730,10 +791,9 @@ function applyRestart(r) {
       const dx = p.x - ball.x, dy = p.y - ball.y, d = Math.hypot(dx, dy);
       if (d < 60) { const s = d ? 60 / d : 1; p.x = ball.x + (d ? dx * s : 60); p.y = ball.y + (d ? dy * s : 0); }
     }
+    // always give the free kick a taker standing directly behind the ball
     const near = nearestPiece(r.team, ball.x, ball.y, true);
-    if (near && Math.hypot(near.x - ball.x, near.y - ball.y) > 110) {
-      near.x = ball.x - atk * (PR + BR + 14); near.y = ball.y;
-    }
+    if (near) { near.x = ball.x - atk * (PR + BR + 6); near.y = ball.y; }
   } else if (r.type === 'penalty') {
     const def = other(r.team);
     const gx = atk > 0 ? PITCH.x + PITCH.w : PITCH.x;    // goal under attack
@@ -749,7 +809,23 @@ function applyRestart(r) {
 
   relaxOverlaps();
   turn = r.team; aiTimer = 0; settle = 0;
+  restartFlick = true;                          // arms the double-touch rule
+  // throw-ins & corners: the human taking it gets 20s to reposition any of
+  // their players first; the clock stops but the pause becomes added time
+  const humanTeam = mode !== 'demo' && (mode === 'pvp' || r.team === 'red');
+  if (humanTeam && (r.type === 'throwin' || r.type === 'corner')) {
+    placing = { team: r.team, tLeft: 20, bx: ball.x, by: ball.y };
+  }
   updateHUD();
+}
+
+function endPlacing() {
+  if (!placing) return;
+  const { bx, by } = placing;
+  placing = null; moveDrag = null;
+  relaxOverlaps();
+  ball.x = bx; ball.y = by; ball.vx = 0; ball.vy = 0;
+  aiTimer = 0;
 }
 
 /* ---------- turn flow ---------- */
@@ -757,15 +833,19 @@ function resolveTurnEnd() {
   awaiting = false;
   if (pendingRestart) { applyRestart(pendingRestart); return; }
   if (halfEndPending) { endHalf(); return; }
-  if (activePiece && activeTouched) {
-    // touched the ball → keep the turn (dribbling!)
-    if (streak.p === activePiece && streak.n >= MAX_TOUCHES)
+  // possession goes to whoever touched the ball LAST — a deflection off an
+  // opponent hands them the turn; missing the ball entirely also loses it
+  const next = turnTouched && ball.lastTeam ? ball.lastTeam : other(turn);
+  if (next === turn) {
+    if (streak.p && streak.p.team === turn && streak.n >= MAX_TOUCHES)
       toast(MAX_TOUCHES + ' TOUCHES — MUST PASS!', TEAM[turn].main);
     else if (streak.p === activePiece && streak.n === 2)
       toast('TOUCH 2 OF ' + MAX_TOUCHES, TEAM[turn].main);
-  } else {
-    turn = other(turn);
+  } else if (turnTouched && activeTouched) {
+    toast('LAST TOUCH — ' + TEAM[next].label + "'S BALL", TEAM[next].main);
   }
+  turn = next;
+  turnTouched = false;
   activePiece = null; activeTouched = false;
   aiTimer = 0; settle = 0;
   updateHUD();
@@ -778,9 +858,13 @@ function endCelebration() {
 }
 
 /* ---------- halves & stats ---------- */
-function gameMinute() {
-  const m = Math.min(45, Math.floor(45 * halfClock / settings.halfLen));
-  return half === 2 ? 45 + m : m;
+function clockText() {
+  const base = half === 2 ? 45 : 0;
+  if (halfClock <= settings.halfLen)
+    return (half === 1 ? '1ST' : '2ND') + ' HALF · ' +
+           (base + Math.floor(45 * halfClock / settings.halfLen)) + "'";
+  const extra = Math.max(1, Math.ceil(45 * (halfClock - settings.halfLen) / settings.halfLen));
+  return (half === 1 ? '1ST' : '2ND') + ' HALF · ' + (base + 45) + '+' + extra + "'";
 }
 
 function endHalf() {
@@ -834,12 +918,15 @@ function isHumanTurn() {
   return mode === 'pvp' || turn === 'red';
 }
 function canFlick() {
-  return phase === 'play' && !celebrate && !awaiting && !pendingRestart && !statsView && allStopped();
+  return phase === 'play' && !celebrate && !awaiting && !pendingRestart && !statsView &&
+         !placing && allStopped();
 }
 
 function doFlick(p, dirx, diry, power) {
   power = Math.min(power, powerCap(p));
   restartKind = null;
+  turnTouched = false;
+  if (restartFlick) { restartTaker = { p, touched: false }; restartFlick = false; }
   const len = Math.hypot(dirx, diry) || 1;
   p.vx = (dirx / len) * power;
   p.vy = (diry / len) * power;
@@ -883,6 +970,7 @@ function aiFlick(team) {
     if (p.team !== team) continue;
     if (p.num === 1) continue;                                   // the keeper slides, never flicks
     if (streak.p === p && streak.n >= MAX_TOUCHES) continue;     // must pass — pick someone else
+    if (restartTaker && restartTaker.touched && restartTaker.p === p) continue; // no double touch
     if (kickoffPending && Math.hypot(p.x - ball.x, p.y - ball.y) > 70) continue;
     const dx = cx - p.x, dy = cy - p.y;
     const dist = Math.hypot(dx, dy) || 1;
@@ -1232,7 +1320,7 @@ function startGame(m) {
   MAX_TOUCHES = settings.touches;
   score = { red:0, blue:0 };
   stats = newStats();
-  half = 1; halfClock = 0; halfEndPending = false; statsView = null;
+  half = 1; halfClock = 0; halfEndPending = false; statsView = null; stoppage = 0;
   firstKick = Math.random() < 0.5 ? 'red' : 'blue';
   prevKickTo = firstKick;
   celebrate = null; confetti = []; toasts = [];
@@ -1244,7 +1332,7 @@ function startDemo() {
   mode = 'demo'; phase = 'menu';
   score = { red:0, blue:0 };
   stats = newStats();
-  half = 1; halfClock = 0; halfEndPending = false; statsView = null;
+  half = 1; halfClock = 0; halfEndPending = false; statsView = null; stoppage = 0;
   prevKickTo = 'red'; celebrate = null; confetti = []; toasts = [];
   kickoff('red');
   setOverlays();
@@ -1252,6 +1340,8 @@ function startDemo() {
 
 $('btnAI').onclick  = () => startGame('ai');
 $('btnPVP').onclick = () => startGame('pvp');
+$('btnCustom').onclick = () => $('custom').classList.remove('hidden');
+$('btnCustomDone').onclick = () => $('custom').classList.add('hidden');
 $('btnHow').onclick = () => $('howto').classList.remove('hidden');
 $('btnHowClose').onclick = () => $('howto').classList.add('hidden');
 $('menuBtn').onclick = startDemo;
@@ -1259,7 +1349,7 @@ $('btnOverMenu').onclick = startDemo;
 $('btnAgain').onclick = () => startGame(mode);
 $('btnHalf').onclick = () => {
   statsView = null;
-  half = 2; halfClock = 0; halfEndPending = false;
+  half = 2; halfClock = 0; halfEndPending = false; stoppage = 0;
   prevKickTo = other(firstKick);
   kickoff(prevKickTo);
   toast('SECOND HALF — ' + TEAM[prevKickTo].label + ' KICK OFF', TEAM[prevKickTo].main);
@@ -1307,7 +1397,7 @@ function buildSwatches(id, team) {
 function buildMenuControls() {
   buildSeg('segDiff', [['easy','EASY'], ['normal','NORMAL'], ['hard','HARD']],
     settings.diff, v => { settings.diff = v; });
-  buildSeg('segLen', [[60,'1:00'], [120,'2:00'], [180,'3:00']],
+  buildSeg('segLen', [[180,'3'], [300,'5'], [420,'7'], [600,'10']],
     settings.halfLen, v => { settings.halfLen = +v; });
   buildSeg('segTouch', [[2,'2'], [3,'3'], [4,'4']],
     settings.touches, v => { settings.touches = +v; MAX_TOUCHES = +v; });
@@ -1362,6 +1452,11 @@ cv.addEventListener('pointerdown', e => {
     cv.setPointerCapture(e.pointerId);
     return;
   }
+  if (placing) {                        // repositioning window: drag your players around
+    const p = playerAt(g.x, g.y, placing.team);
+    if (p && p.num !== 1) { moveDrag = p; cv.setPointerCapture(e.pointerId); }
+    return;
+  }
   if (!isHumanTurn() || !canFlick()) return;
   const team = mode === 'pvp' ? turn : 'red';
   const p = playerAt(g.x, g.y, team);
@@ -1373,7 +1468,17 @@ cv.addEventListener('pointerdown', e => {
 cv.addEventListener('pointermove', e => {
   const g = toGame(e);
   if (gkDrag) { gkDrag.targetY = g.y; return; }
+  if (moveDrag) {
+    const M = APRON - 8;
+    moveDrag.x = Math.min(Math.max(g.x, PITCH.x - M + PR), PITCH.x + PITCH.w + M - PR);
+    moveDrag.y = Math.min(Math.max(g.y, PITCH.y - M + PR), PITCH.y + PITCH.h + M - PR);
+    return;
+  }
   if (drag) { drag.mx = g.x; drag.my = g.y; return; }
+  if (placing) {
+    cv.style.cursor = playerAt(g.x, g.y, placing.team) ? 'grab' : 'default';
+    return;
+  }
   if (keeperAt(g.x, g.y)) { hoverP = null; cv.style.cursor = 'grab'; return; }
   if (isHumanTurn() && canFlick()) {
     const p = playerAt(g.x, g.y, turn);
@@ -1383,6 +1488,14 @@ cv.addEventListener('pointermove', e => {
 });
 cv.addEventListener('pointerup', e => {
   if (gkDrag) { gkDrag = null; return; }
+  if (moveDrag) {
+    moveDrag = null;
+    if (placing) {
+      relaxOverlaps();
+      ball.x = placing.bx; ball.y = placing.by; ball.vx = 0; ball.vy = 0;
+    }
+    return;
+  }
   if (!drag) return;
   const g = toGame(e);
   const dx = drag.p.x - g.x, dy = drag.p.y - g.y;
@@ -1392,7 +1505,8 @@ cv.addEventListener('pointerup', e => {
     doFlick(drag.p, dx, dy, Math.max(pow, 110));
   } else drag = null;
 });
-cv.addEventListener('pointercancel', () => { drag = null; gkDrag = null; });
+cv.addEventListener('pointercancel', () => { drag = null; gkDrag = null; moveDrag = null; });
+$('takeBtn').onclick = endPlacing;
 
 /* ---------- main loop ---------- */
 let last = performance.now();
@@ -1406,12 +1520,24 @@ function frame(now) {
   checkOut();
   updateConfetti(dt);
 
-  // match clock
-  if (phase === 'play' && mode !== 'demo' && !celebrate && !statsView) {
-    halfClock += dt;
-    if (halfClock >= settings.halfLen) halfEndPending = true;
-    $('clock').textContent = (half === 1 ? '1ST' : '2ND') + ' HALF · ' + gameMinute() + "'";
+  // repositioning window before throw-ins/corners: clock stops, but the
+  // pause is added to the half as stoppage time
+  if (placing) {
+    placing.tLeft -= dt;
+    stoppage += dt;
+    $('takeBtn').textContent = 'TAKE IT NOW — ' + Math.max(0, Math.ceil(placing.tLeft)) + 's';
+    if (placing.tLeft <= 0) endPlacing();
   }
+  $('takeBtn').classList.toggle('hidden', !placing);
+
+  // match clock (runs to 45' + added time)
+  if (phase === 'play' && mode !== 'demo' && !celebrate && !statsView && !placing) {
+    halfClock += dt;
+    if (halfClock >= settings.halfLen + stoppage) halfEndPending = true;
+    $('clock').textContent = clockText();
+  }
+
+  if (placing) { ball.x = placing.bx; ball.y = placing.by; ball.vx = 0; ball.vy = 0; }
 
   if (celebrate) {
     celebrate.t -= dt;
@@ -1427,12 +1553,12 @@ function frame(now) {
     } else settle = 0;
   }
   // buzzer with no action in progress
-  if (halfEndPending && !awaiting && !celebrate && !statsView && !pendingRestart && allStopped()) endHalf();
+  if (halfEndPending && !awaiting && !celebrate && !statsView && !pendingRestart && !placing && allStopped()) endHalf();
 
   // computer turns (and both sides of the menu demo match)
   const aiControls = (phase === 'menu' && mode === 'demo') ||
                      (phase === 'play' && mode === 'ai' && turn === 'blue');
-  if (aiControls && !awaiting && !celebrate && !pendingRestart && !statsView && allStopped()) {
+  if (aiControls && !awaiting && !celebrate && !pendingRestart && !statsView && !placing && allStopped()) {
     aiTimer += dt;
     if (aiTimer > (mode === 'demo' ? 0.6 : 1.0)) { aiTimer = 0; aiFlick(turn); }
   }
