@@ -1962,6 +1962,7 @@ function startDemo() {
 }
 function startQuick() {
   screen = 'match';
+  hideAll();
   startMatch({
     mode: 'quick',
     red: { label: settings.names.red, kit: settings.kits.red, squad: defaultSquad(74, (Math.random()*1e9)>>>0) },
