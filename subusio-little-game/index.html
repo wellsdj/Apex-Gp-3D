@@ -744,10 +744,10 @@ let toastQueue = [];   // shown when returning to hub
 // 4-4-2 anchors (fractions of pitch, team defending the LEFT goal);
 // index order matches SLOT_POS: GK, DF×4, MF×4, FW×2
 const FORMATION = [
-  [0.055, 0.50],
-  [0.20, 0.16], [0.18, 0.385], [0.18, 0.615], [0.20, 0.84],
-  [0.42, 0.13], [0.40, 0.385], [0.40, 0.615], [0.42, 0.87],
-  [0.62, 0.34], [0.62, 0.66],
+  [0.05, 0.50],                                              // GK
+  [0.17, 0.20], [0.16, 0.40], [0.16, 0.60], [0.17, 0.80],   // DF — deeper, tighter
+  [0.39, 0.17], [0.37, 0.40], [0.37, 0.60], [0.39, 0.83],   // MF — deeper
+  [0.57, 0.36], [0.57, 0.64],                                // FW
 ];
 
 let match = null;        // active match (also runs the menu demo)
@@ -758,8 +758,18 @@ const sp = { held:false, downT:0, charging:false, pow:0, pendingTap:0 };
 function defaultSquad(rating, seed) {
   return genSquad(mulberry32(seed), rating);
 }
-function spd(p) { return 72 + p.attrs.pace * 2.25; }    // ~162..295 px/s (bigger pace spread)
+function spd(p) { return 36 + p.attrs.pace * 1.125; }   // ~81..147 px/s (halved: slower, passing game)
 function accel(p) { return 4.5 + (p.attrs.pace / 99) * 3.5; }   // slower players are heavier to move
+// relaxed AI pace by zone: slow/patient when building from deep, quicker up the
+// pitch, full tilt in the opponent box (applied only to attacking/holding runs,
+// never to defending — defenders stay responsive)
+function zonePace(p) {
+  const atk = TEAM[p.team].attacks;
+  const adv = atk > 0 ? (p.x - PITCH.x) / PITCH.w : (PITCH.x + PITCH.w - p.x) / PITCH.w;
+  if (adv < 0.5)  return 0.55 + adv * 0.50;              // own half:      0.55 → 0.80
+  if (adv < 0.82) return 0.80 + (adv - 0.5) * 0.625;    // attacking half:0.80 → 1.00
+  return 1.0 + (adv - 0.82) * 0.83;                     // final third/box:1.0 → ~1.15
+}
 
 function mkMatchPlayer(team, slot, data) {
   const atk = TEAM[team].attacks;
@@ -904,6 +914,7 @@ function doTackle(p, dirx, diry) {
   p.lvy = (diry / dl) * (300 + p.attrs.tackle * 1.25);
 }
 function switchPlayer() {
+  if (attacking()) return;   // no switching while you have the ball — stay on your player
   const m = match, b = m.ball;
   const atk = TEAM.red.attacks;
   const fx = b.x + b.vx * 0.5, fy = b.y + b.vy * 0.5;   // where the ball is going
@@ -966,6 +977,17 @@ function placeRestart() {
     } else { taker.x = d.x - atk * (PR + BR + 4); taker.y = d.y; }
   }
   taker.vx = taker.vy = 0;
+  // throw-in: push opponents out of the taker's space (no crowding in front/behind)
+  if (d.type === 'throwin') {
+    for (const p of m.players) {
+      if (p.team === d.team) continue;
+      const dx = p.x - m.ball.x, dy = p.y - m.ball.y, dd = Math.hypot(dx, dy);
+      if (dd < 72) {
+        const nx = dd > 1 ? dx / dd : 0, ny = dd > 1 ? dy / dd : 1;
+        p.x = m.ball.x + nx * 72; p.y = m.ball.y + ny * 72; p.vx = p.vy = 0;
+      }
+    }
+  }
   m.ball.owner = taker; m.ball.lastTeam = d.team;
   m.state = 'live'; m.dead = { ...d, placed:true, autoT: 3.0, taker }; m.controlCoolT = 0;
   if (humanTeam() === d.team) controlled = taker;
@@ -1140,7 +1162,7 @@ function moveKeeper(gk, dt) {
   const goalLineX = atk > 0 ? PITCH.x : PITCH.x + PITCH.w;
   const brain = gk.gkBrain;
   const rf = gk.attrs.reflex;
-  let ty = CY, sMax = 130;
+  let ty = CY, sMax = 92;
 
   // shot incoming?
   let shot = false;
@@ -1163,13 +1185,13 @@ function moveKeeper(gk, dt) {
   }
   if (shot) {
     brain.delay -= dt;
-    if (brain.delay <= 0) { ty = brain.yp + brain.err; sMax = 150 + rf * 1.5; }
+    if (brain.delay <= 0) { ty = brain.yp + brain.err; sMax = 118 + rf * 1.25; }
     else { ty = gk.y; }
   } else {
     brain.reacting = false;
     const dGoal = Math.abs(b.x - goalLineX);
     ty = dGoal < PITCH.w * 0.5 ? CY + (b.y - CY) * 0.55 : CY;
-    sMax = 110;
+    sMax = 82;
   }
   ty = Math.min(Math.max(ty, CY - (GOAL.w / 2 - 4)), CY + (GOAL.w / 2 - 4));
   const dy = ty - gk.y;
@@ -1285,7 +1307,7 @@ function teamBrains(dt) {
     let ty = ay + (b.y - CY) * 0.09;
     { const odx = tx - ax, ody = ty - ay, ol = Math.hypot(odx, ody);
       if (ol > 85) { tx = ax + odx / ol * 85; ty = ay + ody / ol * 85; } }
-    p.spdMul = 0.82;
+    p.spdMul = 0.82 * zonePace(p);   // relaxed when holding shape deep, quicker upfield
 
     const rank = near[p.team].findIndex(e => e[0] === p);
     if (owner === p) {
@@ -1304,8 +1326,8 @@ function teamBrains(dt) {
       const gx = atk > 0 ? PITCH.x : PITCH.x + PITCH.w;   // own goal
       const dx = gx - owner.x, dy = CY - owner.y, dl = Math.hypot(dx, dy) || 1;
       tx = owner.x + (dx / dl) * 62; ty = owner.y + (dy / dl) * 62; p.spdMul = 0.97;
-    } else if (myBall && rank === 1) { tx = owner.x - atk * 30; ty = owner.y + (p.y > owner.y ? 88 : -88); p.spdMul = 0.95; }
-    else if (myBall && p.role === 'FW') { tx = owner.x + atk * 175; ty = CY + (p.slot === 9 ? -62 : 62); p.spdMul = 0.98; }
+    } else if (myBall && rank === 1) { tx = owner.x - atk * 30; ty = owner.y + (p.y > owner.y ? 88 : -88); p.spdMul = 0.95 * zonePace(p); }
+    else if (myBall && p.role === 'FW') { tx = owner.x + atk * 175; ty = CY + (p.slot === 9 ? -62 : 62); p.spdMul = 0.98 * zonePace(p); }
 
     p.tx = Math.min(Math.max(tx, PITCH.x + 14), PITCH.x + PITCH.w - 14);
     p.ty = Math.min(Math.max(ty, PITCH.y + 14), PITCH.y + PITCH.h - 14);
@@ -1339,17 +1361,19 @@ function aiCarrier(p, dt) {
     const s = Math.sign(px2 * (ty - p.y) - py2 * (tx - p.x)) || 1;
     tx += -s * px2 * 0.9; ty += -s * py2 * 0.9;
   }
-  p.tx = tx; p.ty = ty; p.spdMul = 0.93;
+  p.tx = tx; p.ty = ty; p.spdMul = 0.93 * zonePace(p);   // patient in own half, drives on advancing
 
   if (p.decideT > 0) return;
   p.decideT = D().decide + Math.random() * 0.25;
   const distG = Math.abs(gx - p.x);
   const pressed = nd < 42;
-  if (distG < 265 && Math.abs(p.y - CY) < 190 && (pressed || Math.random() < 0.15)) {
-    // shoot (difficulty adds error)
-    const aimY = CY + (Math.random() - 0.5) * (GOAL.w - 44);
-    const spread = (3 + Math.random() * 8) * D().err * (1.3 - p.attrs.shot / 150);
-    kickBall(p, gx - p.x, aimY - p.y, 430 + Math.random() * 260, spread);
+  if (distG < 230 && Math.abs(p.y - CY) < 150 && (pressed || Math.random() < 0.18)) {
+    // finish into the corner farther from the keeper, with pace to beat him
+    const gk = m.players.find(q => q.team !== p.team && q.role === 'GK');
+    const aimHigh = gk ? gk.y > CY : Math.random() < 0.5;   // keeper low → aim high, and vice-versa
+    const aimY = CY + (aimHigh ? -1 : 1) * (GOAL.w / 2 - 12) * (0.72 + Math.random() * 0.28);
+    const spread = (2 + Math.random() * 5) * D().err * (1.3 - p.attrs.shot / 150);
+    kickBall(p, gx - p.x, aimY - p.y, 560 + Math.random() * 240, spread);
     registerShot(p);
   } else if (pressed) {
     // pass to the most open forward-ish teammate
@@ -1442,6 +1466,18 @@ function updateMatch(dt) {
   // auto-take stalled restarts (AI teams take instantly-ish, humans get a grace window)
   if (m.state === 'live' && m.dead && m.dead.placed && m.ball.owner === m.dead.taker) {
     m.dead.autoT -= dt;
+    // throw-in: hold opponents out of the taker's space for the whole setup
+    if (m.dead.type === 'throwin') {
+      for (const p of m.players) {
+        if (p.team === m.dead.team) continue;
+        const dx = p.x - m.ball.x, dy = p.y - m.ball.y, dd = Math.hypot(dx, dy);
+        if (dd < 72) {
+          const nx = dd > 1 ? dx / dd : 0, ny = dd > 1 ? dy / dd : 1;
+          p.x = m.ball.x + nx * 72; p.y = m.ball.y + ny * 72;
+          if (p.vx * nx + p.vy * ny < 0) { p.vx = 0; p.vy = 0; }
+        }
+      }
+    }
     const isAI = m.dead.team === 'blue' || !humanTeam();
     if ((isAI && m.dead.autoT < 2.4) || m.dead.autoT <= 0) {
       aiRestartPass(m.dead.taker);
