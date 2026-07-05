@@ -758,7 +758,8 @@ const sp = { held:false, downT:0, charging:false, pow:0, pendingTap:0 };
 function defaultSquad(rating, seed) {
   return genSquad(mulberry32(seed), rating);
 }
-function spd(p) { return 118 + p.attrs.pace * 1.35; }   // ~186..252 px/s
+function spd(p) { return 72 + p.attrs.pace * 2.25; }    // ~162..295 px/s (bigger pace spread)
+function accel(p) { return 4.5 + (p.attrs.pace / 99) * 3.5; }   // slower players are heavier to move
 
 function mkMatchPlayer(team, slot, data) {
   const atk = TEAM[team].attacks;
@@ -794,7 +795,7 @@ function startMatch(opts) {
     ball: { x: CX, y: CY, vx:0, vy:0, owner:null, lockT:0, lastKicker:null, kickerT:0, lastTeam:null },
     score: { red:0, blue:0 }, half:1, clock:0, halfEndPending:false,
     stats: { red: zStat(), blue: zStat() },
-    dead: null, celebrate: null, penalty: null, foulCool: 0,
+    dead: null, celebrate: null, penalty: null, foulCool: 0, controlCoolT: 0,
     kickoffTeam: Math.random() < 0.5 ? 'red' : 'blue',
   };
   confetti = []; toasts = [];
@@ -817,7 +818,7 @@ function doKickoff(team) {
   taker.x = CX - TEAM[team].attacks * 4; taker.y = CY;
   m.ball.x = CX; m.ball.y = CY; m.ball.vx = m.ball.vy = 0;
   m.ball.owner = taker; m.ball.lockT = 0; m.ball.lastTeam = team;
-  m.state = 'live'; m.dead = null;
+  m.state = 'live'; m.dead = null; m.controlCoolT = 0;
   if (humanTeam() === team) controlled = taker;
   else if (humanTeam()) controlled = m.players.find(p => p.team === 'red' && p.slot === 6);
   else controlled = null;
@@ -866,13 +867,20 @@ function bestPassTarget(p, dirx, diry, throughBall) {
   }
   return best;
 }
+// closing-down: a rushed action under close pressure is less accurate
+function pressureMul(p, radius, mult) {
+  let nd = 1e9;
+  for (const q of match.players)
+    if (q.team !== p.team) nd = Math.min(nd, (q.x - p.x) ** 2 + (q.y - p.y) ** 2);
+  return nd < radius * radius ? mult : 1;
+}
 function doPass(p) {
   const t = bestPassTarget(p, mouse.x - p.x, mouse.y - p.y, false);
   if (!t) return;
   const lead = 0.35;
   const dx = t.x + t.vx * lead - p.x, dy = t.y + t.vy * lead - p.y;
   const d = Math.hypot(dx, dy);
-  kickBall(p, dx, dy, Math.min(560, 330 + d * 0.9), (108 - p.attrs.pass) * 0.14);
+  kickBall(p, dx, dy, Math.min(560, 330 + d * 0.9), (108 - p.attrs.pass) * 0.14 * pressureMul(p, 35, 1.5));
 }
 function doThrough(p) {
   const atk = TEAM[p.team].attacks;
@@ -880,12 +888,12 @@ function doThrough(p) {
   if (!t) return;
   const dx = t.x + t.vx * 0.7 + atk * 78 - p.x, dy = t.y + t.vy * 0.7 - p.y;
   const d = Math.hypot(dx, dy);
-  kickBall(p, dx, dy, Math.min(640, 420 + d * 0.7), (112 - p.attrs.pass) * 0.17);
+  kickBall(p, dx, dy, Math.min(640, 420 + d * 0.7), (112 - p.attrs.pass) * 0.17 * pressureMul(p, 35, 1.5));
   toast('THROUGH BALL!', TEAM[p.team].lite);
 }
 function doShoot(p, power) {
   const dx = mouse.x - p.x, dy = mouse.y - p.y;
-  const spread = (2 + power * power * 14) * (1.3 - p.attrs.shot / 150);
+  const spread = (2 + power * power * 14) * (1.3 - p.attrs.shot / 150) * pressureMul(p, 30, 1.2);
   kickBall(p, dx, dy, 380 + power * 430, spread);
   registerShot(p);
 }
@@ -907,7 +915,7 @@ function switchPlayer() {
     const sc = d + goalSide;
     if (sc < bs) { bs = sc; best = p; }
   }
-  if (best) { controlled = best; toast('▶ ' + best.name.split(' ')[1].toUpperCase(), '#ffd94d'); }
+  if (best) { controlled = best; match.controlCoolT = 0.5; toast('▶ ' + best.name.split(' ')[1].toUpperCase(), '#ffd94d'); }
 }
 
 /* ---------- fouls, restarts, penalties ---------- */
@@ -959,7 +967,7 @@ function placeRestart() {
   }
   taker.vx = taker.vy = 0;
   m.ball.owner = taker; m.ball.lastTeam = d.team;
-  m.state = 'live'; m.dead = { ...d, placed:true, autoT: 3.0, taker };
+  m.state = 'live'; m.dead = { ...d, placed:true, autoT: 3.0, taker }; m.controlCoolT = 0;
   if (humanTeam() === d.team) controlled = taker;
 }
 function startPenalty(team) {
@@ -985,6 +993,7 @@ function startPenalty(team) {
   m.ball.owner = null; m.ball.x = spotX; m.ball.y = CY; m.ball.vx = m.ball.vy = 0; m.ball.lockT = 99;
   m.state = 'penalty';
   m.penalty = { team, shooter, t: 0, aiT: 1.4, taken:false };
+  m.controlCoolT = 0;
   if (humanTeam() === team) controlled = shooter;
 }
 function takePenalty(power) {
@@ -1076,8 +1085,9 @@ function movePlayers(dt) {
         const dx = mouse.x - p.x, dy = mouse.y - p.y, d = Math.hypot(dx, dy);
         const sMax = spd(p);
         const wx = d > 6 ? (dx / d) * sMax : 0, wy = d > 6 ? (dy / d) * sMax : 0;
-        p.vx += (wx - p.vx) * Math.min(1, 7 * dt);
-        p.vy += (wy - p.vy) * Math.min(1, 7 * dt);
+        const k = Math.min(1, accel(p) * dt);
+        p.vx += (wx - p.vx) * k;
+        p.vy += (wy - p.vy) * k;
       } else { p.vx *= Math.pow(0.006, dt); p.vy *= Math.pow(0.006, dt); }
     } else if (m.state === 'penalty') {
       p.vx *= Math.pow(0.002, dt); p.vy *= Math.pow(0.002, dt);
@@ -1087,8 +1097,9 @@ function movePlayers(dt) {
       const mul = (p.team === 'blue' || !humanTeam()) ? D().aiSpd : 0.95;
       const sMax = spd(p) * p.spdMul * mul * (d < 26 ? d / 26 : 1);
       const wx = d > 3 ? (dx / d) * sMax : 0, wy = d > 3 ? (dy / d) * sMax : 0;
-      p.vx += (wx - p.vx) * Math.min(1, 6 * dt);
-      p.vy += (wy - p.vy) * Math.min(1, 6 * dt);
+      const k = Math.min(1, accel(p) * dt);
+      p.vx += (wx - p.vx) * k;
+      p.vy += (wy - p.vy) * k;
     }
     p.x += p.vx * dt; p.y += p.vy * dt;
     const sp2 = p.vx * p.vx + p.vy * p.vy;
@@ -1112,7 +1123,11 @@ function movePlayers(dt) {
         for (const [t1, t2] of [[a, b], [b, a]]) {
           if (t1.lungeT > 0 && t2.team !== t1.team && match.ball.owner === t2) {
             const impact = Math.hypot(t1.vx - t2.vx, t1.vy - t2.vy);
-            if (impact > 240 && Math.random() < 0.75) awardFoul(t1.team, (a.x + b.x) / 2, (a.y + b.y) / 2);
+            const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+            const ballDist = Math.hypot(match.ball.x - cx, match.ball.y - cy);
+            // only a foul if the tackle MISSED the ball; a challenge that reaches
+            // the ball is a fair, ball-winning tackle
+            if (impact > 240 && ballDist > 24 && Math.random() < 0.75) awardFoul(t1.team, cx, cy);
           }
         }
       }
@@ -1232,7 +1247,12 @@ function gainPossession(p) {
   const m = match, b = m.ball;
   b.owner = p; b.vx = 0; b.vy = 0; b.lastTeam = p.team;
   p.holdT = 0;
-  if (p.team === 'red' && humanTeam() && p.role !== 'GK') controlled = p;
+  // auto-give control to the red player who gets the ball, but not more than once
+  // every 0.5s so a scramble can't ping-pong the gold ring around
+  if (p.team === 'red' && humanTeam() && p.role !== 'GK' && (!controlled || m.controlCoolT <= 0)) {
+    if (controlled !== p) m.controlCoolT = 0.5;
+    controlled = p;
+  }
   if (m.dead && m.dead.placed && p !== m.dead.taker) m.dead = null;   // restart complete
 }
 
@@ -1259,8 +1279,12 @@ function teamBrains(dt) {
     const [fx, fy] = FORMATION[p.slot];
     const ax = atk > 0 ? PITCH.x + fx * PITCH.w : PITCH.x + (1 - fx) * PITCH.w;
     const ay = PITCH.y + fy * PITCH.h;
-    let tx = ax + (b.x - CX) * 0.30 + (myBall ? atk * 62 : oppBall ? -atk * 48 : 0);
-    let ty = ay + (b.y - CY) * 0.26;
+    // hold zonal shape: only a gentle drift toward the ball, hard-clamped so a
+    // player never strays more than 85px from their formation slot
+    let tx = ax + (b.x - CX) * 0.11 + (myBall ? atk * 24 : oppBall ? -atk * 18 : 0);
+    let ty = ay + (b.y - CY) * 0.09;
+    { const odx = tx - ax, ody = ty - ay, ol = Math.hypot(odx, ody);
+      if (ol > 85) { tx = ax + odx / ol * 85; ty = ay + ody / ol * 85; } }
     p.spdMul = 0.82;
 
     const rank = near[p.team].findIndex(e => e[0] === p);
@@ -1269,8 +1293,13 @@ function teamBrains(dt) {
       aiCarrier(p, dt);
       continue;
     }
-    if (!owner && rank < 2) { tx = b.x + b.vx * 0.25; ty = b.y + b.vy * 0.25; p.spdMul = 1; }
-    else if (oppBall && rank === 0) { tx = owner.x; ty = owner.y; p.spdMul = 1; }
+    // only the single nearest player chases a loose ball; everyone else holds shape
+    if (!owner && rank < 1) { tx = b.x + b.vx * 0.25; ty = b.y + b.vy * 0.25; p.spdMul = 1; }
+    else if (oppBall && rank === 0) {   // jockey: pressure from goal-side, don't dive on top
+      const gx = atk > 0 ? PITCH.x : PITCH.x + PITCH.w;
+      const dx = gx - owner.x, dy = CY - owner.y, dl = Math.hypot(dx, dy) || 1;
+      tx = owner.x + (dx / dl) * 22; ty = owner.y + (dy / dl) * 22; p.spdMul = 1;
+    }
     else if (oppBall && rank === 1) {
       const gx = atk > 0 ? PITCH.x : PITCH.x + PITCH.w;   // own goal
       const dx = gx - owner.x, dy = CY - owner.y, dl = Math.hypot(dx, dy) || 1;
@@ -1315,8 +1344,8 @@ function aiCarrier(p, dt) {
   if (p.decideT > 0) return;
   p.decideT = D().decide + Math.random() * 0.25;
   const distG = Math.abs(gx - p.x);
-  const pressed = nd < 58;
-  if (distG < 265 && Math.abs(p.y - CY) < 190 && (pressed || Math.random() < 0.55)) {
+  const pressed = nd < 42;
+  if (distG < 265 && Math.abs(p.y - CY) < 190 && (pressed || Math.random() < 0.15)) {
     // shoot (difficulty adds error)
     const aimY = CY + (Math.random() - 0.5) * (GOAL.w - 44);
     const spread = (3 + Math.random() * 8) * D().err * (1.3 - p.attrs.shot / 150);
@@ -1390,6 +1419,7 @@ function updateMatch(dt) {
   if (!m) return;
   const now = performance.now();
   if (m.foulCool > 0) m.foulCool -= dt;
+  if (m.controlCoolT > 0) m.controlCoolT -= dt;
 
   if (m.state === 'celebrate') {
     m.celebrate.t -= dt;
@@ -1580,9 +1610,12 @@ function drawPlayers() {
     const main = isGK ? T.gk : T.main;
     ctx.fillStyle = 'rgba(0,0,0,.35)';
     ctx.beginPath(); ctx.ellipse(p.x + 2, p.y + 3, p.r, p.r * 0.85, 0, 0, 7); ctx.fill();
-    if (p === controlled) {   // gold control ring
-      ctx.strokeStyle = `rgba(255,217,77,${0.6 + 0.3 * Math.sin(time * 6)})`;
-      ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 5, 0, 7); ctx.stroke();
+    if (p === controlled) {   // gold control ring + floating chevron
+      ctx.strokeStyle = `rgba(255,217,77,${0.78 + 0.22 * Math.sin(time * 3)})`;
+      ctx.lineWidth = 4.5; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 6, 0, 7); ctx.stroke();
+      const cy2 = p.y - p.r - 15 + Math.sin(time * 3) * 2;
+      ctx.fillStyle = '#ffd94d';
+      ctx.beginPath(); ctx.moveTo(p.x - 6, cy2); ctx.lineTo(p.x + 6, cy2); ctx.lineTo(p.x, cy2 + 7); ctx.closePath(); ctx.fill();
     }
     if (p.lungeT > 0) {   // tackle streak
       ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2;
