@@ -228,13 +228,12 @@
   <div class="playRow" style="margin-top:34px; flex-direction:column;">
     <button class="btn gold hidden" id="btnContinue">Continue Career</button>
     <button class="btn" id="btnNew">New Career</button>
-    <button class="btn blue" id="btnQuick">Quick Match</button>
   </div>
   <div class="playRow" style="margin-top:14px;">
     <button class="btn ghost" id="btnCustom">⚙ Settings</button>
     <button class="btn ghost" id="btnHow">How to Play</button>
   </div>
-  <div class="foot">Hold mouse to run · Space to pass & shoot · fictional clubs, real glory</div>
+  <div class="foot">Play the highlights · draw where the ball goes · build a club, win the cup</div>
 </div>
 
 <!-- SETTINGS -->
@@ -248,12 +247,12 @@
         <div class="optRow"><label>Half length (minutes)</label><div class="seg" id="segLen"></div></div>
       </div>
       <div class="panel">
-        <h3>Quick Match — Your Team</h3>
-        <input class="tName" id="nameRed" maxlength="10" spellcheck="false" aria-label="Your team name">
+        <h3>Menu Teams — Home</h3>
+        <input class="tName" id="nameRed" maxlength="10" spellcheck="false" aria-label="Home team name">
         <div class="swatches" id="swRed"></div>
       </div>
       <div class="panel">
-        <h3>Quick Match — Away Team</h3>
+        <h3>Menu Teams — Away</h3>
         <input class="tName" id="nameBlue" maxlength="10" spellcheck="false" aria-label="Away team name">
         <div class="swatches" id="swBlue"></div>
       </div>
@@ -267,13 +266,13 @@
   <div class="card">
     <h2>HOW TO PLAY</h2>
     <ul>
-      <li><b>Run:</b> <span class="kbd">HOLD MOUSE</span> — your player (gold ring) runs toward the cursor.</li>
-      <li><b>Attacking:</b> <span class="kbd">SPACE</span> pass toward the cursor · <span class="kbd">SPACE ×2</span> through-ball into space · <span class="kbd">HOLD SPACE</span> shoot — a power bar fills at the top. <b>More power = less accurate:</b> a full-blooded hit can fly wide, a placed shot stays true.</li>
-      <li><b>Defending:</b> <span class="kbd">SPACE</span> slide tackle · <span class="kbd">SPACE ×2</span> switch to the best-placed defender (picked automatically from where the ball and players are).</li>
-      <li><b>Keepers are AI</b> — yours dives better if you bought a better one.</li>
-      <li>Smashing a player without winning the ball = <b>foul</b> → free kick, or a <b>penalty</b> in the box.</li>
-      <li><b>Career:</b> £42M to build an 11-man squad — every slot gives you 10 players to choose from; ratings make them genuinely faster, stronger, sharper. Group stage → knockout rounds → the final. Prize money rolls into next season.</li>
-      <li>Set difficulty and half length (3–10 min) in Settings.</li>
+      <li><b>You play the highlights.</b> Each match is a handful of key moments (4–15). Your team walks out, then you're dropped into the first one.</li>
+      <li><b>Attacking:</b> the moment freezes — <b>draw with the mouse where the ball should go</b>. Draw to a teammate to <b>pass</b>; draw at the goal for a <b>shot</b>. If your player receives it, you draw again — keep the move going until you score or lose it.</li>
+      <li>Lose the ball to a defender and you get <b>3 seconds</b> to win it back — draw a run to chase it down. If they clear it, the highlight's over.</li>
+      <li><b>Defending:</b> when the AI is about to pass, it freezes — <b>draw your defender's run</b> to cut it out (they move at their own pace). When they're about to shoot, <b>drag your keeper</b> to a side to make the save.</li>
+      <li>You don't have to score every highlight — the <b>final score is whatever actually happens</b> across them.</li>
+      <li><b>Career:</b> £42M to build an 11-man squad — every slot gives you 10 players to choose from; better ratings really do play better. Group stage → knockouts → the final. Prize money rolls into next season.</li>
+      <li>Set difficulty in Settings.</li>
     </ul>
     <button class="btn" id="btnHowClose">Got It</button>
   </div>
@@ -1441,6 +1440,7 @@ function checkGoalAndOut() {
 function updateMatch(dt) {
   const m = match;
   if (!m) return;
+  if (m.hl) return updateHighlights(dt);   // career = highlights runtime
   const now = performance.now();
   if (m.foulCool > 0) m.foulCool -= dt;
   if (m.controlCoolT > 0) m.controlCoolT -= dt;
@@ -1768,7 +1768,12 @@ function updateHUD() {
   $('sRed').textContent = match.score.red;
   $('sBlue').textContent = match.score.blue;
   const chip = $('chip');
-  if (match.mode === 'demo') { chip.textContent = 'EXHIBITION'; }
+  if (match.hl) {
+    const cur = match.hl.cur;
+    chip.textContent = cur ? (cur.h.team === 'red' ? 'ATTACK' : 'DEFEND') + (cur.h.kind !== 'open' ? ' · ' + cur.h.kind.toUpperCase() : '') : 'KICK OFF';
+    $('clock').textContent = 'HIGHLIGHT ' + match.hl.hlCount + '/' + match.hl.schedule.length +
+      (cur ? '  ·  ' + cur.h.minute + "'" : '');
+  } else if (match.mode === 'demo') { chip.textContent = 'EXHIBITION'; }
   else if (controlled) chip.textContent = '▶ ' + controlled.name.toUpperCase();
   else chip.textContent = TEAM[match.kickoffTeam].label + ' KICK OFF';
   chip.style.background = `linear-gradient(180deg, ${TEAM.red.main}, ${TEAM.red.dark})`;
@@ -1791,6 +1796,14 @@ function statRows() {
   const m = match, r = m.stats.red, b = m.stats.blue;
   const tp = Math.max(0.1, r.poss + b.poss);
   const poss = Math.round(100 * r.poss / tp);
+  if (m.hlPlayed !== undefined) {
+    return [
+      ['Goals', m.score.red, m.score.blue],
+      ['Shots', r.shots, b.shots],
+      ['On Target', r.onTarget, b.onTarget],
+      ['Highlights', m.hlPlayed, m.hlPlayed],
+    ];
+  }
   return [
     ['Goals', m.score.red, m.score.blue],
     ['Shots', r.shots, b.shots],
@@ -2019,6 +2032,409 @@ function renderSeasonEnd() {
 }
 
 /* ============================================================
+   HIGHLIGHTS MATCH ENGINE  (career = play only the key moments)
+   ============================================================ */
+const HL = { fadeDur:0.6, resultHold:1.1, chase:3.0, introDur:2.6 };
+function ease(k){ return k<0.5 ? 2*k*k : 1-Math.pow(-2*k+2,2)/2; }
+
+function buildHighlightSchedule(rng) {
+  const n = 4 + Math.floor(rng() * 12);           // 4..15 highlights
+  const mins = [];
+  while (mins.length < n) { const mn = 1 + Math.floor(rng() * 90); if (!mins.includes(mn)) mins.push(mn); }
+  mins.sort((a, b) => a - b);
+  return mins.map(minute => {
+    const team = rng() < 0.55 ? 'red' : 'blue';    // you attack ~55%
+    const r = rng();
+    const kind = r < 0.65 ? 'open' : r < 0.85 ? 'freekick' : 'throwin';
+    return { minute, team, kind };
+  });
+}
+
+function startHighlightMatch(opts) {
+  startMatch(opts);                                // reuse team/player scaffolding
+  const rng = mulberry32(((career && career.seed) || 1) + 5000 + (opts.fix ? opts.fix.oppId : 0) + (career ? career.t.round : 0) * 7);
+  match.score = { red:0, blue:0 };
+  match.stats = { red: zStat(), blue: zStat() };
+  match.hl = {
+    phase:'intro', schedule: buildHighlightSchedule(rng), idx:-1,
+    fade:0, t:0, cur:null, hlCount:0,
+  };
+  // stage players at the tunnel (bottom centre) to walk on
+  for (const p of match.players) {
+    p.x0 = CX + (Math.random() - 0.5) * 120; p.y0 = PITCH.y + PITCH.h + 70;
+    p.xT = p.x; p.yT = p.y; p.x = p.x0; p.y = p.y0; p.vx = p.vy = 0;
+  }
+  match.ball.owner = null; match.ball.x = CX; match.ball.y = PITCH.y + PITCH.h + 70;
+  controlled = null;
+  updateHUD();
+}
+
+/* ---- placement of a highlight scenario ---- */
+function placeHighlight(atkTeam, kind) {
+  const m = match, dir = TEAM[atkTeam].attacks, defTeam = other(atkTeam);
+  const ballX = CX + dir * PITCH.w * 0.14;
+  const atkers = m.players.filter(p => p.team === atkTeam && p.role !== 'GK');
+  const defs   = m.players.filter(p => p.team === defTeam && p.role !== 'GK');
+  const clampY = y => Math.min(Math.max(y, PITCH.y + 22), PITCH.y + PITCH.h - 22);
+  const clampX = x => Math.min(Math.max(x, PITCH.x + 20), PITCH.x + PITCH.w - 20);
+  // carrier: a central forward
+  const carrier = atkers.find(p => p.slot === 9) || atkers[0];
+  carrier.x = ballX; carrier.y = clampY(CY + (Math.random() - 0.5) * 70);
+  const aSpots = [[0.22,-150],[0.22,150],[0.12,-50],[0.30,10],[-0.06,-100],[-0.06,100],[-0.18,0],[0.06,190],[0.06,-190],[-0.24,60]];
+  let si = 0;
+  for (const p of atkers) { if (p === carrier) continue; const [fx, dy] = aSpots[si++ % aSpots.length];
+    p.x = clampX(ballX + dir * PITCH.w * fx); p.y = clampY(CY + dy); }
+  const dSpots = [[0.10,-70],[0.15,70],[0.22,-140],[0.22,140],[0.28,0],[0.34,-80],[0.34,80],[0.06,10],[0.42,0],[0.18,-180]];
+  si = 0;
+  for (const p of defs) { const [fx, dy] = dSpots[si++ % dSpots.length];
+    p.x = clampX(ballX + dir * PITCH.w * fx); p.y = clampY(CY + dy); }
+  for (const p of m.players) if (p.role === 'GK') { const a = TEAM[p.team].attacks;
+    p.x = a > 0 ? PITCH.x + 16 : PITCH.x + PITCH.w - 16; p.y = CY; }
+  for (const p of m.players) { p.vx = p.vy = 0; p.lungeT = 0; }
+  // free kick: ball dead, a wall of 3 defenders ~92px goal-side
+  if (kind === 'freekick') {
+    carrier.x = clampX(ballX);
+    const wallX = clampX(ballX + dir * 92);
+    defs.slice(0, 3).forEach((p, i) => { p.x = wallX; p.y = clampY(CY - 44 + i * 44); });
+  }
+  m.ball.x = carrier.x - dir * (PR + BR); m.ball.y = carrier.y;
+  m.ball.vx = m.ball.vy = 0; m.ball.owner = carrier; m.ball.lastTeam = atkTeam; m.ball.lockT = 0;
+  return carrier;
+}
+
+function beginHighlight(i) {
+  const m = match, hl = m.hl;
+  hl.idx = i;
+  const h = hl.schedule[i];
+  const carrier = placeHighlight(h.team, h.kind);
+  hl.hlCount++;
+  hl.cur = { h, carrier, sub: h.team === 'red' ? 'await-draw' : 'ai-move',
+    path:null, timer:0, resT:0, resText:'', decideT: 0.7 + Math.random()*0.5, ai:null };
+  controlled = h.team === 'red' ? carrier : null;
+  hl.phase = 'transition'; hl.fade = 1; hl.t = 0;
+  updateHUD();
+}
+function nextHighlight() {
+  const hl = match.hl;
+  if (hl.idx + 1 >= hl.schedule.length) { match.hlPlayed = hl.hlCount; match.state = 'ft'; match.hl = null; finishMatch(); return; }
+  beginHighlight(hl.idx + 1);
+}
+function endHighlight(text, goalTeam) {
+  const hl = match.hl, cur = hl.cur;
+  if (goalTeam) { match.score[goalTeam]++; }
+  cur.resText = text; cur.done = true;
+  hl.phase = 'result'; hl.t = 0;
+  match.ball.owner = null;
+  updateHUD();
+}
+
+/* ---- helpers ---- */
+function nearestOf(team, x, y, excludeGK, exclude) {
+  let best = null, bd = 1e9;
+  for (const p of match.players) {
+    if (team && p.team !== team) continue;
+    if (excludeGK && p.role === 'GK') continue;
+    if (p === exclude) continue;
+    const d = (p.x - x) ** 2 + (p.y - y) ** 2;
+    if (d < bd) { bd = d; best = p; }
+  }
+  return best;
+}
+function hlSeek(p, tx, ty, dt, mul) {
+  const dx = tx - p.x, dy = ty - p.y, d = Math.hypot(dx, dy);
+  const sMax = spd(p) * (mul || 1) * (d < 20 ? d / 20 : 1);
+  const wx = d > 2 ? dx / d * sMax : 0, wy = d > 2 ? dy / d * sMax : 0;
+  const k = Math.min(1, accel(p) * dt);
+  p.vx += (wx - p.vx) * k; p.vy += (wy - p.vy) * k;
+  p.x += p.vx * dt; p.y += p.vy * dt;
+  const s2 = p.vx*p.vx + p.vy*p.vy; if (s2 > 60) { const s = Math.sqrt(s2); p.fx = p.vx/s; p.fy = p.vy/s; }
+  const M = APRON - 10;
+  p.x = Math.min(Math.max(p.x, PITCH.x - M + PR), PITCH.x + PITCH.w + M - PR);
+  p.y = Math.min(Math.max(p.y, PITCH.y - M + PR), PITCH.y + PITCH.h + M - PR);
+}
+function hlBallFly(dt) {   // integrate a travelling ball; return 'goal'|'out'|null
+  const b = match.ball;
+  if (b.lockT > 0) b.lockT -= dt;
+  b.x += b.vx * dt; b.y += b.vy * dt;
+  const f = Math.pow(0.986, dt * 60); b.vx *= f; b.vy *= f;
+  if (b.vx*b.vx + b.vy*b.vy < 140) { b.vx = 0; b.vy = 0; }
+  // top/bottom rails
+  if (b.y < PITCH.y + BR) { b.y = PITCH.y + BR; b.vy = Math.abs(b.vy)*0.4; }
+  if (b.y > PITCH.y + PITCH.h - BR) { b.y = PITCH.y + PITCH.h - BR; b.vy = -Math.abs(b.vy)*0.4; }
+  const inMouth = Math.abs(b.y - CY) <= GOAL.w / 2;
+  if (inMouth && (b.x <= PITCH.x || b.x >= PITCH.x + PITCH.w)) return 'goal';   // crossed the line in the mouth
+  if (!inMouth && (b.x < PITCH.x - 4 || b.x > PITCH.x + PITCH.w + 4)) return 'out';   // wide of the posts
+  return null;
+}
+
+/* ---- draw classification (attack) ---- */
+function classifyDraw(path) {
+  // returns { type:'pass'|'shot'|'space', tx, ty, target }
+  const m = match, cur = m.hl.cur, carrier = m.ball.owner || cur.carrier;
+  const end = path[path.length - 1];
+  const dir = TEAM['red'].attacks;
+  const goalX = dir > 0 ? PITCH.x + PITCH.w : PITCH.x;
+  // teammate near the path end?
+  const mate = nearestOf('red', end.x, end.y, true, carrier);
+  const mateD = mate ? Math.hypot(mate.x - end.x, mate.y - end.y) : 1e9;
+  // aimed at goal?
+  const towardGoal = (goalX - carrier.x) * dir > 0 && Math.abs(end.y - CY) < GOAL.w / 2 + 26
+                     && (end.x - carrier.x) * dir > PITCH.w * 0.12;
+  if (mateD < 34) return { type:'pass', tx: mate.x, ty: mate.y, target: mate };
+  if (towardGoal) {
+    // opponent parked right on the path end → treat as a blocked pass
+    const opp = nearestOf('blue', end.x, end.y, true);
+    if (opp && Math.hypot(opp.x - end.x, opp.y - end.y) < 26) return { type:'space', tx: end.x, ty: end.y };
+    return { type:'shot', tx: goalX, ty: end.y, target: null };
+  }
+  return { type:'space', tx: end.x, ty: end.y };
+}
+function commitAttackDraw(path) {
+  const m = match, hl = m.hl, cur = hl.cur;
+  if (cur.sub !== 'await-draw' && cur.sub !== 'chase') return;
+  const carrier = m.ball.owner;
+  if (cur.sub === 'chase') {   // during chase the draw commands your nearest player to run
+    const chaser = nearestOf('red', m.ball.x, m.ball.y, false);
+    cur.chaser = chaser; cur.chaseTarget = path[path.length - 1];
+    return;
+  }
+  if (!carrier) return;
+  const c = classifyDraw(path);
+  const dx = c.tx - carrier.x, dy = c.ty - carrier.y, d = Math.hypot(dx, dy) || 1;
+  let speed, spread;
+  if (c.type === 'shot') { speed = 560 + Math.min(260, d * 0.7); spread = (3 + (110 - carrier.attrs.shot) * 0.1); match.stats.red.shots++; }
+  else { speed = Math.min(600, 300 + d * 0.85); spread = (108 - carrier.attrs.pass) * 0.12; }
+  kickBall(carrier, dx, dy, speed, spread);
+  cur.intent = c.type; cur.sub = 'ball-live';
+  if (c.type === 'shot') {
+    const gk = nearestOf('blue', 0, 0, false); // the blue keeper
+    // register on-target if heading into the frame
+    if (Math.abs(c.ty - CY) < GOAL.w / 2) match.stats.red.onTarget++;
+  }
+  controlled = null;
+}
+
+/* ---- AI (defend highlight) ---- */
+function aiDefendStep(dt) {
+  const m = match, hl = m.hl, cur = hl.cur;
+  const carrier = m.ball.owner; if (!carrier) return;
+  const dir = TEAM['blue'].attacks, goalX = dir > 0 ? PITCH.x + PITCH.w : PITCH.x;
+  // dribble toward goal
+  hlSeek(carrier, goalX - dir * 40, CY + (carrier.y - CY) * 0.4, dt, 0.85 * (0.6 + zonePace(carrier) * 0.4));
+  m.ball.x = carrier.x + carrier.fx * (PR + BR - 2); m.ball.y = carrier.y + carrier.fy * (PR + BR - 2);
+  cur.decideT -= dt;
+  const distG = Math.abs(goalX - carrier.x);
+  if (cur.decideT <= 0) {
+    if (distG < PITCH.w * 0.18) { cur.sub = 'keeper-wait'; cur.timer = 1.6; toast('DRAG YOUR KEEPER!', '#ffd94d'); }
+    else { cur.sub = 'defend-draw'; cur.timer = 1.6; toast('DRAW YOUR DEFENDER', '#ffd94d');
+      // choose a pass target now (revealed as an arrow)
+      const mates = m.players.filter(p => p.team === 'blue' && p !== carrier && p.role !== 'GK');
+      cur.passTo = mates.reduce((a, b) => (Math.abs(b.x - goalX) < Math.abs(a.x - goalX) ? b : a));
+    }
+  }
+}
+function commitDefendDraw(path) {
+  const cur = match.hl.cur;
+  const d = nearestOf('red', match.ball.x, match.ball.y, true);
+  cur.defender = d; cur.defTarget = path[path.length - 1];
+  cur.sub = 'defend-run'; cur.timer = 1.4;
+}
+function keeperDragTo(x, y) {
+  const gk = match.players.find(p => p.team === 'red' && p.role === 'GK');
+  if (!gk) return;
+  gk.y = Math.min(Math.max(y, CY - GOAL.w / 2 + 6), CY + GOAL.w / 2 - 6);
+}
+
+function playHighlight(dt) {
+  const m = match, hl = m.hl, cur = hl.cur, b = m.ball;
+  const sub = cur.sub;
+  if (sub === 'await-draw') { /* frozen, waiting for player draw */ return; }
+
+  if (sub === 'ball-live') {
+    const ev = hlBallFly(dt);
+    if (ev === 'goal') return endHighlight('GOAL!', 'red');
+    if (ev === 'out')  return endHighlight(cur.intent === 'shot' ? 'OFF TARGET' : 'OUT OF PLAY', null);
+    // keeper claim on a shot
+    const gk = m.players.find(p => p.team === 'blue' && p.role === 'GK');
+    if (gk && Math.hypot(gk.x - b.x, gk.y - b.y) < PR + BR + 4 && b.lockT <= 0) return endHighlight('SAVED!', null);
+    // receive / steal
+    if (b.lockT <= 0) {
+      const p = nearestOf(null, b.x, b.y, false);
+      if (p && Math.hypot(p.x - b.x, p.y - b.y) < PR + BR + 5) {
+        if (p.team === 'red') { b.owner = p; b.vx = b.vy = 0; cur.carrier = p; controlled = p; cur.sub = 'await-draw'; }
+        else { b.owner = p; b.vx = b.vy = 0; cur.sub = 'chase'; cur.timer = HL.chase; cur.stealer = p; toast('WIN IT BACK! 3s', '#ff8a90'); }
+      }
+    }
+    if (b.vx === 0 && b.vy === 0 && b.lockT <= 0 && !b.owner) {
+      const p = nearestOf(null, b.x, b.y, false);
+      if (!p || Math.hypot(p.x - b.x, p.y - b.y) > PR + BR + 5) return endHighlight('OUT OF PLAY', null);
+    }
+    return;
+  }
+
+  if (sub === 'chase') {
+    cur.timer -= dt;
+    const stealer = cur.stealer;
+    // stealer tries to dribble the ball out of the box
+    if (stealer) { const dir = TEAM['blue'].attacks;
+      hlSeek(stealer, CX - dir * 120, stealer.y, dt, 0.8);
+      b.x = stealer.x; b.y = stealer.y; }
+    if (cur.chaser && cur.chaseTarget) hlSeek(cur.chaser, cur.chaseTarget.x, cur.chaseTarget.y, dt, 1);
+    // won it back?
+    if (cur.chaser && Math.hypot(cur.chaser.x - b.x, cur.chaser.y - b.y) < PR + BR + 4) {
+      b.owner = cur.chaser; b.vx = b.vy = 0; cur.carrier = cur.chaser; controlled = cur.chaser; cur.sub = 'await-draw';
+      cur.stealer = null; toast('WON IT!', '#61d883'); return;
+    }
+    if (cur.timer <= 0) return endHighlight('LOST IT', null);
+    // stealer cleared it out of the attacking third
+    const dir = TEAM['red'].attacks;
+    if ((b.x - CX) * dir < PITCH.w * 0.05) return endHighlight('CLEARED', null);
+    return;
+  }
+
+  if (sub === 'ai-move') { aiDefendStep(dt); return; }
+  if (sub === 'defend-draw' || sub === 'keeper-wait') { /* frozen waiting for input */ return; }
+
+  if (sub === 'defend-run') {
+    // execute the AI pass toward passTo, meanwhile your defender runs
+    if (!cur.passShot) { const t = cur.passTo; kickBall(m.ball.owner || cur.carrier, t.x - b.x, t.y - b.y, 430, 6); cur.passShot = true; }
+    if (cur.defender && cur.defTarget) hlSeek(cur.defender, cur.defTarget.x, cur.defTarget.y, dt, 1);
+    const ev = hlBallFly(dt);
+    if (ev === 'out') return endHighlight('CLEARED', null);
+    // interception?
+    if (cur.defender && Math.hypot(cur.defender.x - b.x, cur.defender.y - b.y) < PR + BR + 4 && b.lockT <= 0)
+      return endHighlight('INTERCEPTED!', null);
+    // pass reaches a blue player → they carry on (new mini decision)
+    if (b.lockT <= 0) { const p = nearestOf('blue', b.x, b.y, true);
+      if (p && Math.hypot(p.x - b.x, p.y - b.y) < PR + BR + 5) {
+        b.owner = p; b.vx = b.vy = 0; cur.carrier = p; cur.sub = 'ai-move';
+        cur.decideT = 0.6 + Math.random()*0.5; cur.passShot = false;
+      }
+    }
+    if (b.vx === 0 && b.vy === 0 && b.lockT <= 0 && !b.owner) return endHighlight('CLEARED', null);
+    return;
+  }
+
+  if (sub === 'keeper-shot') {
+    const ev = hlBallFly(dt);
+    const gk = m.players.find(p => p.team === 'red' && p.role === 'GK');
+    if (gk && Math.hypot(gk.x - b.x, gk.y - b.y) < PR + BR + 6) return endHighlight('SAVED!', null);
+    if (ev === 'goal') return endHighlight('GOAL CONCEDED', 'blue');
+    if (ev === 'out') return endHighlight('OFF TARGET', null);
+    return;
+  }
+}
+
+function updateHighlights(dt) {
+  const m = match, hl = m.hl;
+  if (hl.phase === 'intro') {
+    hl.t += dt;
+    const k = Math.min(1, hl.t / (HL.introDur - 0.4));
+    for (const p of m.players) { p.x = p.x0 + (p.xT - p.x0) * ease(k); p.y = p.y0 + (p.yT - p.y0) * ease(k); }
+    if (hl.t >= HL.introDur) { hl.fade += dt / HL.fadeDur; if (hl.fade >= 1) { hl.fade = 1; beginHighlight(0); } }
+    return;
+  }
+  if (hl.phase === 'transition') { hl.fade -= dt / HL.fadeDur; if (hl.fade <= 0) { hl.fade = 0; hl.phase = 'play'; } return; }
+  if (hl.phase === 'result') {
+    hl.t += dt;
+    if (hl.t > HL.resultHold) { hl.fade += dt / HL.fadeDur; if (hl.fade >= 1) { hl.fade = 1; nextHighlight(); } }
+    return;
+  }
+  if (hl.phase === 'play') {
+    // freeze-frame timers for pause states tick so prompts can auto-resolve if ignored
+    const cur = hl.cur;
+    if ((cur.sub === 'defend-draw' || cur.sub === 'keeper-wait') && cur.timer > 0) {
+      cur.timer -= dt;
+      if (cur.timer <= 0) {   // player didn't act in time
+        if (cur.sub === 'keeper-wait') { const dir = TEAM['blue'].attacks, gx = dir>0?PITCH.x+PITCH.w:PITCH.x;
+          kickBall(m.ball.owner || cur.carrier, gx - m.ball.x, (CY + (Math.random()<0.5?-1:1)*44) - m.ball.y, 560, 5); cur.sub = 'keeper-shot'; }
+        else { commitDefendDraw([{ x: m.ball.x, y: m.ball.y }]); }
+      }
+    }
+    playHighlight(dt);
+    return;
+  }
+}
+
+/* highlight overlay: draw path, prompts, result banner, HUD count */
+function drawHighlightUI() {
+  const hl = match.hl; if (!hl) return;
+  // intro title
+  if (hl.phase === 'intro') {
+    ctx.globalAlpha = Math.min(1, hl.t / 0.5) * (1 - hl.fade);
+    ctx.fillStyle = '#fff'; ctx.font = '900 italic 40px Arial'; ctx.textAlign = 'center';
+    ctx.fillText(TEAM.red.label + '  vs  ' + TEAM.blue.label, CX, PITCH.y - 40);
+    ctx.globalAlpha = 1;
+  }
+  const cur = hl.cur;
+  if (hl.phase === 'play' && cur) {
+    // in-progress drawn path
+    if (cur.path && cur.path.length > 1) {
+      ctx.strokeStyle = 'rgba(255,217,77,.85)'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(cur.path[0].x, cur.path[0].y);
+      for (const pt of cur.path) ctx.lineTo(pt.x, pt.y); ctx.stroke();
+      const e = cur.path[cur.path.length - 1];
+      ctx.fillStyle = 'rgba(255,217,77,.9)'; ctx.beginPath(); ctx.arc(e.x, e.y, 6, 0, 7); ctx.fill();
+    }
+    // pass-target hint arrow in defend-draw
+    if (cur.sub === 'defend-draw' && cur.passTo) {
+      ctx.strokeStyle = 'rgba(255,120,120,.6)'; ctx.setLineDash([5,6]); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(match.ball.x, match.ball.y); ctx.lineTo(cur.passTo.x, cur.passTo.y); ctx.stroke(); ctx.setLineDash([]);
+    }
+    // prompt banner
+    const prompts = { 'await-draw':'DRAW WHERE THE BALL GOES', 'chase':'WIN IT BACK — DRAW A RUN',
+      'defend-draw':'DRAW YOUR DEFENDER’S RUN', 'keeper-wait':'DRAG YOUR KEEPER TO SAVE' };
+    if (prompts[cur.sub]) {
+      ctx.font = '800 20px Arial'; ctx.textAlign = 'center';
+      const txt = prompts[cur.sub]; const w = ctx.measureText(txt).width + 40;
+      ctx.fillStyle = 'rgba(8,11,18,.8)'; ctx.beginPath(); ctx.roundRect(CX - w/2, PITCH.y - 44, w, 32, 9); ctx.fill();
+      ctx.fillStyle = '#ffd94d'; ctx.fillText(txt, CX, PITCH.y - 23);
+    }
+    // 3s chase countdown
+    if (cur.sub === 'chase' && cur.timer > 0) {
+      ctx.font = '900 34px Arial'; ctx.textAlign = 'center'; ctx.fillStyle = '#ff8a90';
+      ctx.fillText(cur.timer.toFixed(1), CX, PITCH.y + 40);
+    }
+  }
+  if (hl.phase === 'result' && cur) {
+    ctx.globalAlpha = 1 - hl.fade;
+    ctx.font = '900 italic 64px Arial'; ctx.textAlign = 'center';
+    ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.strokeText(cur.resText, CX, CY);
+    ctx.fillStyle = cur.resText.includes('GOAL!') ? '#61d883' : cur.resText.includes('CONCEDED') ? '#ff6b73' : '#ffd94d';
+    ctx.fillText(cur.resText, CX, CY);
+    ctx.globalAlpha = 1;
+  }
+}
+
+/* highlight pointer input */
+function hlPointerDown(g) {
+  const hl = match.hl; if (!hl || hl.phase !== 'play') return;
+  const cur = hl.cur;
+  if (cur.sub === 'keeper-wait') { cur.keeperGrab = true; keeperDragTo(g.x, g.y); return; }
+  if (cur.sub === 'await-draw' || cur.sub === 'chase' || cur.sub === 'defend-draw') { cur.path = [{ x:g.x, y:g.y }]; }
+}
+function hlPointerMove(g) {
+  const hl = match.hl; if (!hl || hl.phase !== 'play') return;
+  const cur = hl.cur;
+  if (cur.keeperGrab) { keeperDragTo(g.x, g.y); return; }
+  if (cur.path) cur.path.push({ x:g.x, y:g.y });
+}
+function hlPointerUp(g) {
+  const hl = match.hl; if (!hl || hl.phase !== 'play') return;
+  const cur = hl.cur;
+  if (cur.keeperGrab) {   // release keeper → AI shoots
+    cur.keeperGrab = false;
+    const dir = TEAM['blue'].attacks, gx = dir > 0 ? PITCH.x + PITCH.w : PITCH.x;
+    kickBall(match.ball.owner || cur.carrier, gx - match.ball.x, (CY + (Math.random()<0.5?-1:1)*46) - match.ball.y, 560, 5);
+    cur.sub = 'keeper-shot'; return;
+  }
+  const path = cur.path; cur.path = null;
+  if (!path || path.length < 2) return;
+  if (cur.sub === 'defend-draw') { commitDefendDraw(path); return; }
+  commitAttackDraw(path);
+}
+
+/* ============================================================
    GAME START HELPERS
    ============================================================ */
 function startDemo() {
@@ -2029,16 +2445,6 @@ function startDemo() {
     blue: { label: settings.names.blue, kit: settings.kits.blue, squad: defaultSquad(72, rngB) },
   });
 }
-function startQuick() {
-  screen = 'match';
-  hideAll();
-  startMatch({
-    mode: 'quick',
-    red: { label: settings.names.red, kit: settings.kits.red, squad: defaultSquad(74, (Math.random()*1e9)>>>0) },
-    blue: { label: settings.names.blue, kit: settings.kits.blue, squad: defaultSquad(74, (Math.random()*1e9)>>>0) },
-  });
-  inGameHUD(true);
-}
 function startCareerMatch() {
   const fix = nextMyFixture();
   if (!fix) return;
@@ -2046,7 +2452,7 @@ function startCareerMatch() {
   const rng = mulberry32(career.seed + 9000 + oppId);
   screen = 'match';
   hideAll();
-  startMatch({
+  startHighlightMatch({
     mode: 'career',
     fix: { oppId, stage: fix.stage },
     red: { label: career.clubName, kit: career.kit, squad: career.squad },
@@ -2071,13 +2477,15 @@ function toGame(e) {
 cv.addEventListener('pointerdown', e => {
   const g = toGame(e); mouse.x = g.x; mouse.y = g.y; mouse.held = true;
   cv.setPointerCapture(e.pointerId);
+  if (match && match.hl) hlPointerDown(g);
 });
-cv.addEventListener('pointermove', e => { const g = toGame(e); mouse.x = g.x; mouse.y = g.y; });
-cv.addEventListener('pointerup', () => { mouse.held = false; });
-cv.addEventListener('pointercancel', () => { mouse.held = false; });
+cv.addEventListener('pointermove', e => { const g = toGame(e); mouse.x = g.x; mouse.y = g.y;
+  if (match && match.hl) hlPointerMove(g); });
+cv.addEventListener('pointerup', e => { mouse.held = false;
+  if (match && match.hl) hlPointerUp(toGame(e)); });
+cv.addEventListener('pointercancel', () => { mouse.held = false; if (match && match.hl && match.hl.cur) { match.hl.cur.path = null; match.hl.cur.keeperGrab = false; } });
 
 /* menu buttons */
-$('btnQuick').onclick = startQuick;
 $('btnNew').onclick = () => { buildNewCareerUI(); show('newcareer'); screen = 'newcareer'; };
 $('btnContinue').onclick = () => { career = loadCareer(); if (career) { if (!squadComplete()) renderSquad(); else renderCareerHub(); } };
 $('btnCustom').onclick = () => { buildSettingsUI(); show('custom'); };
@@ -2127,11 +2535,17 @@ function frame(now) {
   if (match) updateMatch(dt);
   updateConfetti(dt);
   drawStadium(); drawPitch(); drawGoals();
-  if (match) { drawPlayers(); drawBall(); drawAimHint(); }
-  drawConfetti(); drawGoalBanner(); drawToasts(dt);
+  if (match) { drawPlayers(); drawBall(); if (!(match.hl)) drawAimHint(); }
+  drawConfetti(); drawGoalBanner();
+  if (match && match.hl) drawHighlightUI();
+  drawToasts(dt);
   const v = ctx.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, H * 0.85);
   v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.38)');
   ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  if (match && match.hl && match.hl.fade > 0) {   // fade-to-black between highlights
+    ctx.fillStyle = `rgba(0,0,0,${Math.min(1, match.hl.fade)})`;
+    ctx.fillRect(0, 0, W, H);
+  }
   requestAnimationFrame(frame);
 }
 
@@ -2139,9 +2553,6 @@ function frame(now) {
 $('btnContinue').classList.toggle('hidden', !loadCareer());
 startDemo();
 requestAnimationFrame(frame);
-</script>
-</body>
-</html>
 </script>
 </body>
 </html>
