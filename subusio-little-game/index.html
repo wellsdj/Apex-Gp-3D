@@ -1083,16 +1083,18 @@ function aiFlick(team) {
   const goalY = CY + kbias * (GOAL.w / 2 - 22) * (0.3 + precision * 0.6)
                 + (Math.random() - 0.5) * (GOAL.w - 20) * D.err * 0.5;
 
-  // build-up: deep in its own half, a smarter AI often feeds its most advanced teammate
-  // with a clear lane rather than blindly booting a low-percentage ball toward goal
-  const ownHalf = (m.ball.x - CX) * atk < -PITCH.w * 0.08;
+  // only actually go for goal when there's a real look at it; anywhere else on the pitch
+  // a smarter AI plays it like a pass — find its most advanced teammate with a clear lane
+  // — rather than blasting a low-percentage ball at goal (or out of play) from a bad spot
+  const distToGoal = Math.abs(goalX - m.ball.x);
+  const wantsShot = distToGoal < PITCH.w * 0.55 && Math.random() < (0.35 + D.decide * 0.4);
   let aimX = goalX, aimY = goalY, passTo = null;
-  if (ownHalf && Math.random() < (1 - D.decide)) {
+  if (!wantsShot) {
     let bestAdv = -Infinity;
     for (const p of m.players) {
       if (p.team !== team || p.role === 'GK') continue;
       const adv = (p.x - m.ball.x) * atk;
-      if (adv < 60 || segmentBlocked(p, m.ball.x, m.ball.y) > 200) continue;
+      if (adv < 50 || segmentBlocked(p, m.ball.x, m.ball.y) > 200) continue;
       if (adv > bestAdv) { bestAdv = adv; passTo = p; }
     }
     if (passTo) { aimX = passTo.x; aimY = passTo.y; }
@@ -1116,9 +1118,14 @@ function aiFlick(team) {
   const wob = (Math.random() - 0.5) * 0.09 * D.err;
   const c = Math.cos(wob), s = Math.sin(wob);
   const rx = dx * c - dy * s, ry = dx * s + dy * c;
-  const basePow = passTo ? 220 + Math.hypot(aimX - m.ball.x, aimY - m.ball.y) * 1.5 : 300 + dist * 2.3;
+  // keep passes and safe touches measured so the ball doesn't blast out of play —
+  // only a genuine shot at goal gets full power
+  let basePow;
+  if (passTo) basePow = 170 + Math.hypot(aimX - m.ball.x, aimY - m.ball.y) * 1.15;
+  else if (wantsShot) basePow = 320 + dist * 2.3;
+  else basePow = 190 + dist * 1.3;   // no clear pass, no clear shot: nudge it forward safely
   const power = Math.min(powerCap(best), basePow) * (0.85 + Math.random() * 0.15);
-  doFlick(best, rx, ry, Math.max(power, passTo ? 130 : 150));
+  doFlick(best, rx, ry, Math.max(power, wantsShot ? 150 : 120));
 }
 
 /* ---------- goals & outs ---------- */
