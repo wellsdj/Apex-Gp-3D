@@ -855,8 +855,10 @@ function kickoff(team) {
   const m = match;
   placeFormation('red', 'norm', false);
   placeFormation('blue', 'norm', false);
+  // taker sits in FRONT of the ball (attacking side), so the kickoff must be
+  // played backwards into their own half — like a real kickoff
   const st = m.players.find(p => p.team === team && p.slot === 9);
-  if (st) { st.x = CX - TEAM[team].attacks * (PR + BR + 4); st.y = CY; }
+  if (st) { st.x = CX + TEAM[team].attacks * (PR + BR + 4); st.y = CY; }
   for (const p of m.players) if (p.role === 'GK') { p.targetY = CY;
     p.x = TEAM[p.team].attacks > 0 ? PITCH.x + PR + 3 : PITCH.x + PITCH.w - PR - 3; p.y = CY;
     p.targetX = p.x; }
