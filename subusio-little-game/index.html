@@ -866,7 +866,7 @@ function kickoff(team) {
   for (const b of m.bodies) { b.vx = 0; b.vy = 0; }
   m.turn = team; m.awaiting = false; m.settle = 0; m.activePiece = null; m.activeTouched = false;
   m.pendingRestart = null; m.restartKind = null; m.aiTimer = 0;
-  m.touches = 0; m.turnTouched = false;
+  m.touches = 0; m.turnTouched = false; m.kickoffPending = true;
   drag = null; gkDrag = null;
   relaxOverlaps();
   updateHUD();
@@ -1058,10 +1058,12 @@ function doFlick(p, dx, dy, power) {
   p.vx = (dx / len) * power; p.vy = (dy / len) * power;
   const s2 = p.vx * p.vx + p.vy * p.vy; if (s2 > 60) { const s = Math.sqrt(s2); p.fx = p.vx / s; p.fy = p.vy / s; }
   match.activePiece = p; match.activeTouched = false; match.turnTouched = false;
-  match.awaiting = true; match.settle = 0; drag = null;
+  match.awaiting = true; match.settle = 0; match.kickoffPending = false; drag = null;
 }
 
-/* ---------- AI (takes its whole turn with one flick) ---------- */
+/* ---------- AI (a real strategy engine: it weighs a shot vs. passing to each
+   teammate — forward progress, the receiver's space and the safety of the lane —
+   then picks the best action and strikes the ball toward it with one flick) ---------- */
 function segmentBlocked(p, cx, cy) {
   let cost = 0;
   const dx = cx - p.x, dy = cy - p.y, L = Math.hypot(dx, dy) || 1;
@@ -1074,60 +1076,144 @@ function segmentBlocked(p, cx, cy) {
   }
   return cost;
 }
-function aiFlick(team) {
-  const m = match, atk = TEAM[team].attacks, D = DIFF[settings.diff] || DIFF.normal;
-  const goalX = atk > 0 ? PITCH.x + PITCH.w + GOAL.d * 0.5 : PITCH.x - GOAL.d * 0.5;
-  // aim away from the keeper's current position — the harder the difficulty, the more
-  // precisely it goes for the far post instead of a coin-flip side
-  const keeper = m.players.find(p => p.team !== team && p.role === 'GK');
-  const kbias = keeper ? (Math.sign(CY - keeper.y) || 1) : (Math.random() < 0.5 ? -1 : 1);
-  const precision = 1 - Math.min(1, D.decide);
-  const goalY = CY + kbias * (GOAL.w / 2 - 22) * (0.3 + precision * 0.6)
-                + (Math.random() - 0.5) * (GOAL.w - 20) * D.err * 0.5;
-
-  // only actually go for goal when there's a real look at it; anywhere else on the pitch
-  // a smarter AI plays it like a pass — find its most advanced teammate with a clear lane
-  // — rather than blasting a low-percentage ball at goal (or out of play) from a bad spot
-  const distToGoal = Math.abs(goalX - m.ball.x);
-  const wantsShot = distToGoal < PITCH.w * 0.55 && Math.random() < (0.35 + D.decide * 0.4);
-  let aimX = goalX, aimY = goalY, passTo = null;
-  if (!wantsShot) {
-    let bestAdv = -Infinity;
-    for (const p of m.players) {
-      if (p.team !== team || p.role === 'GK') continue;
-      const adv = (p.x - m.ball.x) * atk;
-      if (adv < 50 || segmentBlocked(p, m.ball.x, m.ball.y) > 200) continue;
-      if (adv > bestAdv) { bestAdv = adv; passTo = p; }
-    }
-    if (passTo) { aimX = passTo.x; aimY = passTo.y; }
+// how much an opponent would intercept the ball travelling x0,y0 → x1,y1
+function laneBlocked(x0, y0, x1, y1, team) {
+  let cost = 0;
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy) || 1;
+  for (const q of match.players) {
+    if (q.team === team) continue;                 // opponents (incl. their keeper) block
+    const t = ((q.x - x0) * dx + (q.y - y0) * dy) / (L * L);
+    if (t < 0.03 || t > 1.02) continue;
+    const qx = x0 + dx * t, qy = y0 + dy * t, dd = Math.hypot(q.x - qx, q.y - qy);
+    const clear = PR * 2 + 6;
+    if (dd < clear) cost += (clear - dd) * 7 * (1 - Math.abs(t - 0.5) * 0.4);
   }
-
-  let gdx = aimX - m.ball.x, gdy = aimY - m.ball.y;
+  return cost;
+}
+function nearestOppDist(team, x, y) {
+  let best = Infinity;
+  for (const q of match.players)
+    if (q.team !== team && q.role !== 'GK') { const d = Math.hypot(q.x - x, q.y - y); if (d < best) best = d; }
+  return best;
+}
+// the piece best placed to knock the ball toward (destX,destY), and how awkward that is
+function bestStriker(destX, destY, team, exclude) {
+  let dx = destX - match.ball.x, dy = destY - match.ball.y;
+  const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+  const sx = match.ball.x - dx * (PR + BR), sy = match.ball.y - dy * (PR + BR);  // stand-behind point
+  let best = null, bestSc = Infinity;
+  for (const p of match.players) {
+    if (p.team !== team || p.role === 'GK' || p === exclude) continue;
+    const ax = sx - p.x, ay = sy - p.y, dist = Math.hypot(ax, ay) || 1;
+    const align = (ax / dist) * dx + (ay / dist) * dy;   // is p roughly behind the ball?
+    if (align < 0.15) continue;
+    const sc = dist * (2.2 - align) + segmentBlocked(p, sx, sy) * 0.5;
+    if (sc < bestSc) { bestSc = sc; best = p; }
+  }
+  return best ? { piece: best, cost: bestSc } : null;
+}
+function aiStrike(piece, destX, destY, power) {   // flick `piece` into the ball toward a point
+  const ball = match.ball;
+  let gdx = destX - ball.x, gdy = destY - ball.y;
   const gl = Math.hypot(gdx, gdy) || 1; gdx /= gl; gdy /= gl;
-  const cx = m.ball.x - gdx * (PR + BR), cy = m.ball.y - gdy * (PR + BR);   // ideal strike point
-  let best = null, bestScore = Infinity;
-  for (const p of m.players) {
-    if (p.team !== team || p.role === 'GK' || p === passTo) continue;
-    const dx = cx - p.x, dy = cy - p.y, dist = Math.hypot(dx, dy) || 1;
-    const align = (dx / dist) * gdx + (dy / dist) * gdy;
-    const sc = dist * (2.1 - align) + segmentBlocked(p, cx, cy);
-    if (sc < bestScore) { bestScore = sc; best = p; }
+  const cx = ball.x - gdx * (PR + BR), cy = ball.y - gdy * (PR + BR);
+  const D = DIFF[settings.diff] || DIFF.normal;
+  let dx = cx - piece.x, dy = cy - piece.y;
+  const wob = (Math.random() - 0.5) * 0.085 * D.err;
+  const c = Math.cos(wob), s = Math.sin(wob);
+  doFlick(piece, dx * c - dy * s, dx * s + dy * c, power);
+}
+function aiFlick(team) {
+  const m = match, atk = TEAM[team].attacks, D = DIFF[settings.diff] || DIFF.normal, ball = m.ball;
+  const goalX = atk > 0 ? PITCH.x + PITCH.w + GOAL.d * 0.5 : PITCH.x - GOAL.d * 0.5;
+  const keeper = m.players.find(p => p.team !== team && p.role === 'GK');
+
+  // KICKOFF: like a real kickoff, take it with the front taker and play it BACK
+  // into our own half to the most open teammate behind the ball
+  if (m.kickoffPending) {
+    const taker = m.players.find(p => p.team === team && p.slot === 9) || nearestPiece(team, ball.x, ball.y, true);
+    let best = null, bestV = -Infinity;
+    for (const r of m.players) {
+      if (r.team !== team || r.role === 'GK' || r === taker) continue;
+      if ((r.x - ball.x) * atk > -20) continue;              // must be behind the ball (own half)
+      const space = Math.min(nearestOppDist(team, r.x, r.y), 180);
+      const lane = laneBlocked(ball.x, ball.y, r.x, r.y, team);
+      const v = space * 2 - lane - Math.hypot(r.x - ball.x, r.y - ball.y) * 0.3;
+      if (v > bestV) { bestV = v; best = r; }
+    }
+    if (taker && best) {
+      const pd = Math.hypot(best.x - ball.x, best.y - ball.y);
+      aiStrike(taker, best.x, best.y, Math.min(powerCap(taker), 150 + pd * 1.05));
+      return;
+    }
+    m.kickoffPending = false;   // fall through to normal play if nobody behind
   }
-  if (!best) best = nearestPiece(team, m.ball.x, m.ball.y, true);
-  if (!best) { resolveTurnEnd(); return; }
-  let dx = cx - best.x, dy = cy - best.y;
+
+  const cands = [];
+
+  // ---- candidate: SHOT at the corner away from the keeper ----
+  const distToGoal = Math.abs(goalX - ball.x);
+  const close = Math.max(0, 1 - distToGoal / (PITCH.w * 0.58));
+  const central = Math.max(0, 1 - Math.abs(ball.y - CY) / (PA.h * 0.7));
+  if (close > 0.1) {
+    const kbias = keeper ? (Math.sign(CY - keeper.y) || 1) : (Math.random() < 0.5 ? -1 : 1);
+    const goalY = CY + kbias * (GOAL.w / 2 - 20) * (0.4 + (1 - Math.min(1, D.decide)) * 0.5);
+    const q = bestStriker(goalX, goalY, team, null);
+    if (q) {
+      const lane = laneBlocked(ball.x, ball.y, goalX, goalY, team);
+      let value = 300 + 1000 * close * (0.5 + 0.5 * central) - lane * 0.9 - q.cost * 0.4;
+      if (close > 0.55 && central > 0.5 && lane < 60) value += 300;   // clear look: take it
+      cands.push({ type: 'shot', x: goalX, y: goalY, piece: q.piece, value });
+    }
+  }
+
+  // ---- candidates: PASS to each teammate (forward preferred, but retention allowed) ----
+  for (const r of m.players) {
+    if (r.team !== team || r.role === 'GK') continue;
+    if (Math.hypot(r.x - ball.x, r.y - ball.y) < PR * 2 + BR + 6) continue;   // already on the ball
+    const q = bestStriker(r.x, r.y, team, r);
+    if (!q) continue;
+    const adv = (r.x - ball.x) * atk;                        // forward progress toward opp goal
+    const space = Math.min(nearestOppDist(team, r.x, r.y), 180);
+    const lane = laneBlocked(ball.x, ball.y, r.x, r.y, team);
+    const passDist = Math.hypot(r.x - ball.x, r.y - ball.y);
+    const edge = Math.min(r.x - PITCH.x, PITCH.x + PITCH.w - r.x, r.y - PITCH.y, PITCH.y + PITCH.h - r.y);
+    const outRisk = edge < 46 ? (46 - edge) * 3 : 0;
+    const longPen = passDist > 360 ? (passDist - 360) * 0.65 : 0;
+    // in the attacking third, strongly prefer working the ball into a central position
+    const inFinalThird = (r.x - CX) * atk > PITCH.w * 0.16;
+    const centralBonus = inFinalThird ? Math.max(0, 1 - Math.abs(r.y - CY) / (PA.h * 0.7)) * 130 : 0;
+    const value = 230 + 1.3 * adv + 1.7 * space - 0.9 * lane - 0.4 * q.cost - outRisk - longPen + centralBonus;
+    cands.push({ type: 'pass', x: r.x, y: r.y, piece: q.piece, value, passDist });
+  }
+
+  if (!cands.length) {
+    const fb = nearestPiece(team, ball.x, ball.y, true);
+    if (!fb) { resolveTurnEnd(); return; }
+    cands.push({ type: 'pass', x: goalX, y: ball.y, piece: fb, value: 0, passDist: distToGoal });
+  }
+
+  // pick the best action; weaker difficulties add more noise (worse decisions)
+  const noise = 230 * D.err;
+  for (const c of cands) c.score = c.value + (Math.random() - 0.5) * noise;
+  cands.sort((a, b) => b.score - a.score);
+  const pick = cands[0];
+
+  // strike the chosen piece into the ball toward the destination
+  let dx = ball.x - pick.piece.x, dy = ball.y - pick.piece.y;   // aim through the ball at the dest
+  let gdx = pick.x - ball.x, gdy = pick.y - ball.y;
+  const gl = Math.hypot(gdx, gdy) || 1; gdx /= gl; gdy /= gl;
+  const cx = ball.x - gdx * (PR + BR), cy = ball.y - gdy * (PR + BR);
+  dx = cx - pick.piece.x; dy = cy - pick.piece.y;
   const dist = Math.hypot(dx, dy) || 1;
-  const wob = (Math.random() - 0.5) * 0.09 * D.err;
+  const wob = (Math.random() - 0.5) * 0.085 * D.err;
   const c = Math.cos(wob), s = Math.sin(wob);
   const rx = dx * c - dy * s, ry = dx * s + dy * c;
-  // keep passes and safe touches measured so the ball doesn't blast out of play —
-  // only a genuine shot at goal gets full power
   let basePow;
-  if (passTo) basePow = 170 + Math.hypot(aimX - m.ball.x, aimY - m.ball.y) * 1.15;
-  else if (wantsShot) basePow = 320 + dist * 2.3;
-  else basePow = 190 + dist * 1.3;   // no clear pass, no clear shot: nudge it forward safely
-  const power = Math.min(powerCap(best), basePow) * (0.85 + Math.random() * 0.15);
-  doFlick(best, rx, ry, Math.max(power, wantsShot ? 150 : 120));
+  if (pick.type === 'shot') basePow = 330 + dist * 2.2;
+  else basePow = 150 + (pick.passDist || dist) * 1.05;      // land the pass near the receiver
+  const power = Math.min(powerCap(pick.piece), basePow) * (0.88 + Math.random() * 0.12);
+  doFlick(pick.piece, rx, ry, Math.max(power, pick.type === 'shot' ? 150 : 120));
 }
 
 /* ---------- goals & outs ---------- */
