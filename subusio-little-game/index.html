@@ -1519,6 +1519,14 @@ function updateHUD() {
 function endHalf() {
   const m = match;
   m.halfEndPending = false;
+  if (m.mode === 'demo') {
+    // ambient background match behind the menu — never surface a stats
+    // screen or steal focus from whatever the player is doing (e.g.
+    // setting up a career); just quietly move on to the next half/match
+    if (m.half === 1) { m.half = 2; m.clock = 45; kickoff(other(m.kickoffTeam)); }
+    else startDemo();
+    return;
+  }
   if (m.half === 1) {
     m.state = 'ht';
     showStats('HALF TIME', 'half', '');
