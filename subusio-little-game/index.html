@@ -868,7 +868,25 @@ function kickoff(team) {
 function allStopped() {
   return match.bodies.every(b => b.kinematic || b.vx * b.vx + b.vy * b.vy < 625);
 }
+// Belt-and-suspenders: a body can never be left (or seen) with a non-finite or
+// absurd position/velocity — whatever produced it, this resets it in place so
+// corruption can neither persist across frames nor spread to bodies it collides with.
+function sanitizeBodies() {
+  for (const b of match.bodies) {
+    const bad = !Number.isFinite(b.x) || !Number.isFinite(b.y) ||
+                !Number.isFinite(b.vx) || !Number.isFinite(b.vy) ||
+                Math.abs(b.x) > 4000 || Math.abs(b.y) > 4000;
+    if (!bad) continue;
+    if (b.type === 'b') { b.x = CX; b.y = CY; }
+    else {
+      const a = shapeAnchor(b.team, b.slot, 'norm');
+      b.x = a.x; b.y = a.y;
+    }
+    b.vx = 0; b.vy = 0;
+  }
+}
 function stepPhysics(dt) {
+  sanitizeBodies();
   const N = 3, h = dt / N, m = match;
   for (let s = 0; s < N; s++) {
     for (const b of m.bodies) {
@@ -877,6 +895,8 @@ function stepPhysics(dt) {
         const f = Math.pow(b.type === 'b' ? 0.9865 : 0.983, h * 60);
         b.vx *= f; b.vy *= f;
         if (b.vx * b.vx + b.vy * b.vy < 324) { b.vx = 0; b.vy = 0; }
+        const sp2 = b.vx * b.vx + b.vy * b.vy, capSp2 = 2500 * 2500;
+        if (sp2 > capSp2) { const sc = 2500 / Math.sqrt(sp2); b.vx *= sc; b.vy *= sc; }
       }
       collideWalls(b);
     }
@@ -886,6 +906,7 @@ function stepPhysics(dt) {
   }
 }
 function collideWalls(b) {
+  if (!Number.isFinite(b.x) || !Number.isFinite(b.y)) return;
   const M = b.type === 'p' ? APRON - 8 : APRON - 6;
   const top = PITCH.y - M + b.r, bot = PITCH.y + PITCH.h + M - b.r;
   const left = PITCH.x - M + b.r, right = PITCH.x + PITCH.w + M - b.r;
@@ -911,16 +932,18 @@ function collideWalls(b) {
       collideCircle(b, gx, gy, GOAL.post);
 }
 function collideCircle(b, cx, cy, cr) {
+  if (!Number.isFinite(b.x) || !Number.isFinite(b.y)) return;
   const dx = b.x - cx, dy = b.y - cy, rr = b.r + cr, d2 = dx * dx + dy * dy;
-  if (d2 >= rr * rr || d2 === 0) return;
+  if (!(d2 < rr * rr) || d2 === 0) return;
   const d = Math.sqrt(d2), nx = dx / d, ny = dy / d;
   b.x = cx + nx * rr; b.y = cy + ny * rr;
   const vn = b.vx * nx + b.vy * ny;
   if (vn < 0) { b.vx -= 1.8 * vn * nx; b.vy -= 1.8 * vn * ny; }
 }
 function collidePair(a, b) {
+  if (!Number.isFinite(a.x) || !Number.isFinite(a.y) || !Number.isFinite(b.x) || !Number.isFinite(b.y)) return;
   const dx = b.x - a.x, dy = b.y - a.y, rr = a.r + b.r, d2 = dx * dx + dy * dy;
-  if (d2 >= rr * rr || d2 === 0) return;
+  if (!(d2 < rr * rr) || d2 === 0) return;
   const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, overlap = rr - d, tm = a.m + b.m;
   a.x -= nx * overlap * (b.m / tm); a.y -= ny * overlap * (b.m / tm);
   b.x += nx * overlap * (a.m / tm); b.y += ny * overlap * (a.m / tm);
@@ -1003,6 +1026,7 @@ function canFlick() {
          !m.halfEndPending && allStopped();
 }
 function doFlick(p, dx, dy, power) {
+  if (!Number.isFinite(dx) || !Number.isFinite(dy) || !Number.isFinite(power)) { drag = null; return; }
   power = Math.min(power, powerCap(p));
   match.restartKind = null;
   const len = Math.hypot(dx, dy) || 1;
@@ -1813,6 +1837,7 @@ function resize() {
 addEventListener('resize', resize); resize();
 function toGame(e) {
   const r = cv.getBoundingClientRect();
+  if (!r.width || !r.height) return { x: mouse.x, y: mouse.y };
   return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height };
 }
 function pieceAt(x, y, team) {
@@ -1829,6 +1854,7 @@ function myKeeperAt(x, y) {
 }
 cv.addEventListener('pointerdown', e => {
   if (!match || match.mode === 'demo') return;
+  if (drag || gkDrag) return;                // never start a second grab over an unfinished one
   const g = toGame(e); mouse.x = g.x; mouse.y = g.y;
   const gk = myKeeperAt(g.x, g.y);            // grab your keeper any time
   if (gk) { gkDrag = gk; gk.targetY = g.y; cv.setPointerCapture(e.pointerId); return; }
@@ -1838,17 +1864,24 @@ cv.addEventListener('pointerdown', e => {
 });
 cv.addEventListener('pointermove', e => {
   const g = toGame(e); mouse.x = g.x; mouse.y = g.y;
-  if (gkDrag) { gkDrag.targetY = g.y; return; }
-  if (drag) { drag.mx = g.x; drag.my = g.y; return; }
+  if (gkDrag) {
+    if (!match || !match.bodies.includes(gkDrag)) { gkDrag = null; return; }
+    gkDrag.targetY = g.y; return;
+  }
+  if (drag) {
+    if (!match || !match.bodies.includes(drag.p)) { drag = null; return; }
+    drag.mx = g.x; drag.my = g.y; return;
+  }
   if (match && match.mode !== 'demo' && isHumanTurn() && canFlick())
     cv.style.cursor = (myKeeperAt(g.x, g.y) || pieceAt(g.x, g.y, 'red')) ? 'grab' : 'default';
 });
 cv.addEventListener('pointerup', e => {
   if (gkDrag) { gkDrag = null; return; }
   if (!drag) return;
+  const stale = !match || !match.bodies.includes(drag.p);
   const g = toGame(e);
   const dx = drag.p.x - g.x, dy = drag.p.y - g.y, len = Math.hypot(dx, dy);
-  if (len >= 12 && canFlick() && isHumanTurn()) {
+  if (!stale && Number.isFinite(len) && len >= 12 && canFlick() && isHumanTurn()) {
     const pow = Math.min(len / MAXDRAG, 1) * powerCap(drag.p);
     doFlick(drag.p, dx, dy, Math.max(pow, 110));
   } else drag = null;
