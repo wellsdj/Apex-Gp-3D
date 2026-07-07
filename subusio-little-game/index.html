@@ -277,7 +277,7 @@
     <ul>
       <li><b>Turn-based flick football</b> — like Soccer Stars. You and the opponent take turns flicking discs.</li>
       <li><b>Flick:</b> press &amp; hold one of your discs, <b>drag back</b> to aim &amp; load power (the arrow &amp; ring show it), then <b>release</b> to fire it. Knock the ball into their net.</li>
-      <li><b>Possession:</b> whoever's disc last touches the ball keeps the turn — up to <b>3 touches</b> in a row. Touch a 4th time and it's a turnover; if the other side touches it first, it becomes their turn straight away.</li>
+      <li><b>Possession:</b> you keep the ball only if your disc <b>touched it</b> and your team is <b>closest to it</b> when everything stops. If you didn't touch it, or the other team's disc ends up nearest, it becomes their ball. So control it — don't just smash it away.</li>
       <li><b>Formations:</b> instead of flicking, tap <span class="kbd">DEFENSIVE</span> / <span class="kbd">NORMAL</span> / <span class="kbd">ATTACKING</span> up top to reset your whole team's shape — deep, midfield or pushed up. It shifts toward the ball, and it uses your turn. <b>On your own throw-in or corner</b> you can re-shape as much as you like <i>before</i> taking it — it stays your restart.</li>
       <li><b>Your keeper</b> you can grab and drag anywhere inside your box any time — cover a shot from any angle. It can't be flicked.</li>
       <li>Smashing an opponent before the ball is a <b>foul</b> → free kick, or a <b>penalty</b> in the box. Ball off the sides → throw-in; off the ends → corner or goal kick (opponents must stand clear).</li>
@@ -824,7 +824,7 @@ function startMatch(opts) {
     awaiting:false, settle:0, celebrate:null, pendingRestart:null, restartKind:null, restartInfo:null,
     activePiece:null, activeTouched:false, aiTimer:0, foulCool:0,
     half:1, clock:0, halfEndPending:false, kickoffTeam:null,
-    touches:0, turnTouched:false,
+    turnTouched:false,
   };
   match.kickoffTeam = match.turn;
   confetti = []; toasts = []; drag = null; gkDrag = null;
@@ -866,7 +866,7 @@ function kickoff(team) {
   for (const b of m.bodies) { b.vx = 0; b.vy = 0; }
   m.turn = team; m.awaiting = false; m.settle = 0; m.activePiece = null; m.activeTouched = false;
   m.pendingRestart = null; m.restartKind = null; m.restartInfo = null; m.aiTimer = 0;
-  m.touches = 0; m.turnTouched = false; m.kickoffPending = true;
+  m.turnTouched = false; m.kickoffPending = true;
   drag = null; gkDrag = null;
   relaxOverlaps();
   updateHUD();
@@ -1132,28 +1132,40 @@ function rollout(strikerRef, vx, vy) {
     const bs = ball.vx * ball.vx + ball.vy * ball.vy;
     if (bs < 400 && step > 6) break;
   }
-  // nearest teammate (not the striker) to where the ball came to rest — good next platform
-  let distTM = Infinity;
-  for (const b of bodies)
-    if (b.team === strikerTeam && b.type === 'p' && b.ref !== strikerRef && b.slot !== 0) {
-      const d = Math.hypot(b.x - ball.x, b.y - ball.y); if (d < distTM) distTM = d;
-    }
+  // who ends up nearest the ball (the new possession test), and how close a
+  // teammate is to it (a good platform to flick from next)
+  let distTM = Infinity, nd = Infinity, nearestTeam = null;
+  for (const b of bodies) {
+    if (b.type !== 'p' || b.slot === 0) continue;
+    const d = Math.hypot(b.x - ball.x, b.y - ball.y);
+    if (d < nd) { nd = d; nearestTeam = b.team; }
+    if (b.team === strikerTeam && b.ref !== strikerRef && d < distTM) distTM = d;
+  }
   return { ballX: ball.x, ballY: ball.y, startX, startY, strikerTeam,
-    lastTouch, oppTookOver, scored, wentOut, distTM };
+    lastTouch, oppTookOver, scored, wentOut, distTM, nearestTeam };
 }
 // score a simulated outcome from the acting team's point of view
 function scoreOutcome(o) {
-  if (!o) return -1e6;
+  if (!o) return -1e9;
   const atk = TEAM[o.strikerTeam].attacks;
+  if (o.scored === o.strikerTeam) return 1e6;      // goal — always take it
+  if (o.scored) return -1e6;                        // own goal — never
   let s = 0;
-  if (o.scored === o.strikerTeam) s += 6000;
-  else if (o.scored) s -= 6000;                                  // own goal
-  if (o.oppTookOver || (o.lastTouch && o.lastTouch !== o.strikerTeam)) s -= 1500;  // lost possession
-  if (o.wentOut) s -= 550;
-  s += (o.ballX - o.startX) * atk * 2.2;                          // forward progress
-  if ((o.ballX - CX) * atk > PITCH.w * 0.16)                      // central in the final third
-    s += Math.max(0, 1 - Math.abs(o.ballY - CY) / (PA.h * 0.7)) * 150;
-  if (Number.isFinite(o.distTM)) s += Math.max(0, 180 - o.distTM) * 1.6;  // ends near a teammate
+  // NEW rule is the dominant factor: keep the ball only if WE touched it AND WE
+  // end up nearest to it. This is worth more than any positional gain.
+  const kept = (o.lastTouch === o.strikerTeam) && (o.nearestTeam === o.strikerTeam);
+  s += kept ? 5000 : -5000;
+  if (o.wentOut) s -= 3000;                          // out of play = lost it, no question
+  // drive toward the opposite goal (progress) — this is what "go on the opposite goal" means
+  const goalX = atk > 0 ? PITCH.x + PITCH.w : PITCH.x;
+  s += (Math.abs(goalX - o.startX) - Math.abs(goalX - o.ballX)) * 6;
+  if (kept) {
+    // and, having kept it, reward setting up the next shot: close & central to their goal
+    const close = Math.max(0, 1 - Math.abs(goalX - o.ballX) / (PITCH.w * 0.6));
+    const central = Math.max(0, 1 - Math.abs(o.ballY - CY) / (PA.h * 0.7));
+    s += close * (0.4 + 0.6 * central) * 900;
+    if (Number.isFinite(o.distTM)) s += Math.max(0, 150 - o.distTM) * 1.2;
+  }
   return s;
 }
 
@@ -1247,46 +1259,42 @@ function aiFlick(team) {
 
   const cands = [];
 
-  // ---- candidate: SHOT at the corner away from the keeper ----
+  // ---- candidates: SHOT at each corner ----
   const distToGoal = Math.abs(goalX - ball.x);
   const close = Math.max(0, 1 - distToGoal / (PITCH.w * 0.58));
   const central = Math.max(0, 1 - Math.abs(ball.y - CY) / (PA.h * 0.7));
   if (close > 0.1) {
-    const kbias = keeper ? (Math.sign(CY - keeper.y) || 1) : (Math.random() < 0.5 ? -1 : 1);
-    const goalY = CY + kbias * (GOAL.w / 2 - 20) * (0.4 + (1 - Math.min(1, D.decide)) * 0.5);
-    const q = bestStriker(goalX, goalY, team, null);
-    if (q) {
+    for (const side of [-1, 1]) {
+      const goalY = CY + side * (GOAL.w / 2 - 18);
+      const q = bestStriker(goalX, goalY, team, null);
+      if (!q) continue;
       const lane = laneBlocked(ball.x, ball.y, goalX, goalY, team);
-      let value = 300 + 1000 * close * (0.5 + 0.5 * central) - lane * 0.9 - q.cost * 0.4;
-      if (close > 0.55 && central > 0.5 && lane < 60) value += 300;   // clear look: take it
-      cands.push({ type: 'shot', x: goalX, y: goalY, piece: q.piece, value });
+      const value = 300 + 1000 * close * (0.5 + 0.5 * central) - lane * 0.9 - q.cost * 0.4;
+      cands.push({ type: 'shot', x: goalX, y: goalY, piece: q.piece, value, powScale: 1 });
     }
   }
 
-  // ---- candidates: PASS to each teammate (forward preferred, but retention allowed) ----
+  // ---- candidates: PASS to each teammate, at a couple of weights (so the sim can
+  //      find the one that leaves OUR disc nearest the ball = keeps possession) ----
   for (const r of m.players) {
     if (r.team !== team || r.role === 'GK') continue;
     if (Math.hypot(r.x - ball.x, r.y - ball.y) < PR * 2 + BR + 6) continue;   // already on the ball
     const q = bestStriker(r.x, r.y, team, r);
     if (!q) continue;
-    const adv = (r.x - ball.x) * atk;                        // forward progress toward opp goal
+    const adv = (r.x - ball.x) * atk;
     const space = Math.min(nearestOppDist(team, r.x, r.y), 180);
     const lane = laneBlocked(ball.x, ball.y, r.x, r.y, team);
     const passDist = Math.hypot(r.x - ball.x, r.y - ball.y);
-    const edge = Math.min(r.x - PITCH.x, PITCH.x + PITCH.w - r.x, r.y - PITCH.y, PITCH.y + PITCH.h - r.y);
-    const outRisk = edge < 46 ? (46 - edge) * 3 : 0;
-    const longPen = passDist > 360 ? (passDist - 360) * 0.65 : 0;
-    // in the attacking third, strongly prefer working the ball into a central position
-    const inFinalThird = (r.x - CX) * atk > PITCH.w * 0.16;
-    const centralBonus = inFinalThird ? Math.max(0, 1 - Math.abs(r.y - CY) / (PA.h * 0.7)) * 130 : 0;
-    const value = 230 + 1.3 * adv + 1.7 * space - 0.9 * lane - 0.4 * q.cost - outRisk - longPen + centralBonus;
-    cands.push({ type: 'pass', x: r.x, y: r.y, piece: q.piece, value, passDist });
+    const value = 230 + 1.3 * adv + 1.7 * space - 0.9 * lane - 0.4 * q.cost;
+    for (const powScale of [0.8, 1.0]) {
+      cands.push({ type: 'pass', x: r.x, y: r.y, piece: q.piece, value, passDist, powScale });
+    }
   }
 
   if (!cands.length) {
     const fb = nearestPiece(team, ball.x, ball.y, true);
     if (!fb) { resolveTurnEnd(); return; }
-    cands.push({ type: 'pass', x: goalX, y: ball.y, piece: fb, value: 0, passDist: distToGoal });
+    cands.push({ type: 'pass', x: goalX, y: ball.y, piece: fb, value: 0, passDist: distToGoal, powScale: 1 });
   }
 
   // the exact (no-wobble) velocity a candidate's flick would give the striker,
@@ -1297,22 +1305,25 @@ function aiFlick(team) {
     const cx = ball.x - gdx * (PR + BR), cy = ball.y - gdy * (PR + BR);
     const dx = cx - cand.piece.x, dy = cy - cand.piece.y, dist = Math.hypot(dx, dy) || 1;
     let basePow = cand.type === 'shot' ? 330 + dist * 2.2 : 150 + (cand.passDist || dist) * 1.05;
-    const power = Math.max(Math.min(powerCap(cand.piece), basePow), cand.type === 'shot' ? 150 : 120);
+    basePow *= (cand.powScale || 1);
+    const power = Math.max(Math.min(powerCap(cand.piece), basePow), cand.type === 'shot' ? 150 : 110);
     return { dx, dy, dist, power };
   };
 
-  // rank by heuristic first, then run the background simulator on the best few and
-  // re-rank by what actually happens. Stronger difficulties look deeper and think cleaner.
+  // rank by heuristic, then run the background simulator to re-rank by what ACTUALLY
+  // happens under the new possession rule. Stronger difficulties simulate more options
+  // and think cleaner; Impossible simulates every option and never guesses.
   const noise = 230 * D.err;
   for (const c of cands) c.score = c.value + (Math.random() - 0.5) * noise;
   cands.sort((a, b) => b.score - a.score);
-  const depth = { easy: 1, normal: 3, hard: 5, impossible: 8 }[settings.diff] ?? 3;
+  const depthMap = { easy: 1, normal: 6, hard: 14, impossible: cands.length };
+  const depth = depthMap[settings.diff] ?? 6;
   const top = cands.slice(0, Math.min(depth, cands.length));
   if (depth > 1) {
     for (const c of top) {
       const a = aimFor(c);
       const vx = (a.dx / a.dist) * a.power, vy = (a.dy / a.dist) * a.power;
-      c.sim = scoreOutcome(rollout(c.piece, vx, vy)) + c.value * 0.25;
+      c.sim = scoreOutcome(rollout(c.piece, vx, vy)) + c.value * 0.1;
     }
     top.sort((a, b) => b.sim - a.sim);
   }
@@ -1405,6 +1416,16 @@ function nearestPiece(team, x, y, excludeGK) {
   }
   return best;
 }
+// which team has the outfield disc closest to the ball right now
+function nearestTeamToBall() {
+  let bd = Infinity, team = null;
+  for (const p of match.players) {
+    if (p.role === 'GK') continue;
+    const d = (p.x - match.ball.x) ** 2 + (p.y - match.ball.y) ** 2;
+    if (d < bd) { bd = d; team = p.team; }
+  }
+  return team;
+}
 function relaxOverlaps() {
   for (let k = 0; k < 12; k++) {
     for (let i = 0; i < match.bodies.length; i++)
@@ -1463,7 +1484,7 @@ function applyRestart(r) {
   }
   relaxOverlaps();
   m.turn = r.team; m.aiTimer = 0; m.settle = 0; m.awaiting = false;
-  m.touches = 0; m.turnTouched = false;
+  m.turnTouched = false;
   updateHUD();
 }
 // re-pin the taker on the ball and re-clear opponents after the taker's team
@@ -1498,18 +1519,11 @@ function resolveTurnEnd() {
   if (m.halfEndPending) { endHalf(); return; }
   advanceClock();
   if (m.halfEndPending) { endHalf(); return; }
-  // possession: whoever's piece last touched the ball keeps the turn, up to 3 touches in a row
-  const toucher = m.turnTouched ? m.ball.lastTeam : null;
-  if (toucher === priorTeam) {
-    m.touches++;
-    if (m.touches > 3) {
-      toast('3 TOUCHES — TURNOVER!', TEAM[other(priorTeam)].main);
-      m.turn = other(priorTeam); m.touches = 0;
-    }
-  } else {
-    m.turn = toucher || other(priorTeam);
-    m.touches = 0;
-  }
+  // NEW possession rule: you keep the ball only if your disc touched it AND your
+  // team has the disc closest to it now. Otherwise it's the other team's ball.
+  const touchedByMover = m.turnTouched && m.ball.lastTeam === priorTeam;
+  const near = nearestTeamToBall();
+  m.turn = (touchedByMover && near === priorTeam) ? priorTeam : other(priorTeam);
   m.aiTimer = 0;
   updateHUD();
 }
@@ -1529,7 +1543,7 @@ function pressFormation(shape) {
   toast(shape.toUpperCase() + ' SHAPE', TEAM.red.main);
   advanceClock();
   if (match.halfEndPending) { endHalf(); return; }
-  match.turn = 'blue'; match.aiTimer = 0; match.touches = 0; match.turnTouched = false;
+  match.turn = 'blue'; match.aiTimer = 0; match.turnTouched = false;
   updateHUD();
 }
 
@@ -1827,8 +1841,8 @@ function updateHUD() {
   $('sBlue').textContent = match.score.blue;
   const chip = $('chip');
   if (match.mode === 'demo') chip.textContent = 'EXHIBITION';
-  else if (match.turn === 'red') chip.textContent = 'YOUR FLICK' + (match.touches > 0 ? ' · TOUCH ' + (match.touches + 1) + '/3' : '');
-  else chip.textContent = TEAM.blue.label + '…' + (match.touches > 0 ? ' (' + (match.touches + 1) + '/3)' : '');
+  else if (match.turn === 'red') chip.textContent = 'YOUR FLICK';
+  else chip.textContent = TEAM.blue.label + '…';
   const tcol = match.turn === 'red' ? TEAM.red : TEAM.blue;
   chip.style.background = `linear-gradient(180deg, ${tcol.main}, ${tcol.dark})`;
   $('clock').textContent = clockText();
