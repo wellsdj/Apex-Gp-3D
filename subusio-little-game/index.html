@@ -417,7 +417,7 @@ const DIFF = {
   easy:       { aiSpd:0.82, err:1.7,  decide:0.75, gkErr:1.6,  gkDelay:0.34, gkSpd:0.75 },
   normal:     { aiSpd:0.92, err:1.0,  decide:0.5,  gkErr:1.0,  gkDelay:0.22, gkSpd:0.95 },
   hard:       { aiSpd:1.0,  err:0.55, decide:0.32, gkErr:0.6,  gkDelay:0.13, gkSpd:1.15 },
-  impossible: { aiSpd:1.08, err:0.18, decide:0.1,  gkErr:0.18, gkDelay:0.04, gkSpd:1.4  },
+  impossible: { aiSpd:1.2,  err:0,    decide:0,    gkErr:0,    gkDelay:0,    gkSpd:2.2  },
 };
 const D = () => DIFF[settings.diff] || DIFF.normal;
 
@@ -1323,7 +1323,7 @@ function aiFlick(team) {
   const wob = (Math.random() - 0.5) * 0.06 * D.err;
   const c = Math.cos(wob), s = Math.sin(wob);
   const rx = a.dx * c - a.dy * s, ry = a.dx * s + a.dy * c;
-  const power = a.power * (0.92 + Math.random() * 0.08);
+  const power = a.power * (1 - Math.random() * 0.08 * Math.min(1, D.err));   // exact on Impossible
   doFlick(pick.piece, rx, ry, power);
 }
 
