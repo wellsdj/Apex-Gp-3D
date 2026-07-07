@@ -278,7 +278,7 @@
       <li><b>Turn-based flick football</b> — like Soccer Stars. You and the opponent take turns flicking discs.</li>
       <li><b>Flick:</b> press &amp; hold one of your discs, <b>drag back</b> to aim &amp; load power (the arrow &amp; ring show it), then <b>release</b> to fire it. Knock the ball into their net.</li>
       <li><b>Possession:</b> whoever's disc last touches the ball keeps the turn — up to <b>3 touches</b> in a row. Touch a 4th time and it's a turnover; if the other side touches it first, it becomes their turn straight away.</li>
-      <li><b>Formations:</b> instead of flicking, tap <span class="kbd">DEFENSIVE</span> / <span class="kbd">NORMAL</span> / <span class="kbd">ATTACKING</span> up top to reset your whole team's shape — deep, midfield or pushed up. It shifts toward the ball, and it uses your turn.</li>
+      <li><b>Formations:</b> instead of flicking, tap <span class="kbd">DEFENSIVE</span> / <span class="kbd">NORMAL</span> / <span class="kbd">ATTACKING</span> up top to reset your whole team's shape — deep, midfield or pushed up. It shifts toward the ball, and it uses your turn. <b>On your own throw-in or corner</b> you can re-shape as much as you like <i>before</i> taking it — it stays your restart.</li>
       <li><b>Your keeper</b> you can grab and drag anywhere inside your box any time — cover a shot from any angle. It can't be flicked.</li>
       <li>Smashing an opponent before the ball is a <b>foul</b> → free kick, or a <b>penalty</b> in the box. Ball off the sides → throw-in; off the ends → corner or goal kick (opponents must stand clear).</li>
       <li><b>Career:</b> £42M to build an 11-man squad — every slot gives you 10 players; higher ratings flick harder &amp; truer. Group stage → knockouts → the final. Prize money rolls into next season.</li>
@@ -821,7 +821,7 @@ function startMatch(opts) {
     bodies: [...players, ball], state: 'live',
     score: { red:0, blue:0 }, stats: { red: zStat(), blue: zStat() },
     turn: Math.random() < 0.5 ? 'red' : 'blue',
-    awaiting:false, settle:0, celebrate:null, pendingRestart:null, restartKind:null,
+    awaiting:false, settle:0, celebrate:null, pendingRestart:null, restartKind:null, restartInfo:null,
     activePiece:null, activeTouched:false, aiTimer:0, foulCool:0,
     half:1, clock:0, halfEndPending:false, kickoffTeam:null,
     touches:0, turnTouched:false,
@@ -865,7 +865,7 @@ function kickoff(team) {
   m.ball.x = CX; m.ball.y = CY; m.ball.vx = m.ball.vy = 0; m.ball.lastTeam = null;
   for (const b of m.bodies) { b.vx = 0; b.vy = 0; }
   m.turn = team; m.awaiting = false; m.settle = 0; m.activePiece = null; m.activeTouched = false;
-  m.pendingRestart = null; m.restartKind = null; m.aiTimer = 0;
+  m.pendingRestart = null; m.restartKind = null; m.restartInfo = null; m.aiTimer = 0;
   m.touches = 0; m.turnTouched = false; m.kickoffPending = true;
   drag = null; gkDrag = null;
   relaxOverlaps();
@@ -948,10 +948,13 @@ function collideCircle(b, cx, cy, cr) {
   const vn = b.vx * nx + b.vy * ny;
   if (vn < 0) { b.vx -= 1.8 * vn * nx; b.vy -= 1.8 * vn * ny; }
 }
-function collidePair(a, b) {
-  if (!Number.isFinite(a.x) || !Number.isFinite(a.y) || !Number.isFinite(b.x) || !Number.isFinite(b.y)) return;
+// pure elastic collision: separates a & b and applies the impulse. Returns NaN if
+// they weren't overlapping, else the closing speed (-vn) so callers can judge impact.
+// This is shared verbatim by the live engine and the AI's background simulator.
+function resolvePair(a, b) {
+  if (!Number.isFinite(a.x) || !Number.isFinite(a.y) || !Number.isFinite(b.x) || !Number.isFinite(b.y)) return NaN;
   const dx = b.x - a.x, dy = b.y - a.y, rr = a.r + b.r, d2 = dx * dx + dy * dy;
-  if (!(d2 < rr * rr) || d2 === 0) return;
+  if (!(d2 < rr * rr) || d2 === 0) return NaN;
   const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, overlap = rr - d, tm = a.m + b.m;
   a.x -= nx * overlap * (b.m / tm); a.y -= ny * overlap * (b.m / tm);
   b.x += nx * overlap * (a.m / tm); b.y += ny * overlap * (a.m / tm);
@@ -962,12 +965,17 @@ function collidePair(a, b) {
     a.vx -= imp * nx / a.m; a.vy -= imp * ny / a.m;
     b.vx += imp * nx / b.m; b.vy += imp * ny / b.m;
   }
+  return -vn;
+}
+function collidePair(a, b) {
+  const cs = resolvePair(a, b);
+  if (Number.isNaN(cs)) return;
   const ball = match.ball;
   if (b === ball && a.type === 'p') { ball.lastTeam = a.team; match.turnTouched = true; if (a === match.activePiece) match.activeTouched = true; }
   else if (a === ball && b.type === 'p') { ball.lastTeam = b.team; match.turnTouched = true; if (b === match.activePiece) match.activeTouched = true; }
   else if (a.type === 'p' && b.type === 'p') {
     if (match.activePiece && !match.activeTouched && !match.pendingRestart && !match.celebrate &&
-        -vn > 260 && (a === match.activePiece || b === match.activePiece)) {
+        cs > 260 && (a === match.activePiece || b === match.activePiece)) {
       const opp = a === match.activePiece ? b : a;
       if (opp.team !== match.activePiece.team)
         foulAt(match.activePiece.team, (a.x + b.x) / 2, (a.y + b.y) / 2, 'FOUL!');
@@ -1053,7 +1061,7 @@ function canFlick() {
 function doFlick(p, dx, dy, power) {
   if (!Number.isFinite(dx) || !Number.isFinite(dy) || !Number.isFinite(power)) { drag = null; return; }
   power = Math.min(power, powerCap(p));
-  match.restartKind = null;
+  match.restartKind = null; match.restartInfo = null;
   const len = Math.hypot(dx, dy) || 1;
   p.vx = (dx / len) * power; p.vy = (dy / len) * power;
   const s2 = p.vx * p.vx + p.vy * p.vy; if (s2 > 60) { const s = Math.sqrt(s2); p.fx = p.vx / s; p.fy = p.vy / s; }
@@ -1061,9 +1069,97 @@ function doFlick(p, dx, dy, power) {
   match.awaiting = true; match.settle = 0; match.kickoffPending = false; drag = null;
 }
 
+/* ---------- background outcome simulator ----------
+   The AI can play a candidate flick forward in its head — the SAME physics the real
+   match uses (shared resolvePair / collideWalls / collideCircle) — to see exactly where
+   the ball ends up, what it rebounds off, and whether possession is kept or lost. This
+   lets it judge real consequences (a pass deflecting off a teammate, a shot the keeper
+   is sitting in front of, a ball that runs out) instead of trusting a heuristic. */
+function cloneBodies() {
+  return match.bodies.map(b => ({
+    x: b.x, y: b.y, vx: b.vx, vy: b.vy, r: b.r, m: b.m,
+    type: b.type, team: b.team, kinematic: b.kinematic, slot: b.slot, ref: b,
+  }));
+}
+// simulate `strikerRef` leaving the ball with velocity (vx,vy); returns the outcome
+function rollout(strikerRef, vx, vy) {
+  const bodies = cloneBodies();
+  const ball = bodies.find(b => b.type === 'b');
+  const striker = bodies.find(b => b.ref === strikerRef);
+  if (!ball || !striker) return null;
+  striker.vx = vx; striker.vy = vy;
+  const startX = ball.x, startY = ball.y, strikerTeam = striker.team;
+  let lastTouch = null, strikerHit = false, oppTookOver = false, scored = null, wentOut = false;
+  const registerTouch = p => {
+    lastTouch = p.team;
+    if (p.ref === strikerRef) strikerHit = true;
+    else if (strikerHit && p.team !== strikerTeam) oppTookOver = true;
+  };
+  const dt = 1 / 45, N = 3, h = dt / N;
+  for (let step = 0; step < 90; step++) {
+    for (let s = 0; s < N; s++) {
+      for (const b of bodies) {
+        if (!b.kinematic) {
+          b.x += b.vx * h; b.y += b.vy * h;
+          const f = Math.pow(b.type === 'b' ? 0.9865 : 0.983, h * 60);
+          b.vx *= f; b.vy *= f;
+          if (b.vx * b.vx + b.vy * b.vy < 324) { b.vx = 0; b.vy = 0; }
+          const sp2 = b.vx * b.vx + b.vy * b.vy; if (sp2 > 2500 * 2500) { const sc = 2500 / Math.sqrt(sp2); b.vx *= sc; b.vy *= sc; }
+        }
+        collideWalls(b);
+      }
+      for (let i = 0; i < bodies.length; i++)
+        for (let j = i + 1; j < bodies.length; j++) {
+          const cs = resolvePair(bodies[i], bodies[j]);
+          if (!Number.isNaN(cs)) {
+            if (bodies[i].type === 'b' && bodies[j].type === 'p') registerTouch(bodies[j]);
+            else if (bodies[j].type === 'b' && bodies[i].type === 'p') registerTouch(bodies[i]);
+          }
+        }
+    }
+    // goal?
+    if (Math.abs(ball.y - CY) <= GOAL.w / 2) {
+      if (ball.x + BR < PITCH.x) { scored = 'blue'; break; }
+      if (ball.x - BR > PITCH.x + PITCH.w) { scored = 'red'; break; }
+    }
+    // ran out of play (over a touch/goal line, not into the mouth)?
+    if (!wentOut) {
+      const oT = ball.y + BR < PITCH.y, oB = ball.y - BR > PITCH.y + PITCH.h;
+      const oL = ball.x + BR < PITCH.x, oR = ball.x - BR > PITCH.x + PITCH.w;
+      if (oT || oB || ((oL || oR) && Math.abs(ball.y - CY) > GOAL.w / 2)) wentOut = true;
+    }
+    // settled?
+    const bs = ball.vx * ball.vx + ball.vy * ball.vy;
+    if (bs < 400 && step > 6) break;
+  }
+  // nearest teammate (not the striker) to where the ball came to rest — good next platform
+  let distTM = Infinity;
+  for (const b of bodies)
+    if (b.team === strikerTeam && b.type === 'p' && b.ref !== strikerRef && b.slot !== 0) {
+      const d = Math.hypot(b.x - ball.x, b.y - ball.y); if (d < distTM) distTM = d;
+    }
+  return { ballX: ball.x, ballY: ball.y, startX, startY, strikerTeam,
+    lastTouch, oppTookOver, scored, wentOut, distTM };
+}
+// score a simulated outcome from the acting team's point of view
+function scoreOutcome(o) {
+  if (!o) return -1e6;
+  const atk = TEAM[o.strikerTeam].attacks;
+  let s = 0;
+  if (o.scored === o.strikerTeam) s += 6000;
+  else if (o.scored) s -= 6000;                                  // own goal
+  if (o.oppTookOver || (o.lastTouch && o.lastTouch !== o.strikerTeam)) s -= 1500;  // lost possession
+  if (o.wentOut) s -= 550;
+  s += (o.ballX - o.startX) * atk * 2.2;                          // forward progress
+  if ((o.ballX - CX) * atk > PITCH.w * 0.16)                      // central in the final third
+    s += Math.max(0, 1 - Math.abs(o.ballY - CY) / (PA.h * 0.7)) * 150;
+  if (Number.isFinite(o.distTM)) s += Math.max(0, 180 - o.distTM) * 1.6;  // ends near a teammate
+  return s;
+}
+
 /* ---------- AI (a real strategy engine: it weighs a shot vs. passing to each
    teammate — forward progress, the receiver's space and the safety of the lane —
-   then picks the best action and strikes the ball toward it with one flick) ---------- */
+   then simulates the best few in the background and takes the one that truly works out) ---------- */
 function segmentBlocked(p, cx, cy) {
   let cost = 0;
   const dx = cx - p.x, dy = cy - p.y, L = Math.hypot(dx, dy) || 1;
@@ -1193,27 +1289,42 @@ function aiFlick(team) {
     cands.push({ type: 'pass', x: goalX, y: ball.y, piece: fb, value: 0, passDist: distToGoal });
   }
 
-  // pick the best action; weaker difficulties add more noise (worse decisions)
+  // the exact (no-wobble) velocity a candidate's flick would give the striker,
+  // so the background simulator can predict precisely what that flick does
+  const aimFor = (cand) => {
+    let gdx = cand.x - ball.x, gdy = cand.y - ball.y;
+    const gl = Math.hypot(gdx, gdy) || 1; gdx /= gl; gdy /= gl;
+    const cx = ball.x - gdx * (PR + BR), cy = ball.y - gdy * (PR + BR);
+    const dx = cx - cand.piece.x, dy = cy - cand.piece.y, dist = Math.hypot(dx, dy) || 1;
+    let basePow = cand.type === 'shot' ? 330 + dist * 2.2 : 150 + (cand.passDist || dist) * 1.05;
+    const power = Math.max(Math.min(powerCap(cand.piece), basePow), cand.type === 'shot' ? 150 : 120);
+    return { dx, dy, dist, power };
+  };
+
+  // rank by heuristic first, then run the background simulator on the best few and
+  // re-rank by what actually happens. Stronger difficulties look deeper and think cleaner.
   const noise = 230 * D.err;
   for (const c of cands) c.score = c.value + (Math.random() - 0.5) * noise;
   cands.sort((a, b) => b.score - a.score);
-  const pick = cands[0];
+  const depth = { easy: 1, normal: 3, hard: 5, impossible: 8 }[settings.diff] ?? 3;
+  const top = cands.slice(0, Math.min(depth, cands.length));
+  if (depth > 1) {
+    for (const c of top) {
+      const a = aimFor(c);
+      const vx = (a.dx / a.dist) * a.power, vy = (a.dy / a.dist) * a.power;
+      c.sim = scoreOutcome(rollout(c.piece, vx, vy)) + c.value * 0.25;
+    }
+    top.sort((a, b) => b.sim - a.sim);
+  }
+  const pick = top[0];
 
-  // strike the chosen piece into the ball toward the destination
-  let dx = ball.x - pick.piece.x, dy = ball.y - pick.piece.y;   // aim through the ball at the dest
-  let gdx = pick.x - ball.x, gdy = pick.y - ball.y;
-  const gl = Math.hypot(gdx, gdy) || 1; gdx /= gl; gdy /= gl;
-  const cx = ball.x - gdx * (PR + BR), cy = ball.y - gdy * (PR + BR);
-  dx = cx - pick.piece.x; dy = cy - pick.piece.y;
-  const dist = Math.hypot(dx, dy) || 1;
-  const wob = (Math.random() - 0.5) * 0.085 * D.err;
+  // strike it — accuracy scales with difficulty (little wobble on hard/impossible)
+  const a = aimFor(pick);
+  const wob = (Math.random() - 0.5) * 0.06 * D.err;
   const c = Math.cos(wob), s = Math.sin(wob);
-  const rx = dx * c - dy * s, ry = dx * s + dy * c;
-  let basePow;
-  if (pick.type === 'shot') basePow = 330 + dist * 2.2;
-  else basePow = 150 + (pick.passDist || dist) * 1.05;      // land the pass near the receiver
-  const power = Math.min(powerCap(pick.piece), basePow) * (0.88 + Math.random() * 0.12);
-  doFlick(pick.piece, rx, ry, Math.max(power, pick.type === 'shot' ? 150 : 120));
+  const rx = a.dx * c - a.dy * s, ry = a.dx * s + a.dy * c;
+  const power = a.power * (0.92 + Math.random() * 0.08);
+  doFlick(pick.piece, rx, ry, power);
 }
 
 /* ---------- goals & outs ---------- */
@@ -1318,6 +1429,8 @@ function applyRestart(r) {
   if (r.type === 'kickoff') { kickoff(r.team); return; }
   m.ball.x = r.x; m.ball.y = r.y; m.ball.vx = 0; m.ball.vy = 0; m.ball.lastTeam = null;
   m.restartKind = (r.type === 'throwin' || r.type === 'corner' || r.type === 'goalkick') ? r.type : null;
+  // a throw-in / corner you can still re-shape before taking (see pressFormation)
+  m.restartInfo = (r.type === 'throwin' || r.type === 'corner') ? r : null;
   const atk = TEAM[r.team].attacks;
   if (r.type === 'throwin') {
     const p = nearestPiece(r.team, m.ball.x, m.ball.y, true);
@@ -1353,6 +1466,22 @@ function applyRestart(r) {
   m.touches = 0; m.turnTouched = false;
   updateHUD();
 }
+// re-pin the taker on the ball and re-clear opponents after the taker's team
+// re-shapes during its own throw-in / corner (ball stays exactly on the spot)
+function repinRestartTaker() {
+  const m = match, r = m.restartInfo; if (!r) return;
+  m.ball.x = r.x; m.ball.y = r.y; m.ball.vx = 0; m.ball.vy = 0;
+  const p = nearestPiece(r.team, m.ball.x, m.ball.y, true);
+  if (r.type === 'throwin') {
+    if (p) { p.x = m.ball.x; p.y = r.out === 'top' ? m.ball.y - (PR + BR + 4) : m.ball.y + (PR + BR + 4); }
+  } else if (r.type === 'corner') {
+    if (p) { p.x = m.ball.x + Math.sign(m.ball.x - CX) * (PR + BR + 4) * 0.8;
+             p.y = m.ball.y + Math.sign(m.ball.y - CY) * (PR + BR + 4) * 0.8; }
+  }
+  keepOut(r.team, 72);
+  relaxOverlaps();
+  m.ball.x = r.x; m.ball.y = r.y; m.ball.vx = 0; m.ball.vy = 0;   // keep it exactly on the spot
+}
 
 /* ---------- turn flow + clock ---------- */
 function advanceClock() {
@@ -1385,7 +1514,17 @@ function resolveTurnEnd() {
   updateHUD();
 }
 function pressFormation(shape) {
+  const m = match;
   if (!isHumanTurn() || !canFlick()) return;
+  // On your OWN throw-in / corner you may re-shape freely before taking it — the
+  // taker stays on the ball, opponents stay cleared, and it's still your restart.
+  if (m.restartInfo && m.restartInfo.team === 'red' && (m.restartKind === 'throwin' || m.restartKind === 'corner')) {
+    placeFormation('red', shape, true);
+    repinRestartTaker();
+    toast(shape.toUpperCase() + ' SHAPE — STILL YOUR ' + m.restartKind.toUpperCase(), TEAM.red.main);
+    updateHUD();
+    return;
+  }
   placeFormation('red', shape, true);
   toast(shape.toUpperCase() + ' SHAPE', TEAM.red.main);
   advanceClock();
