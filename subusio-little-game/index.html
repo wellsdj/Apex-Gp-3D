@@ -237,12 +237,39 @@
   <div class="playRow" style="margin-top:34px; flex-direction:column;">
     <button class="btn gold hidden" id="btnContinue">Continue Career</button>
     <button class="btn" id="btnNew">New Career</button>
+    <button class="btn" id="btnDuo">2 Players (same screen)</button>
+    <button class="btn" id="btnOnline">Play Online (with a code)</button>
   </div>
   <div class="playRow" style="margin-top:14px;">
     <button class="btn ghost" id="btnCustom">⚙ Settings</button>
     <button class="btn ghost" id="btnHow">How to Play</button>
   </div>
   <div class="foot">Turn-based flick football · drag back &amp; release · build a club, win the cup</div>
+</div>
+
+<!-- ONLINE LOBBY -->
+<div id="lobby" class="overlay hidden">
+  <div class="modalCard" style="max-width:520px;">
+    <h2 style="color:#ffd94d;font-style:italic;letter-spacing:2px;margin-bottom:6px;">PLAY ONLINE</h2>
+    <div id="lobbyBody" style="line-height:1.5;">
+      <p style="color:#b9c6d4;margin-bottom:16px;">Two devices, one match. One of you hosts and gets a code; the other types it in.</p>
+      <div class="playRow" style="flex-direction:column;gap:10px;">
+        <button class="btn" id="btnHost">Host a game (get a code)</button>
+        <div style="display:flex;gap:8px;align-items:center;justify-content:center;">
+          <input id="joinCode" placeholder="ENTER CODE" maxlength="8"
+            style="text-transform:uppercase;letter-spacing:3px;font-weight:800;text-align:center;padding:11px;border-radius:9px;border:1px solid rgba(255,255,255,.25);background:#0c1017;color:#fff;width:150px;">
+          <button class="btn" id="btnJoin">Join</button>
+        </div>
+      </div>
+    </div>
+    <div id="lobbyStatus" style="margin-top:16px;min-height:24px;color:#8fd8a0;font-weight:700;"></div>
+    <div id="lobbyCode" class="hidden" style="margin-top:8px;">
+      <div style="color:#b9c6d4;font-size:13px;">Give your friend this code:</div>
+      <div id="lobbyCodeVal" style="font-size:38px;font-weight:900;letter-spacing:8px;color:#ffd94d;margin:6px 0;"></div>
+      <div style="color:#8fa3b6;font-size:12px;">Waiting for them to join…</div>
+    </div>
+    <button class="btn ghost" id="btnLobbyBack" style="margin-top:18px;width:100%;">Back</button>
+  </div>
 </div>
 
 <!-- SETTINGS -->
@@ -282,6 +309,8 @@
       <li><b>Your keeper</b> you can grab and drag anywhere inside your box any time — cover a shot from any angle. It can't be flicked.</li>
       <li>Smashing an opponent before the ball is a <b>foul</b> → free kick, or a <b>penalty</b> in the box. Ball off the sides → throw-in; off the ends → corner or goal kick (opponents must stand clear).</li>
       <li><b>Career:</b> £42M to build an 11-man squad — every slot gives you 10 players; higher ratings flick harder &amp; truer. Group stage → knockouts → the final. Prize money rolls into next season.</li>
+      <li><b>2 Players:</b> take turns on one screen (Red then Blue) — no AI, just the two of you.</li>
+      <li><b>Play Online:</b> one of you hosts and gets a short <b>code</b>; the other types it in on their own device and you play across the internet. (In 2-player, turns simply alternate — no "closest to the ball" rule.)</li>
       <li>Two halves, a running clock, and a match timer. Set AI difficulty — Easy, Medium, Hard, or Impossible — in Settings.</li>
     </ul>
     <button class="btn" id="btnHowClose">Got It</button>
@@ -782,9 +811,32 @@ let gkDrag = null;                // keeper currently held by the mouse
 
 function defaultSquad(rating, seed) { return genSquad(mulberry32(seed), rating); }
 function zStat() { return { shots:0, onTarget:0, poss:0, corners:0, fouls:0, pens:0 }; }
+// which team the local player is allowed to move right now:
+//  - career: always Red (you)
+//  - duo (2 players, same screen): whichever team's turn it is
+//  - online: only your own side, and only on your turn
+function controlledTeam() {
+  if (!match) return null;
+  if (match.mode === 'duo') return match.turn;
+  if (match.mode === 'online') return match.turn === net.side ? net.side : null;
+  if (match.mode === 'career') return 'red';
+  return null;
+}
 function humanTeam() { return match && match.mode !== 'demo' ? 'red' : null; }
-function isHumanTurn() { return match && match.mode !== 'demo' && match.turn === 'red'; }
-function humanControlsGK(team) { return match && match.mode !== 'demo' && team === 'red'; }
+function isHumanTurn() {
+  if (!match || match.mode === 'demo') return false;
+  if (match.mode === 'duo') return true;                         // always a human's turn
+  if (match.mode === 'online') return match.turn === net.side;
+  return match.turn === 'red';                                   // career
+}
+function humanControlsGK(team) {
+  if (!match || match.mode === 'demo') return false;
+  if (match.mode === 'duo') return true;                         // both keepers are human
+  if (match.mode === 'online') return team === net.side;
+  return team === 'red';                                         // career
+}
+// online 2-player networking state (peer-to-peer room code); side = 'red' (host) or 'blue' (guest)
+const net = { on:false, side:null, conn:null, peer:null, code:null, connected:false };
 // rating → flick/restart strength, ~0.90 (rating 55) to ~1.20 (rating 90+)
 function pieceStrength(rating) { return 0.9 + Math.max(0, Math.min(36, rating - 55)) / 120; }
 
@@ -1519,37 +1571,46 @@ function resolveTurnEnd() {
   if (m.halfEndPending) { endHalf(); return; }
   advanceClock();
   if (m.halfEndPending) { endHalf(); return; }
-  // NEW possession rule: you keep the ball only if your disc touched it AND your
-  // team has the disc closest to it now. Otherwise it's the other team's ball.
-  const touchedByMover = m.turnTouched && m.ball.lastTeam === priorTeam;
-  const near = nearestTeamToBall();
-  m.turn = (touchedByMover && near === priorTeam) ? priorTeam : other(priorTeam);
+  if (m.mode === 'duo' || m.mode === 'online') {
+    // 2-player: simple alternating turns — no "closest to the ball gets it"
+    m.turn = other(priorTeam);
+  } else {
+    // NEW possession rule: you keep the ball only if your disc touched it AND your
+    // team has the disc closest to it now. Otherwise it's the other team's ball.
+    const touchedByMover = m.turnTouched && m.ball.lastTeam === priorTeam;
+    const near = nearestTeamToBall();
+    m.turn = (touchedByMover && near === priorTeam) ? priorTeam : other(priorTeam);
+  }
   m.aiTimer = 0;
   updateHUD();
 }
 function pressFormation(shape) {
   const m = match;
   if (!isHumanTurn() || !canFlick()) return;
+  const team = controlledTeam(); if (!team) return;
+  if (m.mode === 'online' && net.side === 'blue') { netSend({ t:'formation', shape }); return; }
   // On your OWN throw-in / corner you may re-shape freely before taking it — the
   // taker stays on the ball, opponents stay cleared, and it's still your restart.
-  if (m.restartInfo && m.restartInfo.team === 'red' && (m.restartKind === 'throwin' || m.restartKind === 'corner')) {
-    placeFormation('red', shape, true);
+  if (m.restartInfo && m.restartInfo.team === team && (m.restartKind === 'throwin' || m.restartKind === 'corner')) {
+    placeFormation(team, shape, true);
     repinRestartTaker();
-    toast(shape.toUpperCase() + ' SHAPE — STILL YOUR ' + m.restartKind.toUpperCase(), TEAM.red.main);
+    toast(shape.toUpperCase() + ' SHAPE — STILL YOUR ' + m.restartKind.toUpperCase(), TEAM[team].main);
     updateHUD();
     return;
   }
-  placeFormation('red', shape, true);
-  toast(shape.toUpperCase() + ' SHAPE', TEAM.red.main);
+  placeFormation(team, shape, true);
+  toast(shape.toUpperCase() + ' SHAPE', TEAM[team].main);
   advanceClock();
   if (match.halfEndPending) { endHalf(); return; }
-  match.turn = 'blue'; match.aiTimer = 0; match.turnTouched = false;
+  m.turn = other(team); m.aiTimer = 0; m.turnTouched = false;
   updateHUD();
 }
 
 /* ---------- main match update ---------- */
 function updateMatch(dt) {
   const m = match; if (!m) return;
+  // online guest doesn't simulate — it renders authoritative snapshots from the host
+  if (m.mode === 'online' && net.side === 'blue') return;
   if (m.state === 'ht' || m.state === 'ft') return;
   if (m.foulCool > 0) m.foulCool -= dt;
   updateKeepers(dt);
@@ -1569,13 +1630,14 @@ function updateMatch(dt) {
     else m.settle = 0;
   }
 
-  // AI takes its turn (demo = both sides AI)
-  const aiToMove = m.mode === 'demo' || (m.mode !== 'demo' && m.turn === 'blue');
+  // AI only plays in the menu demo and in career (as Blue) — never in 2-player modes
+  const aiToMove = m.mode === 'demo' || (m.mode === 'career' && m.turn === 'blue');
   if (aiToMove && !m.awaiting && !m.celebrate && !m.pendingRestart && !m.halfEndPending && allStopped()) {
     m.aiTimer += dt;
     if (m.aiTimer > (m.mode === 'demo' ? 0.55 : 0.8)) { m.aiTimer = 0; aiFlick(m.turn); }
   }
   if (m.mode !== 'demo') m.stats[m.turn].poss += dt;   // rough share for the FT panel
+  if (m.mode === 'online' && net.side === 'red') netBroadcast();   // host streams state to guest
 }
 function clockText() {
   const m = match;
@@ -1819,11 +1881,12 @@ function drawToasts(dt) {
 /* ============================================================
    HUD / SCREEN MANAGEMENT
    ============================================================ */
-const SCREENS = ['menu','custom','howto','stats','newcareer','career','squad','market','seasonEnd'];
+const SCREENS = ['menu','lobby','custom','howto','stats','newcareer','career','squad','market','seasonEnd'];
 function show(id) { for (const s of SCREENS) $(s).classList.toggle('hidden', s !== id && !(id === 'market' && s === 'squad')); }
 function hideAll() { for (const s of SCREENS) $(s).classList.add('hidden'); }
 let screen = 'menu';
 function goMenu() {
+  if (net.on) netHangup();
   screen = 'menu'; match = null; controlled = null;
   hideAll(); show('menu'); inGameHUD(false);
   $('btnContinue').classList.toggle('hidden', !loadCareer());
@@ -1841,6 +1904,8 @@ function updateHUD() {
   $('sBlue').textContent = match.score.blue;
   const chip = $('chip');
   if (match.mode === 'demo') chip.textContent = 'EXHIBITION';
+  else if (match.mode === 'duo') chip.textContent = TEAM[match.turn].label + ' — YOUR FLICK';
+  else if (match.mode === 'online') chip.textContent = match.turn === net.side ? 'YOUR FLICK' : (TEAM[match.turn].label + '…');
   else if (match.turn === 'red') chip.textContent = 'YOUR FLICK';
   else chip.textContent = TEAM.blue.label + '…';
   const tcol = match.turn === 'red' ? TEAM.red : TEAM.blue;
@@ -2137,7 +2202,18 @@ function startCareerMatch() {
   });
   inGameHUD(true);
 }
-function quitToMenu() { goMenu(); }
+// ---- 2-PLAYER (same screen) ----
+function startDuo() {
+  screen = 'match'; hideAll();
+  startMatch({
+    mode: 'duo',
+    red:  { label: settings.names.red,  kit: settings.kits.red,  squad: defaultSquad(74, 1111) },
+    blue: { label: settings.names.blue, kit: settings.kits.blue, squad: defaultSquad(74, 2222) },
+  });
+  inGameHUD(true);
+  toast('2 PLAYERS — RED STARTS', TEAM[match.turn].main);
+}
+function quitToMenu() { if (net.on) netHangup(); goMenu(); }
 
 /* ============================================================
    INPUT + BOOT
@@ -2160,32 +2236,38 @@ function pieceAt(x, y, team) {
   return null;
 }
 function myKeeperAt(x, y) {
-  if (!humanControlsGK('red')) return null;
-  const gk = match.players.find(p => p.team === 'red' && p.role === 'GK');
+  const team = controlledTeam();
+  if (!team || !humanControlsGK(team)) return null;
+  const gk = match.players.find(p => p.team === team && p.role === 'GK');
   return gk && (gk.x - x) ** 2 + (gk.y - y) ** 2 <= (gk.r + 8) ** 2 ? gk : null;
 }
+const isGuest = () => match && match.mode === 'online' && net.side === 'blue';
 cv.addEventListener('pointerdown', e => {
   if (!match || match.mode === 'demo') return;
   if (drag || gkDrag) return;                // never start a second grab over an unfinished one
+  const team = controlledTeam(); if (!team) return;
   const g = toGame(e); mouse.x = g.x; mouse.y = g.y;
   const gk = myKeeperAt(g.x, g.y);            // grab your keeper any time
-  if (gk) { gkDrag = gk; gk.targetX = g.x; gk.targetY = g.y; cv.setPointerCapture(e.pointerId); return; }
+  if (gk) { gkDrag = gk; gk.targetX = g.x; gk.targetY = g.y;
+    if (isGuest()) netSend({ t:'gk', x:g.x, y:g.y }); cv.setPointerCapture(e.pointerId); return; }
   if (!isHumanTurn() || !canFlick()) return;
-  const p = pieceAt(g.x, g.y, 'red');
+  const p = pieceAt(g.x, g.y, team);
   if (p && p.role !== 'GK') { drag = { p, mx: g.x, my: g.y }; cv.setPointerCapture(e.pointerId); }
 });
 cv.addEventListener('pointermove', e => {
   const g = toGame(e); mouse.x = g.x; mouse.y = g.y;
   if (gkDrag) {
     if (!match || !match.bodies.includes(gkDrag)) { gkDrag = null; return; }
-    gkDrag.targetX = g.x; gkDrag.targetY = g.y; return;
+    gkDrag.targetX = g.x; gkDrag.targetY = g.y;
+    if (isGuest()) netSendThrottled({ t:'gk', x:g.x, y:g.y });
+    return;
   }
   if (drag) {
     if (!match || !match.bodies.includes(drag.p)) { drag = null; return; }
     drag.mx = g.x; drag.my = g.y; return;
   }
   if (match && match.mode !== 'demo' && isHumanTurn() && canFlick())
-    cv.style.cursor = (myKeeperAt(g.x, g.y) || pieceAt(g.x, g.y, 'red')) ? 'grab' : 'default';
+    cv.style.cursor = (myKeeperAt(g.x, g.y) || pieceAt(g.x, g.y, controlledTeam())) ? 'grab' : 'default';
 });
 cv.addEventListener('pointerup', e => {
   if (gkDrag) { gkDrag = null; return; }
@@ -2194,14 +2276,139 @@ cv.addEventListener('pointerup', e => {
   const g = toGame(e);
   const dx = drag.p.x - g.x, dy = drag.p.y - g.y, len = Math.hypot(dx, dy);
   if (!stale && Number.isFinite(len) && len >= 12 && canFlick() && isHumanTurn()) {
-    const pow = Math.min(len / MAXDRAG, 1) * powerCap(drag.p);
-    doFlick(drag.p, dx, dy, Math.max(pow, 110));
-  } else drag = null;
+    const pow = Math.min(len / MAXDRAG, 1) * powerCap(drag.p), power = Math.max(pow, 110);
+    if (isGuest()) netSend({ t:'flick', slot: drag.p.slot, dx, dy, power });
+    else doFlick(drag.p, dx, dy, power);
+  }
+  drag = null;
 });
 cv.addEventListener('pointercancel', () => { drag = null; gkDrag = null; });
 
+/* ============================================================
+   ONLINE 2-PLAYER (peer-to-peer, room code). Host is authoritative:
+   it runs the physics and streams position snapshots; the guest sends
+   its flick / keeper / formation inputs and renders what it receives.
+   ============================================================ */
+function lobbyStatus(t) { const el = $('lobbyStatus'); if (el) el.textContent = t; }
+function showCode(code) { $('lobbyCode').classList.remove('hidden'); $('lobbyCodeVal').textContent = code; }
+function openLobby() { if (net.on) netHangup(); show('lobby'); screen = 'lobby';
+  lobbyStatus(''); $('lobbyCode').classList.add('hidden'); $('joinCode').value = ''; }
+function netHangup() {
+  try { if (net.conn) net.conn.close(); } catch (e) {}
+  try { if (net.peer) net.peer.destroy(); } catch (e) {}
+  net.on = false; net.side = null; net.conn = null; net.peer = null; net.connected = false; net.code = null;
+}
+function netSend(o) { try { if (net.conn && net.conn.open) net.conn.send(o); } catch (e) {} }
+let _lastThrottle = 0;
+function netSendThrottled(o) { const now = performance.now(); if (now - _lastThrottle < 50) return; _lastThrottle = now; netSend(o); }
+let _lastBroadcast = 0;
+function netBroadcast() {
+  if (!net.conn || !net.connected) return;
+  const now = performance.now(); if (now - _lastBroadcast < 33) return; _lastBroadcast = now;   // ~30/s
+  const b = match.bodies, arr = new Array(b.length * 2);
+  for (let i = 0; i < b.length; i++) { arr[i * 2] = Math.round(b[i].x); arr[i * 2 + 1] = Math.round(b[i].y); }
+  netSend({ t:'snap', p:arr, turn:match.turn, sr:match.score.red, sb:match.score.blue,
+    half:match.half, clk:Math.round(match.clock), st:match.state, rk:match.restartKind || 0,
+    cel: match.celebrate ? match.celebrate.team : 0, aw: match.awaiting ? 1 : 0 });
+}
+function applySnapshot(s) {
+  if (!match) return;
+  const b = match.bodies;
+  for (let i = 0; i < b.length && i * 2 + 1 < s.p.length; i++) { b[i].x = s.p[i * 2]; b[i].y = s.p[i * 2 + 1]; }
+  match.turn = s.turn; match.score.red = s.sr; match.score.blue = s.sb;
+  match.half = s.half; match.clock = s.clk; match.restartKind = s.rk || null; match.awaiting = !!s.aw;
+  const prev = match.state; match.state = s.st;
+  if (s.cel && !match.celebrate) { match.celebrate = { t:2, team:s.cel, kickTo:other(s.cel) }; spawnConfetti(s.cel); }
+  else if (!s.cel) match.celebrate = null;
+  if (s.st !== 'live' && prev === 'live') toast(s.st === 'ht' ? 'HALF TIME' : 'FULL TIME', '#ffd94d');
+  updateHUD();
+}
+function applyGuestInput(m) {
+  if (!match || match.mode !== 'online' || net.side !== 'red') return;
+  if (m.t === 'flick') {
+    if (match.turn !== 'blue' || !canFlick()) return;
+    const p = match.players.find(q => q.team === 'blue' && q.slot === m.slot);
+    if (p && p.role !== 'GK') doFlick(p, m.dx, m.dy, m.power);
+  } else if (m.t === 'gk') {
+    const gk = match.players.find(q => q.team === 'blue' && q.role === 'GK');
+    if (gk) { gk.targetX = m.x; gk.targetY = m.y; }
+  } else if (m.t === 'formation') {
+    if (match.turn !== 'blue' || !canFlick()) return;
+    if (match.restartInfo && match.restartInfo.team === 'blue' && (match.restartKind === 'throwin' || match.restartKind === 'corner')) {
+      placeFormation('blue', m.shape, true); repinRestartTaker();
+    } else {
+      placeFormation('blue', m.shape, true); advanceClock();
+      if (match.halfEndPending) endHalf(); else { match.turn = 'red'; match.turnTouched = false; }
+    }
+    updateHUD();
+  }
+}
+function startOnlineMatch() {
+  screen = 'match'; hideAll();
+  startMatch({ mode:'online',
+    red:  { label: settings.names.red,  kit: settings.kits.red,  squad: defaultSquad(74, 1111) },
+    blue: { label: settings.names.blue, kit: settings.kits.blue, squad: defaultSquad(74, 2222) } });
+  inGameHUD(true);
+}
+function onNetData(d) {
+  if (!d || !d.t) return;
+  if (d.t === 'init') {
+    net.side = 'blue'; net.on = true; net.connected = true;
+    startOnlineMatch(); match.turn = d.turn; updateHUD();
+    toast('CONNECTED — ' + TEAM.blue.label + ' (you)', TEAM.blue.main);
+  } else if (d.t === 'snap') { if (net.side === 'blue') applySnapshot(d); }
+  else { if (net.side === 'red') applyGuestInput(d); }
+}
+function wireConn(conn, side) {
+  net.conn = conn;
+  conn.on('open', () => {
+    net.on = true; net.side = side; net.connected = true;
+    if (side === 'red') { startOnlineMatch(); netSend({ t:'init', turn: match.turn }); updateHUD();
+      toast('CONNECTED — ' + TEAM.red.label + ' (you)', TEAM.red.main); }
+    lobbyStatus('Connected!');
+  });
+  conn.on('data', onNetData);
+  conn.on('close', () => { if (net.on) { toast('Opponent left', '#e8c93f'); netHangup(); goMenu(); } });
+  conn.on('error', () => {});
+}
+function loadPeer(cb) {
+  if (window.Peer) return cb(true);
+  const s = document.createElement('script');
+  s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+  s.onload = () => cb(!!window.Peer); s.onerror = () => cb(false);
+  document.head.appendChild(s);
+}
+function shortCode() { let c = ''; const ch = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; for (let i = 0; i < 4; i++) c += ch[(Math.random() * ch.length) | 0]; return c; }
+function netHost() {
+  lobbyStatus('Setting up…');
+  loadPeer(ok => {
+    if (!ok) { lobbyStatus('Couldn’t load the online library — check your internet.'); return; }
+    const code = shortCode();
+    const peer = new Peer('subusio-' + code, { debug: 0 }); net.peer = peer; net.code = code;
+    peer.on('open', () => { showCode(code); lobbyStatus('Room ready — waiting for a friend…'); });
+    peer.on('connection', conn => wireConn(conn, 'red'));
+    peer.on('error', e => lobbyStatus('Error: ' + (e && e.type ? e.type : e) + '. Try hosting again.'));
+  });
+}
+function netJoin(raw) {
+  const code = (raw || '').trim().toUpperCase();
+  if (!code) { lobbyStatus('Type the code first.'); return; }
+  lobbyStatus('Connecting…');
+  loadPeer(ok => {
+    if (!ok) { lobbyStatus('Couldn’t load the online library — check your internet.'); return; }
+    const peer = new Peer(undefined, { debug: 0 }); net.peer = peer;
+    peer.on('open', () => { const conn = peer.connect('subusio-' + code, { reliable: true }); wireConn(conn, 'blue'); });
+    peer.on('error', e => lobbyStatus('Couldn’t connect — check the code. (' + (e && e.type ? e.type : e) + ')'));
+  });
+}
+
 /* menu buttons */
 $('btnNew').onclick = () => { buildNewCareerUI(); show('newcareer'); screen = 'newcareer'; };
+$('btnDuo').onclick = () => { startDuo(); };
+$('btnOnline').onclick = () => { openLobby(); };
+$('btnHost').onclick = () => netHost();
+$('btnJoin').onclick = () => netJoin($('joinCode').value);
+$('btnLobbyBack').onclick = () => { netHangup(); show('menu'); screen = 'menu'; };
 $('btnContinue').onclick = () => { career = loadCareer(); if (career) { if (!squadComplete()) renderSquad(); else renderCareerHub(); } };
 $('btnCustom').onclick = () => { buildSettingsUI(); show('custom'); };
 $('btnCustomDone').onclick = () => { show('menu'); };
